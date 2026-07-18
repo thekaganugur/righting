@@ -1,0 +1,11 @@
+{
+  "preset": "volatility@1",
+  "aliases": {
+    "client": "Client",
+    "manager": "Manager"
+  },
+  "mappings": [
+    { "alias": "client", "path": "src/client/**" },
+    { "alias": "manager", "path": "src/manager/**" }
+  ]
+}

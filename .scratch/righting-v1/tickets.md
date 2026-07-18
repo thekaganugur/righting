@@ -23,10 +23,10 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Bootstrap the safe `righting` CLI.
 
-- [ ] A minimal policy can be read and translated into existing ESLint enforcement without rewriting the project’s lint command.
-- [ ] Allowed and forbidden Client/Manager dependencies are distinguishable in a runnable fixture project.
-- [ ] Findings expose a stable `righting` policy-rule key even if ESLint uses a different native rule identifier.
-- [ ] The fixture tests the observable lint outcome rather than adapter internals.
+- [x] A minimal policy can be read and translated into existing ESLint enforcement without rewriting the project’s lint command.
+- [x] Allowed and forbidden Client/Manager dependencies are distinguishable in a runnable fixture project.
+- [x] Findings expose a stable `righting` policy-rule key even if ESLint uses a different native rule identifier.
+- [x] The fixture tests the observable lint outcome rather than adapter internals.
 
 ## 03. Complete the default `volatility@1` dependency graph
 
