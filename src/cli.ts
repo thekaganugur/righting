@@ -2,6 +2,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { checkBaseline } from "./baseline.js";
 
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
@@ -76,23 +77,77 @@ function initialize(projectDirectory: string) {
   };
 }
 
-function main(arguments_: string[]): void {
-  const [command, ...options] = arguments_;
-  const json = options.length === 1 && options[0] === "--json";
+function baselineOptions(options: string[]): { base: string; migrationReason: string | undefined; json: boolean } {
+  let base: string | undefined;
+  let migrationReason: string | undefined;
+  let json = false;
 
-  if (command !== "init" || (options.length !== 0 && !json)) {
-    throw new Error("Usage: righting init [--json]");
+  for (let index = 0; index < options.length; index += 1) {
+    const option = options[index];
+    if (option === "--base" || option === "--migration-reason") {
+      const value = options[index + 1];
+      if (value === undefined || value.startsWith("--")) {
+        throw new Error(`Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]`);
+      }
+      if (option === "--base") {
+        if (base !== undefined) {
+          throw new Error("Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
+        }
+        base = value;
+      } else {
+        if (migrationReason !== undefined) {
+          throw new Error("Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
+        }
+        migrationReason = value;
+      }
+      index += 1;
+    } else if (option === "--json" && !json) {
+      json = true;
+    } else {
+      throw new Error("Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
+    }
   }
 
-  const result = initialize(process.cwd());
-  if (json) {
-    process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  if (base === undefined) {
+    throw new Error("Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
+  }
+  return { base, migrationReason, json };
+}
+
+function main(arguments_: string[]): void {
+  const [command, ...options] = arguments_;
+  if (command === "init") {
+    const json = options.length === 1 && options[0] === "--json";
+    if (options.length !== 0 && !json) {
+      throw new Error("Usage: righting init [--json]");
+    }
+
+    const result = initialize(process.cwd());
+    if (json) {
+      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+      return;
+    }
+
+    process.stdout.write(
+      `${result.policy.created ? "Created" : "Kept"} righting.json. ${result.guidance.updated ? "Updated" : "Kept"} Righting-managed guidance in AGENTS.md.\n`,
+    );
     return;
   }
 
-  process.stdout.write(
-    `${result.policy.created ? "Created" : "Kept"} righting.json. ${result.guidance.updated ? "Updated" : "Kept"} Righting-managed guidance in AGENTS.md.\n`,
-  );
+  if (command === "baseline") {
+    const { base, migrationReason, json } = baselineOptions(options);
+    const result = checkBaseline(process.cwd(), base, migrationReason);
+    if (json) {
+      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+      return;
+    }
+    process.stdout.write(
+      `${result.debt.status === "migration-baseline" ? "Accepted migration baseline" : "Righting baseline is within policy"} against ${base}.\n`,
+    );
+    return;
+  }
+
+  throw new Error("Usage: righting init [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
 }
 
 try {

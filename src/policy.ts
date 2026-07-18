@@ -340,15 +340,7 @@ export function allowedDependencies(policy: Policy): Record<Role, Role[]> {
   return allowed;
 }
 
-export function readPolicy(policyPath: string): Policy {
-  let source: unknown;
-  try {
-    source = JSON.parse(readFileSync(policyPath, "utf8"));
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`righting.json could not be read: ${message}`);
-  }
-
+function parsePolicy(source: unknown, policyPath: string): Policy {
   const policy = record(source, "a policy object");
   if (policy.status === "incomplete") {
     fail("is incomplete; supply approved aliases and mappings before enabling enforcement.");
@@ -396,4 +388,79 @@ export function readPolicy(policyPath: string): Policy {
   };
   allowedDependencies(result);
   return result;
+}
+
+function mappingIdentity(mapping: Mapping): string {
+  return JSON.stringify(mapping);
+}
+
+function overrideIdentity(override: RoleEdgeOverride): string {
+  return JSON.stringify(override);
+}
+
+function scopeIdentity(scope: Scope): string {
+  return JSON.stringify(scope);
+}
+
+function preservesAll<T>(baseline: readonly T[], current: readonly T[], identity: (item: T) => string): boolean {
+  const currentEntries = new Set(current.map(identity));
+  return baseline.every((item) => currentEntries.has(identity(item)));
+}
+
+// A migration can add enforcement, but cannot use a policy edit to loosen or replace it.
+export function isPolicyExpansion(baseline: Policy, current: Policy): boolean {
+  if (Object.entries(baseline.aliases).some(([alias, role]) => current.aliases[alias] !== role)) {
+    return false;
+  }
+  if (!preservesAll(baseline.mappings, current.mappings, mappingIdentity)) {
+    return false;
+  }
+  if (!preservesAll(baseline.scopes, current.scopes, scopeIdentity)) {
+    return false;
+  }
+  if (!preservesAll(baseline.overrides, current.overrides, overrideIdentity)) {
+    return false;
+  }
+  if ([...baseline.variations].some((variation) => !current.variations.has(variation))) {
+    return false;
+  }
+
+  const addedVariations = [...current.variations].filter((variation) => !baseline.variations.has(variation));
+  const addedOverrides = current.overrides.filter(
+    (override) => !baseline.overrides.some((baselineOverride) => overrideIdentity(baselineOverride) === overrideIdentity(override)),
+  );
+  if (addedVariations.includes("clientReadsAccess") || addedOverrides.some((override) => override.effect === "allow")) {
+    return false;
+  }
+
+  return (
+    current.mappings.length > baseline.mappings.length ||
+    current.scopes.length > baseline.scopes.length ||
+    addedVariations.length > 0 ||
+    addedOverrides.length > 0
+  );
+}
+
+export function readPolicySource(source: string, policyPath: string): Policy {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(source);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`righting.json could not be read: ${message}`);
+  }
+
+  return parsePolicy(parsed, policyPath);
+}
+
+export function readPolicy(policyPath: string): Policy {
+  let source: string;
+  try {
+    source = readFileSync(policyPath, "utf8");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`righting.json could not be read: ${message}`);
+  }
+
+  return readPolicySource(source, policyPath);
 }

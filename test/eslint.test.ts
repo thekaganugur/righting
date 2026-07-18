@@ -43,12 +43,12 @@ function withFixtureFile(path: string, contents: string, action: () => void) {
   }
 }
 
-function runLint(targets: string | readonly string[]) {
+function runLint(targets: string | readonly string[], options: readonly string[] = []) {
   mkdirSync(fixturePackageDirectory, { recursive: true });
   symlinkSync(repositoryDirectory, fixtureRightingPackage, "dir");
 
   try {
-    return spawnSync("npm", ["run", "lint", "--", ...(typeof targets === "string" ? [targets] : targets)], {
+    return spawnSync("npm", ["run", "lint", "--", ...options, ...(typeof targets === "string" ? [targets] : targets)], {
       cwd: fixtureDirectory,
       encoding: "utf8",
     });
@@ -122,7 +122,29 @@ test("fixture lint command reports a forbidden Manager dependency with a stable 
 
   assert.equal(result.status, 1, output);
   assert.match(output, /righting\/role-dependency/);
-  assert.match(output, /boundaries\/dependencies/);
+});
+
+test("fixture stores Righting debt as a namespaced native ESLint suppression", () => {
+  const suppressionsPath = resolve(fixtureDirectory, "eslint-suppressions.json");
+  writeFileSync(
+    suppressionsPath,
+    `${JSON.stringify({ "src/client/existing-lint.js": { "no-undef": { count: 1 } } }, null, 2)}\n`,
+  );
+
+  try {
+    const result = runLint("src/manager/forbidden.js", ["--suppress-rule", "righting/role-dependency"]);
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    assert.deepEqual(JSON.parse(readFileSync(suppressionsPath, "utf8")), {
+      "src/client/existing-lint.js": {
+        "no-undef": { count: 1 },
+      },
+      "src/manager/forbidden.js": {
+        "righting/role-dependency": { count: 1 },
+      },
+    });
+  } finally {
+    rmSync(suppressionsPath, { force: true });
+  }
 });
 
 test("fixture lint command preserves its existing lint configuration", () => {

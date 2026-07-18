@@ -69,11 +69,11 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Enforce context-firewall scopes.
 
-- [ ] The adapter preserves existing flat-config, lint-script, and typed-lint settings; unsupported legacy or absent ESLint setups are reported rather than migrated.
-- [ ] Righting uses namespaced entries in the project’s native ESLint suppression storage without affecting unrelated suppressions.
-- [ ] A maintainer can establish an initial legacy baseline, and normal work passes only when per-file/per-policy-rule debt does not grow.
-- [ ] CI can compare against an explicitly supplied Git base ref; intentional policy expansion requires an explicit migration reason.
-- [ ] Ordinary boundary linting remains available without Git, and documentation states the same-file/same-rule count-swap limitation.
+- [x] The adapter preserves existing flat-config, lint-script, and typed-lint settings; unsupported legacy or absent ESLint setups are reported rather than migrated.
+- [x] Righting uses namespaced entries in the project’s native ESLint suppression storage without affecting unrelated suppressions.
+- [x] A maintainer can establish an initial legacy baseline, and normal work passes only when per-file/per-policy-rule debt does not grow.
+- [x] CI can compare against an explicitly supplied Git base ref; intentional policy expansion requires an explicit migration reason.
+- [x] Ordinary boundary linting remains available without Git, and documentation states the same-file/same-rule count-swap limitation.
 
 ## 07. Generate policy and agent guidance
 
