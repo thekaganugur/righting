@@ -248,6 +248,191 @@ test("pureEngines and named role-edge overrides change only the configured edge"
   );
 });
 
+test("context firewall rejects a contextual dependency on another context", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client", useCase: "Manager" },
+    mappings: [
+      { alias: "screen", path: "src/orders/client/**" },
+      { alias: "useCase", path: "src/billing/manager/**" },
+    ],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "context", name: "billing", path: "src/billing/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile(
+    "src/orders/client/cross-context.js",
+    'import { value } from "../../billing/manager/value.js";\n\nexport { value };\n',
+    () => {
+      withFixtureFile("src/billing/manager/value.js", 'export const value = "billing";\n', () => {
+        withPolicy(policy, () => {
+          const result = runLint("src/orders/client/cross-context.js");
+          const output = `${result.stdout}\n${result.stderr}`;
+          assert.equal(result.status, 1, output);
+          assert.match(output, /righting\/cross-context-dependency/);
+        });
+      });
+    },
+  );
+});
+
+test("context firewall rejects a shared dependency on contextual code", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client", useCase: "Manager" },
+    mappings: [
+      { alias: "screen", path: "src/shared/client/**" },
+      { alias: "useCase", path: "src/orders/manager/**" },
+    ],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile(
+    "src/shared/client/import-context.js",
+    'import { value } from "../../orders/manager/value.js";\n\nexport { value };\n',
+    () => {
+      withFixtureFile("src/orders/manager/value.js", 'export const value = "orders";\n', () => {
+        withPolicy(policy, () => {
+          const result = runLint("src/shared/client/import-context.js");
+          const output = `${result.stdout}\n${result.stderr}`;
+          assert.equal(result.status, 1, output);
+          assert.match(output, /righting\/shared-to-context-dependency/);
+        });
+      });
+    },
+  );
+});
+
+test("contextual Clients can compose Clients in the same context", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client" },
+    mappings: [{ alias: "screen", path: "src/orders/client/**" }],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile(
+    "src/orders/client/compose-client.js",
+    'import { value } from "./screen.js";\n\nexport { value };\n',
+    () => {
+      withFixtureFile("src/orders/client/screen.js", 'export const value = "screen";\n', () => {
+        withPolicy(policy, () => {
+          const result = runLint("src/orders/client/compose-client.js");
+          assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+        });
+      });
+    },
+  );
+});
+
+test("contextual Clients can compose shared Clients", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client" },
+    mappings: [
+      { alias: "screen", path: "src/orders/client/**" },
+      { alias: "screen", path: "src/shared/client/**" },
+    ],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile(
+    "src/orders/client/compose-shared-client.js",
+    'import { value } from "../../shared/client/screen.js";\n\nexport { value };\n',
+    () => {
+      withFixtureFile("src/shared/client/screen.js", 'export const value = "screen";\n', () => {
+        withPolicy(policy, () => {
+          const result = runLint("src/orders/client/compose-shared-client.js");
+          assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+        });
+      });
+    },
+  );
+});
+
+test("contextual code can use shared code when the role graph permits it", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client", useCase: "Manager" },
+    mappings: [
+      { alias: "screen", path: "src/orders/client/**" },
+      { alias: "useCase", path: "src/shared/manager/**" },
+    ],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile(
+    "src/orders/client/use-shared-manager.js",
+    'import { value } from "../../shared/manager/value.js";\n\nexport { value };\n',
+    () => {
+      withFixtureFile("src/shared/manager/value.js", 'export const value = "shared";\n', () => {
+        withPolicy(policy, () => {
+          const result = runLint("src/orders/client/use-shared-manager.js");
+          assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+        });
+      });
+    },
+  );
+});
+
+test("unscoped application code can wire context entry points", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client" },
+    mappings: [
+      { alias: "screen", path: "src/orders/client/**" },
+      { alias: "screen", path: "src/billing/client/**" },
+    ],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "context", name: "billing", path: "src/billing/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile(
+    "src/application/router.js",
+    'import "../orders/client/entry.js";\nimport "../billing/client/entry.js";\n',
+    () => {
+      withFixtureFile("src/orders/client/entry.js", 'export const orders = "orders";\n', () => {
+        withFixtureFile("src/billing/client/entry.js", 'export const billing = "billing";\n', () => {
+          withPolicy(policy, () => {
+            const result = runLint("src/application/router.js");
+            assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+          });
+        });
+      });
+    },
+  );
+});
+
 test("strict policy validation rejects unmapped imports, ambiguous matches, and waiver-like configuration", () => {
   const policy = {
     preset: "volatility@1",

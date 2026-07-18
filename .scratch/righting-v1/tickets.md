@@ -57,11 +57,11 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Make policies strict and exceptions deliberate.
 
-- [ ] Cross-context imports and shared-to-context imports fail with actionable policy diagnostics.
-- [ ] Contextual code can use shared code when the role graph permits it.
-- [ ] Contextual Clients can compose shared Clients and Clients in the same context.
-- [ ] Unscoped application or router code can wire context entry points without introducing a v1 composition-root scope.
-- [ ] Fixtures demonstrate the allowed and forbidden scope behavior independently of framework naming.
+- [x] Cross-context imports and shared-to-context imports fail with actionable policy diagnostics.
+- [x] Contextual code can use shared code when the role graph permits it.
+- [x] Contextual Clients can compose shared Clients and Clients in the same context.
+- [x] Unscoped application or router code can wire context entry points without introducing a v1 composition-root scope.
+- [x] Fixtures demonstrate the allowed and forbidden scope behavior independently of framework naming.
 
 ## 06. Adopt safely with a legacy-debt ratchet
 
