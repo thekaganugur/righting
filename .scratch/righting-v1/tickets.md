@@ -92,10 +92,10 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Adopt safely with a legacy-debt ratchet; Generate policy and agent guidance.
 
-- [ ] `righting-integrate` leads aliases, scopes, approval, generated guidance, and baseline-intent decisions without inferring architecture.
-- [ ] `righting-eslint` inspects the existing modern flat config, preserves its settings, adds only adapter configuration, and runs the established lint command.
-- [ ] The ESLint integration reports typed-lint presence and outcome and never restructures lint commands without approval.
-- [ ] Both skills conform to the Agent Skills standard without harness-specific assumptions.
+- [x] `righting-integrate` leads aliases, scopes, approval, generated guidance, and baseline-intent decisions without inferring architecture.
+- [x] `righting-eslint` inspects the existing modern flat config, preserves its settings, adds only adapter configuration, and runs the established lint command.
+- [x] The ESLint integration reports typed-lint presence and outcome and never restructures lint commands without approval.
+- [x] Both skills conform to the Agent Skills standard without harness-specific assumptions.
 
 ## 09. Offer read-only Righting design review
 

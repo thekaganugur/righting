@@ -11,7 +11,8 @@
     "./eslint": "./dist/src/eslint.js"
   },
   "files": [
-    "dist/src/"
+    "dist/src/",
+    "skills/"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
