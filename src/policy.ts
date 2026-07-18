@@ -366,8 +366,12 @@ export function readPolicy(policyPath: string): Policy {
   if (scopes.length > 0 && !configuredVariations.has("contextFirewall")) {
     fail("scopes require the contextFirewall variation.");
   }
-  if (configuredVariations.has("contextFirewall") && !scopes.some((scope) => scope.kind === "context")) {
-    fail("contextFirewall requires at least one context scope.");
+  if (configuredVariations.has("contextFirewall")) {
+    for (const kind of ["context", "shared", "unscoped"] as const) {
+      if (!scopes.some((scope) => scope.kind === kind)) {
+        fail(`contextFirewall requires at least one ${kind} scope.`);
+      }
+    }
   }
 
   const projectDirectory = dirname(policyPath);

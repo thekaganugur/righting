@@ -313,6 +313,35 @@ test("context firewall rejects a shared dependency on contextual code", () => {
   );
 });
 
+test("context firewall applies shared protections independently of role mappings", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client" },
+    mappings: [{ alias: "screen", path: "src/orders/client/**" }],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile(
+    "src/shared/unmapped/forbidden.js",
+    'import { value } from "../../orders/client/value.js";\n\nexport { value };\n',
+    () => {
+      withFixtureFile("src/orders/client/value.js", 'export const value = "orders";\n', () => {
+        withPolicy(policy, () => {
+          const result = runLint("src/shared/unmapped/forbidden.js");
+          const output = `${result.stdout}\n${result.stderr}`;
+          assert.equal(result.status, 1, output);
+          assert.match(output, /righting\/shared-to-context-dependency/);
+        });
+      });
+    },
+  );
+});
+
 test("contextual Clients can compose Clients in the same context", () => {
   const policy = {
     preset: "volatility@1",
@@ -478,12 +507,26 @@ test("strict policy validation rejects unmapped imports, ambiguous matches, and 
       scopes: [
         { kind: "context", name: "orders", path: "src/client/**" },
         { kind: "shared", path: "src/client/**" },
+        { kind: "unscoped", path: "src/application/**" },
       ],
     },
     () => {
       const result = runLint("src/client/client.js");
       assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`);
       assert.match(`${result.stdout}\n${result.stderr}`, /scope policy maps .* ambiguously/);
+    },
+  );
+
+  withPolicy(
+    {
+      ...policy,
+      variations: ["contextFirewall"],
+      scopes: [{ kind: "context", name: "orders", path: "src/client/**" }],
+    },
+    () => {
+      const result = runLint("src/client/client.js");
+      assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`);
+      assert.match(`${result.stdout}\n${result.stderr}`, /contextFirewall requires at least one shared scope/);
     },
   );
 

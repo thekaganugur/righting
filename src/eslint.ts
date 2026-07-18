@@ -40,9 +40,13 @@ export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json"
     scope.kind === "context" ? [{ index, name: scope.name }] : [],
   );
   const sharedScopeIndexes = policy.scopes.flatMap((scope, index) => (scope.kind === "shared" ? [index] : []));
+  const unscopedScopeIndexes = policy.scopes.flatMap((scope, index) => (scope.kind === "unscoped" ? [index] : []));
 
   return {
-    files: policy.mappings.flatMap((mapping) => (mapping.path === undefined ? [] : [mapping.path])),
+    files: [
+      ...policy.mappings.flatMap((mapping) => (mapping.path === undefined ? [] : [mapping.path])),
+      ...policy.scopes.map((scope) => scope.path),
+    ],
     plugins: { boundaries },
     settings: {
       "boundaries/elements": [
@@ -105,6 +109,12 @@ export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json"
                 to: { element: { types: { anyOf: contexts.map((context) => scopeElementType(context.index)) } } },
               },
               message: "righting/shared-to-context-dependency: Shared code cannot depend on contextual code.",
+            })),
+            ...unscopedScopeIndexes.map((index) => ({
+              from: { element: { types: { allOf: [scopeElementType(index)] } } },
+              allow: {
+                to: { element: { types: { anyOf: contexts.map((context) => scopeElementType(context.index)) } } },
+              },
             })),
             ...contexts.map((context) => ({
               from: {
