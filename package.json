@@ -31,7 +31,8 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "eslint-plugin-boundaries": "^7.0.2"
+    "eslint-plugin-boundaries": "^7.0.2",
+    "micromatch": "^4.0.8"
   },
   "peerDependencies": {
     "eslint": ">=9.0.0"

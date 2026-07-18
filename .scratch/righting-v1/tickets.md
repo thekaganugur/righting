@@ -45,11 +45,11 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Complete the default `volatility@1` dependency graph.
 
-- [ ] Aliases retain canonical role behavior, and explicit path or package mappings determine policy coverage.
-- [ ] Ambiguous role or scope matches and unresolved local imports fail clearly instead of silently bypassing enforcement.
-- [ ] Ordinary external dependencies remain allowed, while explicitly protected Resource or Utility dependencies are constrained by policy.
-- [ ] The named `clientReadsAccess`, `pureEngines`, and `contextFirewall` variations and reason-required global role-edge overrides change behavior only when explicitly configured.
-- [ ] No per-file or per-line Righting waiver mechanism is introduced.
+- [x] Aliases retain canonical role behavior, and explicit path or package mappings determine policy coverage.
+- [x] Ambiguous role or scope matches and unresolved local imports fail clearly instead of silently bypassing enforcement.
+- [x] Ordinary external dependencies remain allowed, while explicitly protected Resource or Utility dependencies are constrained by policy.
+- [x] The named `clientReadsAccess`, `pureEngines`, and `contextFirewall` variations and reason-required global role-edge overrides change behavior only when explicitly configured.
+- [x] No per-file or per-line Righting waiver mechanism is introduced.
 
 ## 05. Enforce context-firewall scopes
 
