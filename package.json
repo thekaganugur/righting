@@ -1,0 +1,24 @@
+{
+  "name": "righting",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local architecture-policy tooling",
+  "type": "module",
+  "bin": {
+    "righting": "dist/src/cli.js"
+  },
+  "files": ["dist/src/"],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "prepack": "npm run build",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "npm run build && node --test dist/test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
+  }
+}

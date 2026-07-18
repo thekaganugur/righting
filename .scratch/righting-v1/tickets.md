@@ -12,10 +12,10 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** None — can start immediately.
 
-- [ ] A maintainer can invoke `init` in a supported local project and receive a clear, machine-readable result where appropriate.
-- [ ] The starter policy identifies the pinned v1 preset but remains explicitly incomplete until approved architecture decisions are supplied.
-- [ ] Re-running `init` preserves project-owned agent guidance while updating only Righting-managed guidance.
-- [ ] Public command tests prove non-interactive operation and safe reruns.
+- [x] A maintainer can invoke `init` in a supported local project and receive a clear, machine-readable result where appropriate.
+- [x] The starter policy identifies the pinned v1 preset but remains explicitly incomplete until approved architecture decisions are supplied.
+- [x] Re-running `init` preserves project-owned agent guidance while updating only Righting-managed guidance.
+- [x] Public command tests prove non-interactive operation and safe reruns.
 
 ## 02. Prove the policy-to-ESLint feedback loop
 
