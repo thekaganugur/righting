@@ -1,6 +1,6 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, isAbsolute, relative, sep } from "node:path";
+import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 
 const { isMatch } = createRequire(import.meta.url)("micromatch") as {
   isMatch(path: string, patterns: string | readonly string[]): boolean;
@@ -32,6 +32,11 @@ type Scope = {
   path: string;
 };
 
+export type GuidanceExtras = {
+  domainVocabulary?: string;
+  goldenExamples?: Record<string, string>;
+};
+
 export type Policy = {
   preset: "volatility@1";
   aliases: Record<string, Role>;
@@ -39,6 +44,7 @@ export type Policy = {
   variations: ReadonlySet<Variation>;
   overrides: RoleEdgeOverride[];
   scopes: Scope[];
+  extras?: GuidanceExtras;
 };
 
 const defaultAllowedDependencies: Record<Role, Role[]> = {
@@ -54,7 +60,8 @@ const variations = new Set<Variation>(["clientReadsAccess", "pureEngines", "cont
 const mappingKeys = new Set(["alias", "path", "package"]);
 const overrideKeys = new Set(["name", "from", "to", "effect", "reason"]);
 const scopeKeys = new Set(["kind", "name", "path"]);
-const policyKeys = new Set(["preset", "aliases", "mappings", "variations", "overrides", "scopes"]);
+const extrasKeys = new Set(["domainVocabulary", "goldenExamples"]);
+const policyKeys = new Set(["preset", "aliases", "mappings", "variations", "overrides", "scopes", "extras"]);
 
 type JsonRecord = Record<string, unknown>;
 
@@ -313,6 +320,45 @@ function parseScopes(value: unknown): Scope[] {
   });
 }
 
+function parseReference(value: unknown, description: string, projectDirectory: string): string {
+  const reference = nonEmptyString(value, description);
+  const path = resolve(projectDirectory, reference);
+  const projectRelative = relative(projectDirectory, path);
+  if (isAbsolute(reference) || projectRelative === ".." || projectRelative.startsWith(`..${sep}`) || isAbsolute(projectRelative)) {
+    fail(`${description} must be a project-relative path.`);
+  }
+  if (!existsSync(path)) {
+    fail(`${description} must reference an existing path.`);
+  }
+  return reference;
+}
+
+function parseExtras(value: unknown, projectDirectory: string): GuidanceExtras | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const extras = record(value, "extras");
+  rejectUnknownKeys(extras, extrasKeys, "extras");
+  const domainVocabulary =
+    extras.domainVocabulary === undefined
+      ? undefined
+      : parseReference(extras.domainVocabulary, "extras domainVocabulary", projectDirectory);
+  let goldenExamples: Record<string, string> | undefined;
+  if (extras.goldenExamples !== undefined) {
+    const examples = record(extras.goldenExamples, "extras goldenExamples");
+    goldenExamples = {};
+    for (const [name, reference] of Object.entries(examples)) {
+      if (name.trim() === "") {
+        fail("extras goldenExamples cannot contain an empty name.");
+      }
+      goldenExamples[name] = parseReference(reference, `extras goldenExamples "${name}"`, projectDirectory);
+    }
+  }
+
+  return { domainVocabulary, goldenExamples };
+}
+
 export function allowedDependencies(policy: Policy): Record<Role, Role[]> {
   const allowed = Object.fromEntries(
     roles.map((role) => [role, [...defaultAllowedDependencies[role]]]),
@@ -355,6 +401,8 @@ function parsePolicy(source: unknown, policyPath: string): Policy {
   const configuredVariations = parseVariations(policy.variations);
   const overrides = parseOverrides(policy.overrides);
   const scopes = parseScopes(policy.scopes);
+  const projectDirectory = dirname(policyPath);
+  const extras = parseExtras(policy.extras, projectDirectory);
   if (scopes.length > 0 && !configuredVariations.has("contextFirewall")) {
     fail("scopes require the contextFirewall variation.");
   }
@@ -366,7 +414,6 @@ function parsePolicy(source: unknown, policyPath: string): Policy {
     }
   }
 
-  const projectDirectory = dirname(policyPath);
   rejectAmbiguousPathMatches(
     projectDirectory,
     mappings.flatMap((mapping) => (mapping.path === undefined ? [] : [{ name: mapping.alias, path: mapping.path }])),
@@ -385,6 +432,7 @@ function parsePolicy(source: unknown, policyPath: string): Policy {
     variations: configuredVariations,
     overrides,
     scopes,
+    ...(extras === undefined ? {} : { extras }),
   };
   allowedDependencies(result);
   return result;

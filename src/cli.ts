@@ -3,6 +3,8 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { checkBaseline } from "./baseline.js";
+import { renderPolicyGuidance } from "./docs.js";
+import { readPolicy } from "./policy.js";
 
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
@@ -28,9 +30,9 @@ const managedGuidance = `${managedStart}
 - Keep project-owned instructions outside this managed block.
 ${managedEnd}`;
 
-function replaceManagedGuidance(existing: string | undefined): string {
+function replaceManagedGuidance(existing: string | undefined, guidance = managedGuidance): string {
   if (existing === undefined) {
-    return `${managedGuidance}\n`;
+    return `${guidance}\n`;
   }
 
   const starts = existing.split(managedStart).length - 1;
@@ -38,7 +40,7 @@ function replaceManagedGuidance(existing: string | undefined): string {
 
   if (starts === 0 && ends === 0) {
     const separator = existing.endsWith("\n") ? "\n" : "\n\n";
-    return `${existing}${separator}${managedGuidance}\n`;
+    return `${existing}${separator}${guidance}\n`;
   }
 
   const start = existing.indexOf(managedStart);
@@ -47,21 +49,30 @@ function replaceManagedGuidance(existing: string | undefined): string {
     throw new Error("AGENTS.md has an invalid Righting-managed block; repair it before rerunning init.");
   }
 
-  return `${existing.slice(0, start)}${managedGuidance}${existing.slice(end + managedEnd.length)}`;
+  return `${existing.slice(0, start)}${guidance}${existing.slice(end + managedEnd.length)}`;
+}
+
+function guidancePath(projectDirectory: string): string {
+  return resolve(projectDirectory, "AGENTS.md");
+}
+
+function updateGuidance(projectDirectory: string, content = managedGuidance): void {
+  const path = guidancePath(projectDirectory);
+  const existingGuidance = existsSync(path) ? readFileSync(path, "utf8") : undefined;
+  writeFileSync(path, replaceManagedGuidance(existingGuidance, content), "utf8");
 }
 
 function initialize(projectDirectory: string) {
   const policyPath = resolve(projectDirectory, "righting.json");
-  const guidancePath = resolve(projectDirectory, "AGENTS.md");
+  const path = guidancePath(projectDirectory);
+  const guidance = replaceManagedGuidance(existsSync(path) ? readFileSync(path, "utf8") : undefined);
   const policyCreated = !existsSync(policyPath);
-  const existingGuidance = existsSync(guidancePath) ? readFileSync(guidancePath, "utf8") : undefined;
-  const guidance = replaceManagedGuidance(existingGuidance);
 
   if (policyCreated) {
     writeFileSync(policyPath, starterPolicy, { encoding: "utf8", flag: "wx" });
   }
 
-  writeFileSync(guidancePath, guidance, "utf8");
+  writeFileSync(path, guidance, "utf8");
 
   return {
     command: "init",
@@ -70,6 +81,19 @@ function initialize(projectDirectory: string) {
       created: policyCreated,
       status: policyCreated ? "incomplete" : "existing",
     },
+    guidance: {
+      path: "AGENTS.md",
+      updated: true,
+    },
+  };
+}
+
+function generateDocs(projectDirectory: string) {
+  const policy = readPolicy(resolve(projectDirectory, "righting.json"));
+  const guidance = `${managedStart}\n${renderPolicyGuidance(policy)}\n${managedEnd}`;
+  updateGuidance(projectDirectory, guidance);
+  return {
+    command: "docs",
     guidance: {
       path: "AGENTS.md",
       updated: true,
@@ -134,6 +158,21 @@ function main(arguments_: string[]): void {
     return;
   }
 
+  if (command === "docs") {
+    const json = options.length === 1 && options[0] === "--json";
+    if (options.length !== 0 && !json) {
+      throw new Error("Usage: righting docs [--json]");
+    }
+
+    const result = generateDocs(process.cwd());
+    if (json) {
+      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+      return;
+    }
+    process.stdout.write("Updated Righting-managed guidance in AGENTS.md.\n");
+    return;
+  }
+
   if (command === "baseline") {
     const { base, migrationReason, json } = baselineOptions(options);
     const result = checkBaseline(process.cwd(), base, migrationReason);
@@ -147,7 +186,9 @@ function main(arguments_: string[]): void {
     return;
   }
 
-  throw new Error("Usage: righting init [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
+  throw new Error(
+    "Usage: righting init [--json] | righting docs [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]",
+  );
 }
 
 try {

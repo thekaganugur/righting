@@ -81,10 +81,10 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Enforce context-firewall scopes.
 
-- [ ] The `docs` command renders aliases, enforced boundaries, adapter limitations, and the available design-review workflow from the policy.
-- [ ] Each rule is identified as lint-enforced, partially checked, or guidance only.
-- [ ] Optional domain-vocabulary and golden-example references are checked for existence without Righting judging their contents.
-- [ ] Generated guidance remains safe to regenerate and preserves project-owned agent instructions outside its managed block.
+- [x] The `docs` command renders aliases, enforced boundaries, adapter limitations, and the available design-review workflow from the policy.
+- [x] Each rule is identified as lint-enforced, partially checked, or guidance only.
+- [x] Optional domain-vocabulary and golden-example references are checked for existence without Righting judging their contents.
+- [x] Generated guidance remains safe to regenerate and preserves project-owned agent instructions outside its managed block.
 
 ## 08. Guide deliberate Righting integrations
 
