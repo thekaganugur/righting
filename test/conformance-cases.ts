@@ -25,10 +25,11 @@ export const allowedRoleEdges = new Set<RoleEdge>([
   "Utility:Utility",
 ]);
 
-export const forbiddenDependencyForms = [
-  "src/manager/forbidden.js",
-  "src/manager/reexport-client.js",
-  "src/manager/require-client.cjs",
-  "src/manager/dynamic-client.js",
-  "src/manager/type-client.mts",
+// Adapter-neutral source cases future adapters must execute against test/fixtures/dependency-conformance.
+export const dependencyForms = [
+  { allowed: "src/client/client.js", forbidden: "src/manager/forbidden.js" },
+  { allowed: "src/client/reexport-manager.js", forbidden: "src/manager/reexport-client.js" },
+  { allowed: "src/client/require-manager.cjs", forbidden: "src/manager/require-client.cjs" },
+  { allowed: "src/client/dynamic-manager.js", forbidden: "src/manager/dynamic-client.js" },
+  { allowed: "src/client/type-manager.mts", forbidden: "src/manager/type-client.mts" },
 ];

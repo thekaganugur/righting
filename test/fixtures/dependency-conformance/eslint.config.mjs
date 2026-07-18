@@ -18,6 +18,7 @@ export default [
         babelOptions: { plugins: ["@babel/plugin-syntax-typescript"] },
       },
     },
+    rules: { "no-undef": "off" },
   },
   eslintConfig(),
 ];

@@ -6,25 +6,25 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   allowedRoleEdges,
-  forbiddenDependencyForms,
+  dependencyForms,
   roleDirectories,
   roles,
   type Role,
   type RoleEdge,
-} from "./fixtures/dependency-conformance.js";
+} from "./conformance-cases.js";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
-const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/policy-to-eslint");
+const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/dependency-conformance");
 const fixturePackageDirectory = resolve(fixtureDirectory, "node_modules");
 const fixtureRightingPackage = resolve(fixturePackageDirectory, "righting");
 
-function runLint(target: string) {
+function runLint(targets: string | readonly string[]) {
   mkdirSync(fixturePackageDirectory, { recursive: true });
   symlinkSync(repositoryDirectory, fixtureRightingPackage, "dir");
 
   try {
-    return spawnSync("npm", ["run", "lint", "--", target], {
+    return spawnSync("npm", ["run", "lint", "--", ...(typeof targets === "string" ? [targets] : targets)], {
       cwd: fixtureDirectory,
       encoding: "utf8",
     });
@@ -34,45 +34,61 @@ function runLint(target: string) {
   }
 }
 
-function runRoleDependency(from: Role, to: Role) {
-  const fromDirectory = roleDirectories[from];
-  const toDirectory = roleDirectories[to];
-  const target = `src/${fromDirectory}/conformance-to-${toDirectory}.js`;
-  const fixturePath = resolve(fixtureDirectory, target);
-  const dependencyPath = from === to ? "./value.js" : `../${toDirectory}/value.js`;
+type RoleDependency = readonly [Role, Role];
 
-  writeFileSync(fixturePath, `import { value } from "${dependencyPath}";\n\nexport { value };\n`);
+function runRoleDependencies(dependencies: readonly RoleDependency[]) {
+  const fixtureFiles = dependencies.map(([from, to]) => {
+    const fromDirectory = roleDirectories[from];
+    const toDirectory = roleDirectories[to];
+    const target = `src/${fromDirectory}/conformance-to-${toDirectory}.js`;
+    const fixturePath = resolve(fixtureDirectory, target);
+    const dependencyPath = from === to ? "./value.js" : `../${toDirectory}/value.js`;
+
+    writeFileSync(fixturePath, `import { value } from "${dependencyPath}";\n\nexport { value };\n`);
+    return { fixturePath, target };
+  });
+
   try {
-    return runLint(target);
+    return { result: runLint(fixtureFiles.map(({ target }) => target)), targets: fixtureFiles.map(({ target }) => target) };
   } finally {
-    rmSync(fixturePath, { force: true });
+    for (const { fixturePath } of fixtureFiles) {
+      rmSync(fixturePath, { force: true });
+    }
   }
 }
 
 test("fixture conformance suite enforces every default volatility@1 role edge", () => {
+  const allowed: RoleDependency[] = [];
+  const forbidden: RoleDependency[] = [];
+
   for (const from of roles) {
     for (const to of roles) {
-      const result = runRoleDependency(from, to);
-      const output = `${result.stdout}\n${result.stderr}`;
-      const dependency = `${from}:${to}` as RoleEdge;
-
-      if (allowedRoleEdges.has(dependency)) {
-        assert.equal(result.status, 0, `${dependency}\n${output}`);
-      } else {
-        assert.equal(result.status, 1, `${dependency}\n${output}`);
-        assert.match(output, /righting\/role-dependency/, dependency);
-      }
+      (allowedRoleEdges.has(`${from}:${to}` as RoleEdge) ? allowed : forbidden).push([from, to]);
     }
+  }
+
+  const allowedResult = runRoleDependencies(allowed).result;
+  assert.equal(allowedResult.status, 0, `${allowedResult.stdout}\n${allowedResult.stderr}`);
+
+  const forbiddenResult = runRoleDependencies(forbidden);
+  const output = `${forbiddenResult.result.stdout}\n${forbiddenResult.result.stderr}`;
+  assert.equal(forbiddenResult.result.status, 1, output);
+  assert.match(output, /righting\/role-dependency/);
+  for (const target of forbiddenResult.targets) {
+    assert.ok(output.includes(target), target);
   }
 });
 
-test("fixture lint command detects forbidden dependencies in every static form", () => {
-  for (const target of forbiddenDependencyForms) {
-    const result = runLint(target);
-    const output = `${result.stdout}\n${result.stderr}`;
+test("fixture lint command treats allowed and forbidden dependencies equally in every static form", () => {
+  const allowedResult = runLint(dependencyForms.map(({ allowed }) => allowed));
+  assert.equal(allowedResult.status, 0, `${allowedResult.stdout}\n${allowedResult.stderr}`);
 
-    assert.equal(result.status, 1, output);
-    assert.match(output, /righting\/role-dependency/, target);
+  const forbiddenResult = runLint(dependencyForms.map(({ forbidden }) => forbidden));
+  const output = `${forbiddenResult.stdout}\n${forbiddenResult.stderr}`;
+  assert.equal(forbiddenResult.status, 1, output);
+  assert.match(output, /righting\/role-dependency/);
+  for (const { forbidden } of dependencyForms) {
+    assert.ok(output.includes(forbidden), forbidden);
   }
 });
 
