@@ -34,10 +34,10 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Prove the policy-to-ESLint feedback loop.
 
-- [ ] The default Client, Manager, Engine, ResourceAccess, Resource, and Utility permissions and prohibitions are enforced through ESLint.
-- [ ] Every role can depend on Utility, while Resources and Utilities cannot reach into business roles and direct Manager-to-Manager imports fail.
-- [ ] Imports, exports/re-exports, `require`, dynamic imports, and type-only imports receive equivalent architectural treatment.
-- [ ] A reusable allowed/forbidden dependency conformance fixture suite becomes the support gate for future adapters.
+- [x] The default Client, Manager, Engine, ResourceAccess, Resource, and Utility permissions and prohibitions are enforced through ESLint.
+- [x] Every role can depend on Utility, while Resources and Utilities cannot reach into business roles and direct Manager-to-Manager imports fail.
+- [x] Imports, exports/re-exports, `require`, dynamic imports, and type-only imports receive equivalent architectural treatment.
+- [x] A reusable allowed/forbidden dependency conformance fixture suite becomes the support gate for future adapters.
 
 ## 04. Make policies strict and exceptions deliberate
 
