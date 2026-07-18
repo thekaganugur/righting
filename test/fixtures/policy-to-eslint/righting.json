@@ -2,10 +2,18 @@
   "preset": "volatility@1",
   "aliases": {
     "client": "Client",
-    "manager": "Manager"
+    "manager": "Manager",
+    "engine": "Engine",
+    "resourceAccess": "ResourceAccess",
+    "resource": "Resource",
+    "utility": "Utility"
   },
   "mappings": [
     { "alias": "client", "path": "src/client/**" },
-    { "alias": "manager", "path": "src/manager/**" }
+    { "alias": "manager", "path": "src/manager/**" },
+    { "alias": "engine", "path": "src/engine/**" },
+    { "alias": "resourceAccess", "path": "src/resource-access/**" },
+    { "alias": "resource", "path": "src/resource/**" },
+    { "alias": "utility", "path": "src/utility/**" }
   ]
 }

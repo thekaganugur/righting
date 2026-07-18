@@ -1,3 +1,4 @@
+import babelParser from "@babel/eslint-parser";
 import { eslintConfig } from "righting/eslint";
 
 const existingLintConfig = {
@@ -6,4 +7,17 @@ const existingLintConfig = {
   },
 };
 
-export default [existingLintConfig, eslintConfig()];
+export default [
+  existingLintConfig,
+  {
+    files: ["**/*.mts"],
+    languageOptions: {
+      parser: babelParser,
+      parserOptions: {
+        requireConfigFile: false,
+        babelOptions: { plugins: ["@babel/plugin-syntax-typescript"] },
+      },
+    },
+  },
+  eslintConfig(),
+];

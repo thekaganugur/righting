@@ -23,6 +23,9 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/eslint-parser": "^7.29.7",
+    "@babel/plugin-syntax-typescript": "^7.29.7",
     "@types/node": "^26.1.1",
     "eslint": "^9.39.5",
     "typescript": "^7.0.2"
