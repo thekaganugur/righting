@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { test } from "node:test";
@@ -8,9 +8,26 @@ import { fileURLToPath } from "node:url";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const cliPath = resolve(testDirectory, "../src/cli.js");
+const repositoryDirectory = resolve(testDirectory, "../..");
+const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/baseline-conformance");
 
 function createProject(): string {
   return mkdtempSync(resolve(tmpdir(), "righting-baseline-"));
+}
+
+function createFixtureProject(): string {
+  const projectDirectory = createProject();
+  cpSync(fixtureDirectory, projectDirectory, { recursive: true });
+  const link = spawnSync("npm", ["link", repositoryDirectory, "--no-package-lock", "--omit=dev", "--ignore-scripts"], {
+    cwd: projectDirectory,
+    encoding: "utf8",
+  });
+  assert.equal(link.status, 0, `${link.stdout}\n${link.stderr}`);
+  symlinkSync(
+    resolve(repositoryDirectory, "node_modules/.bin/eslint"),
+    resolve(projectDirectory, "node_modules/.bin/eslint"),
+  );
+  return projectDirectory;
 }
 
 function writeProject(projectDirectory: string, typedLint = false): void {
@@ -80,6 +97,66 @@ function runBaseline(projectDirectory: string, arguments_: readonly string[]) {
     encoding: "utf8",
   });
 }
+
+function runFixtureLint(projectDirectory: string, target: string) {
+  return spawnSync("npm", ["run", "lint", "--", "--suppress-rule", "righting/role-dependency", target], {
+    cwd: projectDirectory,
+    encoding: "utf8",
+  });
+}
+
+function runFixtureBaseline(projectDirectory: string, arguments_: readonly string[]) {
+  return spawnSync(resolve(projectDirectory, "node_modules/.bin/righting"), ["baseline", ...arguments_], {
+    cwd: projectDirectory,
+    encoding: "utf8",
+  });
+}
+
+test("fixture lint establishes native debt that righting baseline ratchets", () => {
+  const projectDirectory = createFixtureProject();
+  const configPath = resolve(projectDirectory, "eslint.config.mjs");
+  const policyPath = resolve(projectDirectory, "righting.json");
+  const adapterConfig = readFileSync(configPath, "utf8");
+  const policy = readFileSync(policyPath, "utf8");
+
+  try {
+    writeFileSync(
+      configPath,
+      adapterConfig.replace('import { eslintConfig } from "righting/eslint";\n', "").replace("  eslintConfig(),\n", ""),
+    );
+    rmSync(policyPath);
+    writeFileSync(resolve(projectDirectory, ".gitignore"), "node_modules/\n");
+    git(projectDirectory, "init");
+    git(projectDirectory, "config", "user.email", "righting@example.test");
+    git(projectDirectory, "config", "user.name", "Righting Test");
+    commit(projectDirectory, "before righting");
+
+    writeFileSync(configPath, adapterConfig);
+    writeFileSync(policyPath, policy);
+    const initialLint = runFixtureLint(projectDirectory, "src/manager/forbidden.js");
+    assert.equal(initialLint.status, 0, `${initialLint.stdout}\n${initialLint.stderr}`);
+    assert.deepEqual(JSON.parse(readFileSync(resolve(projectDirectory, "eslint-suppressions.json"), "utf8")), {
+      "src/manager/forbidden.js": { "righting/role-dependency": { count: 1 } },
+    });
+
+    const initial = runFixtureBaseline(projectDirectory, [
+      "--base",
+      "HEAD",
+      "--migration-reason",
+      "Adopt existing Manager debt.",
+    ]);
+    assert.equal(initial.status, 0, initial.stderr);
+    commit(projectDirectory, "adopt righting debt");
+
+    const newDebtLint = runFixtureLint(projectDirectory, "src/manager/reexport-client.js");
+    assert.equal(newDebtLint.status, 0, `${newDebtLint.stdout}\n${newDebtLint.stderr}`);
+    const growth = runFixtureBaseline(projectDirectory, ["--base", "HEAD"]);
+    assert.notEqual(growth.status, 0);
+    assert.match(growth.stderr, /legacy debt grew/i);
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
+  }
+});
 
 test("righting baseline preserves a modern ESLint setup and ignores unrelated native suppressions", () => {
   const projectDirectory = createProject();
@@ -191,8 +268,8 @@ test("righting baseline ratchets legacy Righting debt and permits policy expansi
           preset: "volatility@1",
           aliases: { screen: "Client", useCase: "Manager" },
           mappings: [
-            { alias: "screen", path: "src/client/**" },
-            { alias: "useCase", path: "src/manager/**" },
+            { path: "src/client/**", alias: "screen" },
+            { path: "src/manager/**", alias: "useCase" },
           ],
         },
         null,

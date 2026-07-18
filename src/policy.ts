@@ -390,16 +390,16 @@ function parsePolicy(source: unknown, policyPath: string): Policy {
   return result;
 }
 
-function mappingIdentity(mapping: Mapping): string {
-  return JSON.stringify(mapping);
+function mappingIdentity({ alias, path, package: packageName }: Mapping): string {
+  return JSON.stringify([alias, path, packageName]);
 }
 
-function overrideIdentity(override: RoleEdgeOverride): string {
-  return JSON.stringify(override);
+function overrideIdentity({ name, from, to, effect, reason }: RoleEdgeOverride): string {
+  return JSON.stringify([name, from, to, effect, reason]);
 }
 
-function scopeIdentity(scope: Scope): string {
-  return JSON.stringify(scope);
+function scopeIdentity({ kind, name, path }: Scope): string {
+  return JSON.stringify([kind, name, path]);
 }
 
 function preservesAll<T>(baseline: readonly T[], current: readonly T[], identity: (item: T) => string): boolean {

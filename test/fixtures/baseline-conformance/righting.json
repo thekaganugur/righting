@@ -1,0 +1,11 @@
+{
+  "preset": "volatility@1",
+  "aliases": {
+    "screen": "Client",
+    "useCase": "Manager"
+  },
+  "mappings": [
+    { "alias": "screen", "path": "src/client/**" },
+    { "alias": "useCase", "path": "src/manager/**" }
+  ]
+}
