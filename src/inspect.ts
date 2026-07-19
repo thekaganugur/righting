@@ -135,6 +135,7 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
 
   return [
     ...header,
+    "Policy syntax is valid; maintainer approval and active lint enforcement are not checked.",
     "",
     "Configuration",
     `Preset: ${configuration.preset}`,

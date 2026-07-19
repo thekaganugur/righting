@@ -35,6 +35,24 @@ Aliases choose project vocabulary only; they do not create a new role or change 
 
 Unresolved local imports are forbidden. Mappings and scopes must not match the same project file ambiguously.
 
+## Minimal complete shape
+
+Use this to understand the JSON shape after approval, not as a recommendation for names, roles, or folders. Choose and approve your aliases and paths before replacing the incomplete starter.
+
+```json
+{
+  "preset": "volatility@1",
+  "aliases": {
+    "ui": "Client",
+    "application": "Manager"
+  },
+  "mappings": [
+    { "alias": "ui", "path": "src/ui/**" },
+    { "alias": "application", "path": "src/application/**" }
+  ]
+}
+```
+
 ## Optional decisions
 
 Keep each of these absent unless it is approved and applicable:

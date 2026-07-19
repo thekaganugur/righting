@@ -191,6 +191,10 @@ test("righting inspect reports normalized policy semantics and capability limits
       doesNotEstablish: ["queued-interaction-semantics"],
       adapterRules: ["righting/role-dependency"],
     });
+    const humanOutput = run(projectDirectory, "inspect");
+    assert.equal(humanOutput.status, 0, humanOutput.stderr);
+    assert.match(humanOutput.stdout, /Policy syntax is valid; maintainer approval and active lint enforcement are not checked\./);
+    assert.match(humanOutput.stdout, /Adapter activation: unknown \(not checked\)/);
     assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), completePolicy);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });

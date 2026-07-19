@@ -1,8 +1,8 @@
 # Righting
 
-Righting is a local, static architecture-policy tool. It validates declared dependency boundaries; it does not infer an architecture, approve decisions, activate an adapter, or prove runtime behavior.
+Righting is a local, static architecture-policy tool. It validates the policy you declare; it never infers an architecture, approves decisions, activates an adapter, or proves runtime behavior.
 
-## Choose a route
+## First run
 
 Install it in the project:
 
@@ -10,18 +10,41 @@ Install it in the project:
 npm install --save-dev righting
 ```
 
-### Maintainer alone
+### 1. Set up — choose one route
 
-Run `npx righting init`, inspect the incomplete starter, make and approve the policy decisions outside Righting, replace the starter, then run `npx righting inspect`. Follow the [manual maintainer route](docs/manual-maintainer.md).
+**Maintainer alone**
 
-### Maintainer with a compatible agent
+```sh
+npx righting init
+npx righting inspect
+```
 
-Run `npx righting init --skills` to expose the optional packaged skills, then follow the [agent-assisted handoff](docs/agent-assisted.md). The maintainer still approves the exact policy and any adapter changes.
+`inspect` confirms that the starter is intentionally incomplete and names the next decision. Continue with the [manual maintainer route](docs/manual-maintainer.md).
+
+**Maintainer with a compatible agent**
+
+Use this route when the agent supports project-skill discovery. `init --skills` creates `.agents/skills` for it to discover; otherwise use the manual route.
+
+```sh
+npx righting init --skills --json
+```
+
+The agent should consume the JSON codes and next actions, not human-oriented command output. Continue with the [agent-assisted handoff](docs/agent-assisted.md).
+
+### 2. Configure and approve
+
+Both routes require a maintainer to choose and explicitly approve aliases, mappings, and any applicable optional decisions. Replace — never extend — the incomplete starter with that approved policy. The [policy language](docs/policy-language.md) defines the decisions and shows the minimal complete shape.
+
+### 3. Use the policy
+
+```sh
+npx righting inspect
+```
+
+This validates and explains declared policy only. It does **not** check source imports, approval provenance, or adapter activation. To check imports, separately approve the [additive ESLint integration](docs/eslint.md) and run the project’s lint command.
 
 ## References
 
-- [Policy language](docs/policy-language.md) — policy syntax and validation semantics.
 - [Capability catalog](docs/capabilities.md) — static evidence and its limits, generated from the records used by `inspect`.
-- [ESLint adapter](docs/eslint.md) — the additive flat-config protocol.
 - [Legacy debt](docs/legacy-debt.md) — approved native suppression and baseline flow.
-- [Orders/Returns dogfood record](docs/dogfood.md) — a worked record, not an onboarding guide.
+- [Orders/Returns dogfood record](docs/dogfood.md) — a worked record, not onboarding guidance.

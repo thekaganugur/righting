@@ -11,6 +11,41 @@ const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
 const initUsage = "Usage: righting init [--skills] [--json]";
 const inspectUsage = "Usage: righting inspect [--all] [--json]";
+const baselineUsage = "Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]";
+const rootUsage =
+  "Usage: righting init [--skills] [--json] | righting inspect [--all] [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]";
+const rootHelp = [
+  "Righting validates declared architecture policy; it does not infer architecture, approve decisions, or activate ESLint.",
+  "",
+  rootUsage,
+  "",
+  "First use:",
+  "  Maintainer alone: righting init",
+  "  Compatible agent: righting init --skills --json",
+  "",
+  "Run `righting init --help` or `righting inspect --help` for command details.",
+].join("\n");
+const initHelp = [
+  "Create or preserve righting.json and the managed policy pointer in AGENTS.md.",
+  "It does not infer or approve a policy.",
+  "",
+  initUsage,
+  "",
+  "Options:",
+  "  --skills  Link packaged skills under .agents/skills for a compatible agent.",
+  "  --json    Emit the stable machine-facing response.",
+].join("\n");
+const inspectHelp = [
+  "Validate and explain the declared policy without changing the project.",
+  "It does not check approval, ESLint activation, or lint results.",
+  "",
+  inspectUsage,
+  "",
+  "Options:",
+  "  --all   Include available but unconfigured capabilities.",
+  "  --json  Emit the machine-facing policy interpretation.",
+].join("\n");
+const baselineHelp = ["Check a policy baseline against a git reference.", "", baselineUsage].join("\n");
 const rightingSkillNames = ["righting-design-review", "righting-eslint", "righting-integrate"];
 const packagedSkillsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../../skills");
 
@@ -73,7 +108,7 @@ function replaceManagedGuidance(existing: string | undefined, guidance = managed
   if (starts !== 1 || ends !== 1 || start > end) {
     failInit(
       "invalid-managed-guidance",
-      "AGENTS.md has an invalid Righting-managed block; repair it before rerunning init.",
+      "AGENTS.md has an invalid Righting-managed block; keep project-owned text and restore one start marker followed by one end marker before rerunning init.",
       "repair-managed-guidance",
       "AGENTS.md",
     );
@@ -209,6 +244,14 @@ function initialize(projectDirectory: string, installSkills = false) {
   };
 }
 
+function isHelp(options: string[]): boolean {
+  return options.includes("--help") || options.includes("-h");
+}
+
+function writeHelp(help: string): void {
+  process.stdout.write(`${help}\n`);
+}
+
 function initOptions(options: string[]): { json: boolean; skills: boolean } {
   let json = false;
   let skills = false;
@@ -253,16 +296,16 @@ function baselineOptions(options: string[]): { base: string; migrationReason: st
     if (option === "--base" || option === "--migration-reason") {
       const value = options[index + 1];
       if (value === undefined || value.startsWith("--")) {
-        throw new Error(`Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]`);
+        throw new Error(baselineUsage);
       }
       if (option === "--base") {
         if (base !== undefined) {
-          throw new Error("Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
+          throw new Error(baselineUsage);
         }
         base = value;
       } else {
         if (migrationReason !== undefined) {
-          throw new Error("Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
+          throw new Error(baselineUsage);
         }
         migrationReason = value;
       }
@@ -270,19 +313,35 @@ function baselineOptions(options: string[]): { base: string; migrationReason: st
     } else if (option === "--json" && !json) {
       json = true;
     } else {
-      throw new Error("Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
+      throw new Error(baselineUsage);
     }
   }
 
   if (base === undefined) {
-    throw new Error("Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]");
+    throw new Error(baselineUsage);
   }
   return { base, migrationReason, json };
 }
 
 function main(arguments_: string[]): void {
   const [command, ...options] = arguments_;
+  if (command === undefined) {
+    writeHelp(rootHelp);
+    return;
+  }
+  if (command === "--help" || command === "-h") {
+    if (options.length === 0) {
+      writeHelp(rootHelp);
+      return;
+    }
+    throw new Error(rootUsage);
+  }
+
   if (command === "init") {
+    if (isHelp(options)) {
+      writeHelp(initHelp);
+      return;
+    }
     const { json, skills } = initOptions(options);
     const result = initialize(process.cwd(), skills);
     if (json) {
@@ -302,6 +361,10 @@ function main(arguments_: string[]): void {
   }
 
   if (command === "inspect") {
+    if (isHelp(options)) {
+      writeHelp(inspectHelp);
+      return;
+    }
     const { all, json } = inspectOptions(options);
     let result: ReturnType<typeof inspect>;
     try {
@@ -319,6 +382,10 @@ function main(arguments_: string[]): void {
   }
 
   if (command === "baseline") {
+    if (isHelp(options)) {
+      writeHelp(baselineHelp);
+      return;
+    }
     const { base, migrationReason, json } = baselineOptions(options);
     const result = checkBaseline(process.cwd(), base, migrationReason);
     if (json) {
@@ -331,9 +398,7 @@ function main(arguments_: string[]): void {
     return;
   }
 
-  throw new Error(
-    "Usage: righting init [--skills] [--json] | righting inspect [--all] [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]",
-  );
+  throw new Error(rootUsage);
 }
 
 const arguments_ = process.argv.slice(2);

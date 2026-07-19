@@ -184,6 +184,7 @@ test("righting init reports malformed guidance as a structured failure before cr
 
     const result = run(projectDirectory, "init", "--json");
     assertFailureEnvelope(result, "invalid-managed-guidance", "AGENTS.md", "repair-managed-guidance");
+    assert.match((json(result).error as { message: string }).message, /one start marker followed by one end marker/i);
     assert.equal(existsSync(resolve(projectDirectory, "righting.json")), false);
     assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
   } finally {
@@ -231,6 +232,35 @@ test("righting init --skills creates repeatable relative links and preflights co
     rmSync(projectDirectory, { recursive: true, force: true });
     rmSync(collisionDirectory, { recursive: true, force: true });
     rmSync(ancestorCollisionDirectory, { recursive: true, force: true });
+  }
+});
+
+test("righting help makes setup, configuration, and inspection discoverable without changing the project", () => {
+  const projectDirectory = createProject();
+
+  try {
+    const root = run(projectDirectory, "--help");
+    assert.equal(root.status, 0, root.stderr);
+    assert.equal(root.stderr, "");
+    assert.match(root.stdout, /Maintainer alone: righting init/);
+    assert.match(root.stdout, /Compatible agent: righting init --skills --json/);
+
+    const init = run(projectDirectory, "init", "--help", "--json");
+    assert.equal(init.status, 0, init.stderr);
+    assert.match(init.stdout, /does not infer or approve a policy/i);
+    assert.match(init.stdout, /--skills/);
+
+    const inspect = run(projectDirectory, "inspect", "--json", "-h");
+    assert.equal(inspect.status, 0, inspect.stderr);
+    assert.match(inspect.stdout, /does not check approval, ESLint activation, or lint results/i);
+
+    const invalidRoot = run(projectDirectory, "--help", "unexpected");
+    assert.notEqual(invalidRoot.status, 0);
+    assert.match(invalidRoot.stderr, /Usage: righting init/);
+    assert.equal(existsSync(resolve(projectDirectory, "righting.json")), false);
+    assert.equal(existsSync(resolve(projectDirectory, "AGENTS.md")), false);
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
   }
 });
 
