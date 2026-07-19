@@ -30,6 +30,16 @@ const managedGuidance = `${managedStart}
 - Keep project-owned instructions outside this managed block.
 ${managedEnd}`;
 
+const invalidPolicyGuidance = `${managedStart}
+## Righting guidance
+
+\`righting.json\` exists but does not contain a complete valid Righting policy.
+
+- Righting enforcement remains blocked. Repair the policy, then run \`righting docs\` to generate policy guidance.
+- Static adapters can only check source dependencies; they cannot prove runtime behavior.
+- Keep project-owned instructions outside this managed block.
+${managedEnd}`;
+
 function replaceManagedGuidance(existing: string | undefined, guidance = managedGuidance): string {
   if (existing === undefined) {
     return `${guidance}\n`;
@@ -56,6 +66,30 @@ function guidancePath(projectDirectory: string): string {
   return resolve(projectDirectory, "AGENTS.md");
 }
 
+function isIncompleteStarter(policyPath: string): boolean {
+  try {
+    const policy = JSON.parse(readFileSync(policyPath, "utf8")) as Record<string, unknown>;
+    return (
+      typeof policy === "object" &&
+      policy !== null &&
+      !Array.isArray(policy) &&
+      Object.keys(policy).length === 2 &&
+      policy.preset === "volatility@1" &&
+      policy.status === "incomplete"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function existingPolicyGuidance(policyPath: string): string {
+  try {
+    return `${managedStart}\n${renderPolicyGuidance(readPolicy(policyPath))}\n${managedEnd}`;
+  } catch {
+    return isIncompleteStarter(policyPath) ? managedGuidance : invalidPolicyGuidance;
+  }
+}
+
 function updateGuidance(projectDirectory: string, content = managedGuidance): void {
   const path = guidancePath(projectDirectory);
   const existingGuidance = existsSync(path) ? readFileSync(path, "utf8") : undefined;
@@ -65,8 +99,9 @@ function updateGuidance(projectDirectory: string, content = managedGuidance): vo
 function initialize(projectDirectory: string) {
   const policyPath = resolve(projectDirectory, "righting.json");
   const path = guidancePath(projectDirectory);
-  const guidance = replaceManagedGuidance(existsSync(path) ? readFileSync(path, "utf8") : undefined);
   const policyCreated = !existsSync(policyPath);
+  const content = policyCreated ? managedGuidance : existingPolicyGuidance(policyPath);
+  const guidance = replaceManagedGuidance(existsSync(path) ? readFileSync(path, "utf8") : undefined, content);
 
   if (policyCreated) {
     writeFileSync(policyPath, starterPolicy, { encoding: "utf8", flag: "wx" });

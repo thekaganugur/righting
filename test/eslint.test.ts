@@ -484,6 +484,67 @@ test("unscoped application code can wire context entry points", () => {
   );
 });
 
+test("context-scoped unmapped local imports use the unresolved-local-import diagnostic", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client" },
+    mappings: [{ alias: "screen", path: "src/orders/screen/**" }],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile("src/orders/internal/value.js", 'export const value = "unmapped";\n', () => {
+    withFixtureFile(
+      "src/orders/screen/import-unmapped.js",
+      'import { value } from "../internal/value.js";\n\nexport { value };\n',
+      () => {
+        withPolicy(policy, () => {
+          const result = runLint("src/orders/screen/import-unmapped.js");
+          const output = `${result.stdout}\n${result.stderr}`;
+          assert.equal(result.status, 1, output);
+          assert.match(output, /righting\/unresolved-local-import/);
+        });
+      },
+    );
+  });
+});
+
+test("unscoped wiring cannot bypass an unresolved local import", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client" },
+    mappings: [
+      { alias: "screen", path: "src/application/screen/**" },
+      { alias: "screen", path: "src/orders/screen/**" },
+    ],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile("src/orders/internal/value.js", 'export const value = "unmapped";\n', () => {
+    withFixtureFile(
+      "src/application/screen/import-unmapped.js",
+      'import { value } from "../../orders/internal/value.js";\n\nexport { value };\n',
+      () => {
+        withPolicy(policy, () => {
+          const result = runLint("src/application/screen/import-unmapped.js");
+          const output = `${result.stdout}\n${result.stderr}`;
+          assert.equal(result.status, 1, output);
+          assert.match(output, /righting\/unresolved-local-import/);
+        });
+      },
+    );
+  });
+});
+
 test("strict policy validation rejects unmapped imports, ambiguous matches, and waiver-like configuration", () => {
   const policy = {
     preset: "volatility@1",

@@ -134,6 +134,16 @@ test("dogfood project completes the approved Righting integration and repair wor
       "src/orders/workflow/legacy-order.ts": { "righting/role-dependency": { count: 1 } },
     });
 
+    const typeOnlyImportPath = resolve(projectDirectory, "src/orders/screen/illegal-type-only-import.ts");
+    writeFileSync(
+      typeOnlyImportPath,
+      'import type { saveOrder } from "../gateway/orders-gateway.ts";\n\nexport type SaveOrder = typeof saveOrder;\n',
+    );
+    const typeOnlyFailure = npm(projectDirectory, "run", "lint");
+    assert.equal(typeOnlyFailure.status, 1, `${typeOnlyFailure.stdout}\n${typeOnlyFailure.stderr}`);
+    assert.match(`${typeOnlyFailure.stdout}\n${typeOnlyFailure.stderr}`, /righting\/role-dependency/);
+    rmSync(typeOnlyImportPath);
+
     const adopted = righting(
       projectDirectory,
       "baseline",

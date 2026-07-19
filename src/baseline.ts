@@ -119,7 +119,8 @@ function git(projectDirectory: string, arguments_: string[]): string {
 }
 
 function gitFile(projectDirectory: string, base: string, path: string): string | undefined {
-  const result = spawnSync("git", ["show", `${base}:${path}`], { cwd: projectDirectory, encoding: "utf8" });
+  const projectPrefix = git(projectDirectory, ["rev-parse", "--show-prefix"]).trim();
+  const result = spawnSync("git", ["show", `${base}:${projectPrefix}${path}`], { cwd: projectDirectory, encoding: "utf8" });
   return result.status === 0 ? result.stdout : undefined;
 }
 

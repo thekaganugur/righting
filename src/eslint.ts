@@ -131,11 +131,6 @@ export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json"
                     },
                   ];
             }),
-            ...roles.map((from) => ({
-              from: { element: { types: { allOf: [roleElementType(from)] } } },
-              disallow: { to: { element: { isUnknown: true }, module: { origin: "local" } } },
-              message: "righting/unresolved-local-import: Local dependencies must match an explicit policy mapping.",
-            })),
             ...contexts.flatMap((from) =>
               contexts
                 .filter((to) => to.index !== from.index)
@@ -176,6 +171,23 @@ export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json"
                 allow: { to: { element: { types: { allOf: [roleElementType("Client"), scopeElementType(index)] } } } },
               })),
             ),
+            ...roles.flatMap((from) => [
+              {
+                from: { element: { types: { allOf: [roleElementType(from)] } } },
+                disallow: { to: { element: { isUnknown: true }, module: { origin: "local" } } },
+                message: "righting/unresolved-local-import: Local dependencies must match an explicit policy mapping.",
+              },
+              {
+                from: { element: { types: { allOf: [roleElementType(from)] } } },
+                disallow: {
+                  to: {
+                    element: { types: { noneOf: roles.map(roleElementType) } },
+                    module: { origin: "local" },
+                  },
+                },
+                message: "righting/unresolved-local-import: Local dependencies must match an explicit policy mapping.",
+              },
+            ]),
           ],
         },
       ],

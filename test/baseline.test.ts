@@ -290,6 +290,34 @@ test("righting baseline ratchets legacy Righting debt and permits policy expansi
   }
 });
 
+test("righting baseline resolves project files when the project is nested in a Git repository", () => {
+  const repositoryDirectory = createProject();
+  const projectDirectory = resolve(repositoryDirectory, "nested/project");
+
+  try {
+    mkdirSync(projectDirectory, { recursive: true });
+    writeProject(projectDirectory);
+    writePolicy(projectDirectory);
+    writeSuppressions(projectDirectory, 1);
+    git(repositoryDirectory, "init");
+    git(repositoryDirectory, "config", "user.email", "righting@example.test");
+    git(repositoryDirectory, "config", "user.name", "Righting Test");
+    commit(repositoryDirectory, "nested project baseline");
+
+    const result = runBaseline(projectDirectory, ["--base", "HEAD", "--json"]);
+
+    assert.equal(result.status, 0, result.stderr);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.policy.changed, false);
+    assert.equal(output.debt.status, "within-baseline");
+    assert.deepEqual(output.debt.base, {
+      "src/client/legacy.js": { "righting/role-dependency": 1 },
+    });
+  } finally {
+    rmSync(repositoryDirectory, { recursive: true, force: true });
+  }
+});
+
 test("righting baseline documents its same-file, same-rule count limitation in behavior", () => {
   const projectDirectory = createProject();
 

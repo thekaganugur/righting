@@ -91,7 +91,7 @@ test("righting init creates an incomplete starter policy and managed guidance", 
   }
 });
 
-test("righting init safely reruns without replacing project-owned guidance or policy", () => {
+test("righting init preserves an invalid existing policy and reports it accurately", () => {
   const projectDirectory = createProject();
   const policy = '{"preset":"project-owned-policy"}\n';
 
@@ -123,8 +123,67 @@ test("righting init safely reruns without replacing project-owned guidance or po
     assert.match(guidance, /Keep this before\./);
     assert.match(guidance, /Keep this after\./);
     assert.doesNotMatch(guidance, /Outdated Righting guidance/);
+    assert.match(guidance, /does not contain a complete valid Righting policy/);
+    assert.doesNotMatch(guidance, /selects `volatility@1`/);
+    assert.doesNotMatch(guidance, /intentionally incomplete/);
     assert.equal(guidance.split(managedStart).length - 1, 1);
     assert.equal(guidance.split(managedEnd).length - 1, 1);
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
+  }
+});
+
+test("righting init does not mislabel an invalid incomplete-looking policy", () => {
+  const projectDirectory = createProject();
+
+  try {
+    writeFileSync(
+      resolve(projectDirectory, "righting.json"),
+      '{"preset":"not-volatility@1","status":"incomplete"}\n',
+    );
+
+    const result = runInit(projectDirectory, true);
+
+    assert.equal(result.status, 0, result.stderr);
+    const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
+    assert.match(guidance, /does not contain a complete valid Righting policy/);
+    assert.doesNotMatch(guidance, /selects `volatility@1`/);
+    assert.doesNotMatch(guidance, /intentionally incomplete/);
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
+  }
+});
+
+test("righting init refreshes valid existing policy guidance", () => {
+  const projectDirectory = createProject();
+  const policy = `${JSON.stringify(
+    {
+      preset: "volatility@1",
+      aliases: { page: "Client", useCase: "Manager" },
+      mappings: [
+        { alias: "page", path: "src/page/**" },
+        { alias: "useCase", path: "src/use-case/**" },
+      ],
+    },
+    null,
+    2,
+  )}\n`;
+
+  try {
+    writeFileSync(resolve(projectDirectory, "righting.json"), policy);
+    writeFileSync(
+      resolve(projectDirectory, "AGENTS.md"),
+      `# Project guidance\n\n${managedStart}\nOutdated Righting guidance.\n${managedEnd}\n`,
+    );
+
+    const result = runInit(projectDirectory, true);
+
+    assert.equal(result.status, 0, result.stderr);
+    const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
+    assert.match(guidance, /`page` \(Client\)/);
+    assert.match(guidance, /`Client` → `Manager`, `Utility`/);
+    assert.doesNotMatch(guidance, /intentionally incomplete/);
+    assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }
