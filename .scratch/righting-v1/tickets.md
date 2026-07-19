@@ -103,10 +103,10 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Generate policy and agent guidance.
 
-- [ ] The skill reads the policy and relevant code before questioning and uses configured vocabulary and golden examples when present.
-- [ ] It asks one question at a time, uses an original Righting-inspired checklist, and does not issue scores or pass/fail verdicts.
-- [ ] It flags when a constraint is only partially checkable by an adapter and suggests policy changes conservatively.
-- [ ] It changes no policy, CI, or project files automatically; a Markdown artifact is written only when explicitly requested.
+- [x] The skill reads the policy and relevant code before questioning and uses configured vocabulary and golden examples when present.
+- [x] It asks one question at a time, uses an original Righting-inspired checklist, and does not issue scores or pass/fail verdicts.
+- [x] It flags when a constraint is only partially checkable by an adapter and suggests policy changes conservatively.
+- [x] It changes no policy, CI, or project files automatically; a Markdown artifact is written only when explicitly requested.
 
 ## 10. Dogfood the complete v1 workflow
 
