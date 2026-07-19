@@ -51,9 +51,9 @@ Work the **frontier**: any ticket whose blockers are all done. For a purely line
 
 **Blocked by:** Publish onboarding routes and retire generated guidance.
 
-- [ ] The isolated fixture installs a tarball and never relies on workspace imports, copied packages, or linking.
-- [ ] It verifies the exact starter, minimal project pointer, valid-policy repeat initialization, read-only inspection, documentation-linked resources, and the documented ESLint integration outcome.
-- [ ] A shared semantic JSON assertion suite covers incomplete, valid, malformed, inspection, and `inspect --all` states while accepting additive fields.
+- [x] The isolated fixture installs a tarball and never relies on workspace imports, copied packages, or linking.
+- [x] It verifies the exact starter, minimal project pointer, valid-policy repeat initialization, read-only inspection, documentation-linked resources, and the documented ESLint integration outcome.
+- [x] A shared semantic JSON assertion suite covers incomplete, valid, malformed, inspection, and `inspect --all` states while accepting additive fields.
 
 ## Prove the packed agent-assisted journey
 

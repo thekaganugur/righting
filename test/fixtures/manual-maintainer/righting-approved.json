@@ -1,0 +1,11 @@
+{
+  "preset": "volatility@1",
+  "aliases": {
+    "screen": "Client",
+    "workflow": "Manager"
+  },
+  "mappings": [
+    { "alias": "screen", "path": "src/screen/**" },
+    { "alias": "workflow", "path": "src/workflow/**" }
+  ]
+}
