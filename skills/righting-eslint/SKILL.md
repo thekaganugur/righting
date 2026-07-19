@@ -6,7 +6,7 @@ compatibility: Requires an existing ESLint flat config, a resolvable righting/es
 
 # Preserve the lint loop
 
-Righting adds one ESLint config entry to an established flat-config loop. Preserve the loop and make its existing behavior observable before and after the addition.
+Righting adds one ESLint config entry to an established flat-config loop. Preserve the loop and make its existing behavior observable before and after the addition. Use `righting inspect --json` capability records for static evidence and limits; do not duplicate policy guidance in project instructions.
 
 ## 1. Inspect the established setup
 

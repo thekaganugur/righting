@@ -14,7 +14,7 @@
     "dist/src/",
     "!dist/src/docs.js",
     "skills/",
-    "docs/capabilities.md"
+    "docs/"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json && node scripts/render-capabilities.mjs",

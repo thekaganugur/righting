@@ -38,10 +38,10 @@ Work the **frontier**: any ticket whose blockers are all done. For a purely line
 
 **Blocked by:** Approval-first `init` and v1 JSON contract; Read-only policy inspection and capability catalog.
 
-- [ ] Publish a concise route chooser plus focused manual, agent-handoff, policy-language, capability, and additive ESLint references without prescribing a project architecture.
-- [ ] The capability reference and revised skills consume or reference the shared capability catalog; policy approval, adapter changes, and legacy-debt adoption remain separate explicit decisions.
-- [ ] Remove `docs` and every route or reference to it; generated project guidance is no longer a source of policy prose.
-- [ ] The packed package contains the runtime, skills, capability data, and every resource reachable from either onboarding route.
+- [x] Publish a concise route chooser plus focused manual, agent-handoff, policy-language, capability, and additive ESLint references without prescribing a project architecture.
+- [x] The capability reference and revised skills consume or reference the shared capability catalog; policy approval, adapter changes, and legacy-debt adoption remain separate explicit decisions.
+- [x] Remove `docs` and every route or reference to it; generated project guidance is no longer a source of policy prose.
+- [x] The packed package contains the runtime, skills, capability data, and every resource reachable from either onboarding route.
 
 ## Prove the packed manual-maintainer journey
 
