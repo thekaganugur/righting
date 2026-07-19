@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { assertFailureEnvelope, assertSuccessEnvelope, type CommandResult, type Json } from "./json-contract.js";
+import { assertFailureEnvelope, assertSuccessEnvelope, type Json } from "./json-contract.js";
+import { assertCommandSucceeded, createPackedProject, packRighting, righting, runCommand } from "./packed-artifact.js";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
@@ -14,44 +13,13 @@ const policyPointer = "This project has a Righting architecture policy in `right
 const approvedPolicyPath = resolve(fixtureDirectory, "righting-approved.json");
 const documentation = ["README.md", "docs/manual-maintainer.md", "docs/policy-language.md", "docs/capabilities.md", "docs/eslint.md", "docs/legacy-debt.md"];
 
-function run(projectDirectory: string, command: string, arguments_: string[]): CommandResult {
-  return spawnSync(command, arguments_, { cwd: projectDirectory, encoding: "utf8", input: "" }) as unknown as CommandResult;
-}
-
-function assertSuccess(result: CommandResult): void {
-  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-}
-
-function packRighting(): { directory: string; tarball: string } {
-  const directory = mkdtempSync(resolve(tmpdir(), "righting-packed-manual-"));
-  const packed = run(repositoryDirectory, "npm", ["pack", "--json", "--pack-destination", directory]);
-  assertSuccess(packed);
-  const filename = (JSON.parse(packed.stdout) as Array<{ filename: string }>)[0]?.filename;
-  if (filename === undefined) {
-    throw new Error("npm pack did not report a tarball.");
-  }
-  return { directory, tarball: resolve(directory, filename) };
-}
-
-function createProject(tarball: string): string {
-  const projectDirectory = mkdtempSync(resolve(tmpdir(), "righting-manual-maintainer-"));
-  cpSync(fixtureDirectory, projectDirectory, { recursive: true });
-  assertSuccess(run(projectDirectory, "npm", ["install", "--save-dev", "--no-package-lock", "--include=dev", "--ignore-scripts", tarball]));
-  assert.equal(lstatSync(resolve(projectDirectory, "node_modules/righting")).isSymbolicLink(), false);
-  return projectDirectory;
-}
-
-function righting(projectDirectory: string, ...arguments_: string[]): CommandResult {
-  return run(projectDirectory, "npx", ["righting", ...arguments_]);
-}
-
 test("a packed Righting artifact proves the manual-maintainer route and JSON contract", () => {
-  const packed = packRighting();
-  const projectDirectory = createProject(packed.tarball);
+  const packed = packRighting(repositoryDirectory, "righting-packed-manual-");
+  const projectDirectory = createPackedProject(packed.tarball, fixtureDirectory, "righting-manual-maintainer-");
 
   try {
     const initialized = righting(projectDirectory, "init");
-    assertSuccess(initialized);
+    assertCommandSucceeded(initialized);
     assert.match(initialized.stdout, /Created righting\.json/);
     assert.match(initialized.stdout, /Optional compatible-agent support/);
     assert.deepEqual(JSON.parse(readFileSync(resolve(projectDirectory, "righting.json"), "utf8")), {
@@ -121,7 +89,7 @@ test("a packed Righting artifact proves the manual-maintainer route and JSON con
     );
     assert.equal((JSON.parse(readFileSync(resolve(projectDirectory, "package.json"), "utf8")) as { scripts: { lint: string } }).scripts.lint, lintScript);
     assert.match(readFileSync(configPath, "utf8"), /ignores: \["node_modules\/\*\*"\]/);
-    assertSuccess(run(projectDirectory, "npm", ["run", "lint"]));
+    assertCommandSucceeded(runCommand(projectDirectory, "npm", ["run", "lint"]));
 
     writeFileSync(resolve(projectDirectory, "righting.json"), '{"preset":"volatility@1","status":"incomplete","aliases":{"screen":"Client"}}\n');
     const malformed = assertFailureEnvelope(righting(projectDirectory, "inspect", "--json"), "inspect", "invalid-policy", "repair-policy");
