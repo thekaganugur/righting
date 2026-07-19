@@ -11,419 +11,237 @@ const repositoryDirectory = resolve(testDirectory, "../..");
 const cliPath = resolve(testDirectory, "../src/cli.js");
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
+const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nRead it before changing mapped code.";
+const skills = ["righting-design-review", "righting-eslint", "righting-integrate"];
 
 function createProject(): string {
   return mkdtempSync(resolve(tmpdir(), "righting-init-"));
 }
 
-function runInit(projectDirectory: string, json = false, skills = false) {
-  return spawnSync(process.execPath, [cliPath, "init", ...(skills ? ["--skills"] : []), ...(json ? ["--json"] : [])], {
+function run(projectDirectory: string, ...arguments_: string[]) {
+  return spawnSync(process.execPath, [cliPath, ...arguments_], {
     cwd: projectDirectory,
     encoding: "utf8",
     input: "",
   });
 }
 
-function runDocs(projectDirectory: string, json = false) {
-  return spawnSync(process.execPath, [cliPath, "docs", ...(json ? ["--json"] : [])], {
-    cwd: projectDirectory,
-    encoding: "utf8",
-    input: "",
-  });
+function json(result: ReturnType<typeof run>): Record<string, unknown> {
+  assert.notEqual(result.stdout, "", result.stderr);
+  return JSON.parse(result.stdout) as Record<string, unknown>;
 }
 
-test("righting init creates an incomplete starter policy and managed guidance", () => {
+function assertSuccessEnvelope(result: ReturnType<typeof run>) {
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stderr, "");
+  const output = json(result);
+  assert.equal(output.schemaVersion, 1);
+  assert.equal(output.command, "init");
+  assert.equal(output.ok, true);
+  return output;
+}
+
+function assertFailureEnvelope(result: ReturnType<typeof run>, code: string, path: string | undefined, nextAction: string) {
+  assert.notEqual(result.status, 0);
+  assert.equal(result.stderr, "");
+  const output = json(result);
+  assert.equal(output.schemaVersion, 1);
+  assert.equal(output.command, "init");
+  assert.equal(output.ok, false);
+  const error = output.error as { code: string; path?: string; message: string; nextAction: string };
+  assert.equal(error.code, code);
+  assert.equal(error.path, path);
+  assert.equal(error.nextAction, nextAction);
+  assert.match(error.message, /.+/);
+}
+
+const validPolicy = `${JSON.stringify(
+  {
+    preset: "volatility@1",
+    aliases: { page: "Client", useCase: "Manager" },
+    mappings: [
+      { alias: "page", path: "src/page/**" },
+      { alias: "useCase", path: "src/use-case/**" },
+    ],
+  },
+  null,
+  2,
+)}\n`;
+
+test("righting init creates only the exact starter and minimal policy pointer", () => {
   const projectDirectory = createProject();
 
   try {
-    writeFileSync(
-      resolve(projectDirectory, "AGENTS.md"),
-      "# Project guidance\n\nKeep this project-owned instruction.\n",
-    );
+    writeFileSync(resolve(projectDirectory, "AGENTS.md"), "# Project guidance\n\nKeep this project-owned instruction.\n");
 
-    const result = runInit(projectDirectory, true);
-
-    assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout), {
-      command: "init",
-      policy: {
-        path: "righting.json",
-        created: true,
-        status: "incomplete",
-        required: ["aliases", "mappings"],
-      },
-      guidance: {
-        path: "AGENTS.md",
-        updated: true,
-      },
+    const output = assertSuccessEnvelope(run(projectDirectory, "init", "--json"));
+    assert.deepEqual(output.policy, {
+      path: "righting.json",
+      created: true,
+      status: "incomplete",
+      required: ["aliases", "mappings", "maintainer-approval"],
     });
+    assert.equal(output.nextAction, "obtain-policy-approval");
     assert.deepEqual(JSON.parse(readFileSync(resolve(projectDirectory, "righting.json"), "utf8")), {
       preset: "volatility@1",
       status: "incomplete",
     });
-    assert.equal(existsSync(resolve(projectDirectory, ".agents/skills")), false);
 
     const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
     assert.match(guidance, /Keep this project-owned instruction\./);
-    assert.match(guidance, new RegExp(managedStart));
-    assert.match(guidance, /intentionally incomplete/);
-    assert.match(guidance, /Complete the first policy/);
-    assert.match(guidance, /A minimal policy looks like/);
-    assert.match(guidance, /Start without variations, scopes, or overrides/);
-    assert.match(guidance, /righting-design-review/);
-    assert.match(guidance, /righting init --skills/);
-    assert.match(guidance, new RegExp(managedEnd));
+    assert.match(guidance, new RegExp(`${managedStart}\n${policyPointer}\n${managedEnd}`));
+    assert.doesNotMatch(guidance, /Righting setup|righting init --skills|aliases|mappings/i);
 
-    const rerun = runInit(projectDirectory, true);
-
-    assert.equal(rerun.status, 0, rerun.stderr);
-    assert.deepEqual(JSON.parse(rerun.stdout), {
-      command: "init",
-      policy: {
-        path: "righting.json",
-        created: false,
-        status: "incomplete",
-        required: ["aliases", "mappings"],
-      },
-      guidance: {
-        path: "AGENTS.md",
-        updated: true,
-      },
+    const repeat = assertSuccessEnvelope(run(projectDirectory, "init", "--json"));
+    assert.deepEqual(repeat.policy, {
+      path: "righting.json",
+      created: false,
+      status: "incomplete",
+      required: ["aliases", "mappings", "maintainer-approval"],
     });
+    assert.equal(repeat.nextAction, "obtain-policy-approval");
     assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
 
-    const humanReadable = runInit(projectDirectory);
+    const humanReadable = run(projectDirectory, "init");
     assert.equal(humanReadable.status, 0, humanReadable.stderr);
-    assert.match(humanReadable.stdout, /Next: add approved aliases and mappings/i);
-    assert.match(humanReadable.stdout, /Righting setup section in AGENTS\.md/i);
+    assert.match(humanReadable.stdout, /replace the starter after maintainer approval/i);
+    assert.match(humanReadable.stdout, /righting init --skills/);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }
 });
 
-test("righting docs keeps an incomplete starter actionable", () => {
+test("righting init preserves a valid policy without claiming approval or adapter activation", () => {
   const projectDirectory = createProject();
+  const priorGuidance = `# Project guidance\n\nKeep this before.\n\n${managedStart}\nOutdated Righting guidance.\n${managedEnd}\n\nKeep this after.\n`;
 
   try {
-    assert.equal(runInit(projectDirectory, true).status, 0);
+    writeFileSync(resolve(projectDirectory, "righting.json"), validPolicy);
+    writeFileSync(resolve(projectDirectory, "AGENTS.md"), priorGuidance);
 
-    const result = runDocs(projectDirectory, true);
-
-    assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout), {
-      command: "docs",
-      policy: {
-        path: "righting.json",
-        status: "incomplete",
-        required: ["aliases", "mappings"],
-      },
-      guidance: { path: "AGENTS.md", updated: true },
-    });
-    assert.match(result.stderr, /^$/);
+    const output = assertSuccessEnvelope(run(projectDirectory, "init", "--json"));
+    assert.deepEqual(output.policy, { path: "righting.json", created: false, status: "valid" });
+    assert.equal("nextAction" in output, false);
+    assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), validPolicy);
 
     const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
-    assert.match(guidance, /Complete the first policy/);
-    assert.match(guidance, /A minimal policy looks like/);
+    assert.match(guidance, /Keep this before\./);
+    assert.match(guidance, /Keep this after\./);
+    assert.doesNotMatch(guidance, /Outdated Righting guidance/);
+    assert.match(guidance, new RegExp(`${managedStart}\n${policyPointer}\n${managedEnd}`));
 
-    const humanReadable = runDocs(projectDirectory);
+    const humanReadable = run(projectDirectory, "init");
     assert.equal(humanReadable.status, 0, humanReadable.stderr);
-    assert.match(humanReadable.stdout, /not enforcing anything yet/i);
+    assert.doesNotMatch(humanReadable.stdout, /approval|adapter|onboarding complete/i);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }
 });
 
-test("righting init --skills links packaged skills in the standard project location", () => {
+test("righting init rejects a configured incomplete starter before changing the project", () => {
   const projectDirectory = createProject();
-  const skills = ["righting-design-review", "righting-eslint", "righting-integrate"];
-  const packagedSkillsDirectory = resolve(repositoryDirectory, "skills");
+  const policy = '{"preset":"volatility@1","status":"incomplete","aliases":{"page":"Client"}}\n';
+  const guidance = "# Project guidance\n\nKeep this untouched.\n";
 
   try {
-    const result = runInit(projectDirectory, true, true);
+    writeFileSync(resolve(projectDirectory, "righting.json"), policy);
+    writeFileSync(resolve(projectDirectory, "AGENTS.md"), guidance);
 
-    assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout), {
-      command: "init",
-      policy: {
-        path: "righting.json",
-        created: true,
-        status: "incomplete",
-        required: ["aliases", "mappings"],
-      },
-      guidance: { path: "AGENTS.md", updated: true },
-      skills: { path: ".agents/skills", linked: skills },
-    });
-
-    for (const skill of skills) {
-      const link = resolve(projectDirectory, ".agents/skills", skill);
-      assert.ok(lstatSync(link).isSymbolicLink(), link);
-      assert.equal(isAbsolute(readlinkSync(link)), false);
-      assert.equal(resolve(dirname(link), readlinkSync(link)), resolve(packagedSkillsDirectory, skill));
-      assert.match(readFileSync(resolve(link, "SKILL.md"), "utf8"), new RegExp(`name: ${skill}`));
-    }
-
-    const rerun = runInit(projectDirectory, true, true);
-    assert.equal(rerun.status, 0, rerun.stderr);
-    assert.deepEqual(JSON.parse(rerun.stdout).skills, { path: ".agents/skills", linked: skills });
+    const result = run(projectDirectory, "init", "--skills", "--json");
+    assertFailureEnvelope(result, "invalid-policy", "righting.json", "repair-policy");
+    assert.match((json(result).error as { message: string }).message, /may contain only.*preset.*status/i);
+    assert.match((json(result).error as { message: string }).message, /replace.*remove.*incomplete/i);
+    assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
+    assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
+    assert.equal(existsSync(resolve(projectDirectory, ".agents")), false);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }
 });
 
-test("righting init --skills refuses to replace a project-owned skill", () => {
+test("righting init treats only the exact starter as incomplete", () => {
   const projectDirectory = createProject();
-  const skillPath = resolve(projectDirectory, ".agents/skills/righting-eslint");
+  const policy = '{"preset":"other@1","status":"incomplete"}\n';
 
   try {
-    mkdirSync(skillPath, { recursive: true });
-    writeFileSync(resolve(skillPath, "SKILL.md"), "# Project-owned skill\n");
+    writeFileSync(resolve(projectDirectory, "righting.json"), policy);
 
-    const result = runInit(projectDirectory, true, true);
-
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /cannot replace existing skill/i);
-    assert.equal(readFileSync(resolve(skillPath, "SKILL.md"), "utf8"), "# Project-owned skill\n");
-    assert.equal(existsSync(resolve(projectDirectory, "righting.json")), false);
+    const result = run(projectDirectory, "init", "--json");
+    assertFailureEnvelope(result, "invalid-policy", "righting.json", "repair-policy");
+    assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
     assert.equal(existsSync(resolve(projectDirectory, "AGENTS.md")), false);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }
 });
 
-test("righting init preserves an invalid existing policy and reports it accurately", () => {
-  const projectDirectory = createProject();
-  const policy = '{"preset":"project-owned-policy"}\n';
-
-  try {
-    writeFileSync(resolve(projectDirectory, "righting.json"), policy);
-    writeFileSync(
-      resolve(projectDirectory, "AGENTS.md"),
-      `# Project guidance\n\nKeep this before.\n\n${managedStart}\nOutdated Righting guidance.\n${managedEnd}\n\nKeep this after.\n`,
-    );
-
-    const result = runInit(projectDirectory, true);
-
-    assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout), {
-      command: "init",
-      policy: {
-        path: "righting.json",
-        created: false,
-        status: "invalid",
-      },
-      guidance: {
-        path: "AGENTS.md",
-        updated: true,
-      },
-    });
-    assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
-
-    const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
-    assert.match(guidance, /Keep this before\./);
-    assert.match(guidance, /Keep this after\./);
-    assert.doesNotMatch(guidance, /Outdated Righting guidance/);
-    assert.match(guidance, /does not contain a complete valid Righting policy/);
-    assert.doesNotMatch(guidance, /selects `volatility@1`/);
-    assert.doesNotMatch(guidance, /intentionally incomplete/);
-    assert.equal(guidance.split(managedStart).length - 1, 1);
-    assert.equal(guidance.split(managedEnd).length - 1, 1);
-  } finally {
-    rmSync(projectDirectory, { recursive: true, force: true });
-  }
-});
-
-test("righting init does not mislabel an invalid incomplete-looking policy", () => {
-  const projectDirectory = createProject();
-
-  try {
-    writeFileSync(
-      resolve(projectDirectory, "righting.json"),
-      '{"preset":"not-volatility@1","status":"incomplete"}\n',
-    );
-
-    const result = runInit(projectDirectory, true);
-
-    assert.equal(result.status, 0, result.stderr);
-    const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
-    assert.match(guidance, /does not contain a complete valid Righting policy/);
-    assert.doesNotMatch(guidance, /selects `volatility@1`/);
-    assert.doesNotMatch(guidance, /intentionally incomplete/);
-  } finally {
-    rmSync(projectDirectory, { recursive: true, force: true });
-  }
-});
-
-test("righting init refreshes valid existing policy guidance", () => {
-  const projectDirectory = createProject();
-  const policy = `${JSON.stringify(
-    {
-      preset: "volatility@1",
-      aliases: { page: "Client", useCase: "Manager" },
-      mappings: [
-        { alias: "page", path: "src/page/**" },
-        { alias: "useCase", path: "src/use-case/**" },
-      ],
-    },
-    null,
-    2,
-  )}\n`;
-
-  try {
-    writeFileSync(resolve(projectDirectory, "righting.json"), policy);
-    writeFileSync(
-      resolve(projectDirectory, "AGENTS.md"),
-      `# Project guidance\n\n${managedStart}\nOutdated Righting guidance.\n${managedEnd}\n`,
-    );
-
-    const result = runInit(projectDirectory, true);
-
-    assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout).policy, {
-      path: "righting.json",
-      created: false,
-      status: "complete",
-    });
-    const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
-    assert.match(guidance, /`page` \(Client\)/);
-    assert.match(guidance, /`Client` → `Manager`, `Utility`/);
-    assert.doesNotMatch(guidance, /intentionally incomplete/);
-    assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
-  } finally {
-    rmSync(projectDirectory, { recursive: true, force: true });
-  }
-});
-
-test("righting docs generates durable policy guidance without replacing project instructions", () => {
-  const projectDirectory = createProject();
-
-  try {
-    mkdirSync(resolve(projectDirectory, "src"));
-    writeFileSync(resolve(projectDirectory, "CONTEXT.md"), "Not parsed by Righting.\n");
-    writeFileSync(resolve(projectDirectory, "src/example.ts"), "Not judged by Righting.\n");
-    writeFileSync(
-      resolve(projectDirectory, "righting.json"),
-      `${JSON.stringify(
-        {
-          preset: "volatility@1",
-          aliases: { page: "Client", useCase: "Manager" },
-          mappings: [
-            { alias: "page", path: "src/page/**" },
-            { alias: "useCase", path: "src/use-case/**" },
-          ],
-          extras: {
-            domainVocabulary: "CONTEXT.md",
-            goldenExamples: { page: "src/example.ts" },
-          },
-        },
-        null,
-        2,
-      )}\n`,
-    );
-    writeFileSync(
-      resolve(projectDirectory, "AGENTS.md"),
-      `# Project guidance\n\nKeep this before.\n\n${managedStart}\nOutdated Righting guidance.\n${managedEnd}\n\nKeep this after.\n`,
-    );
-
-    const result = runDocs(projectDirectory, true);
-
-    assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout), {
-      command: "docs",
-      policy: { path: "righting.json", status: "complete" },
-      guidance: { path: "AGENTS.md", updated: true },
-    });
-
-    const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
-    assert.match(guidance, /Keep this before\./);
-    assert.match(guidance, /Keep this after\./);
-    assert.doesNotMatch(guidance, /Outdated Righting guidance/);
-    assert.match(guidance, /`page` \(Client\)/);
-    assert.match(guidance, /`Client` → `Manager`, `Utility`/);
-    assert.match(guidance, /lint-enforced/);
-    assert.match(guidance, /partially checked/);
-    assert.match(guidance, /guidance only/);
-    assert.match(guidance, /righting-design-review/);
-    assert.match(guidance, /righting init --skills/);
-    assert.match(guidance, /`CONTEXT\.md`/);
-    assert.match(guidance, /`src\/example\.ts`/);
-
-    const rerun = runDocs(projectDirectory, true);
-    assert.equal(rerun.status, 0, rerun.stderr);
-    assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
-  } finally {
-    rmSync(projectDirectory, { recursive: true, force: true });
-  }
-});
-
-test("righting docs rejects missing agent references without changing guidance", () => {
-  const projectDirectory = createProject();
-  const guidance = "# Project guidance\n";
-
-  try {
-    writeFileSync(
-      resolve(projectDirectory, "righting.json"),
-      `${JSON.stringify({
-        preset: "volatility@1",
-        aliases: { page: "Client" },
-        mappings: [{ alias: "page", path: "src/page/**" }],
-        extras: { domainVocabulary: "missing.md" },
-      })}\n`,
-    );
-    writeFileSync(resolve(projectDirectory, "AGENTS.md"), guidance);
-
-    const result = runDocs(projectDirectory, true);
-
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /domainVocabulary.*existing path/i);
-    assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
-  } finally {
-    rmSync(projectDirectory, { recursive: true, force: true });
-  }
-});
-
-test("righting docs rejects agent references outside the project", () => {
-  const projectDirectory = createProject();
-  const externalDirectory = createProject();
-  const guidance = "# Project guidance\n";
-
-  try {
-    const externalReference = resolve(externalDirectory, "vocabulary.md");
-    writeFileSync(externalReference, "Outside the project.\n");
-    writeFileSync(
-      resolve(projectDirectory, "righting.json"),
-      `${JSON.stringify({
-        preset: "volatility@1",
-        aliases: { page: "Client" },
-        mappings: [{ alias: "page", path: "src/page/**" }],
-        extras: { domainVocabulary: relative(projectDirectory, externalReference) },
-      })}\n`,
-    );
-    writeFileSync(resolve(projectDirectory, "AGENTS.md"), guidance);
-
-    const result = runDocs(projectDirectory, true);
-
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /domainVocabulary.*project-relative/i);
-    assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
-  } finally {
-    rmSync(projectDirectory, { recursive: true, force: true });
-    rmSync(externalDirectory, { recursive: true, force: true });
-  }
-});
-
-test("righting init leaves malformed managed guidance unchanged", () => {
+test("righting init reports malformed guidance as a structured failure before creating a policy", () => {
   const projectDirectory = createProject();
   const guidance = `# Project guidance\n\n${managedStart}\n`;
 
   try {
     writeFileSync(resolve(projectDirectory, "AGENTS.md"), guidance);
 
-    const result = runInit(projectDirectory, true);
-
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /invalid Righting-managed block/);
+    const result = run(projectDirectory, "init", "--json");
+    assertFailureEnvelope(result, "invalid-managed-guidance", "AGENTS.md", "repair-managed-guidance");
     assert.equal(existsSync(resolve(projectDirectory, "righting.json")), false);
     assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
+  }
+});
+
+test("righting init --skills creates repeatable relative links and preflights collisions", () => {
+  const projectDirectory = createProject();
+  const collisionDirectory = createProject();
+  const ancestorCollisionDirectory = createProject();
+  const packagedSkillsDirectory = resolve(repositoryDirectory, "skills");
+
+  try {
+    const output = assertSuccessEnvelope(run(projectDirectory, "init", "--skills", "--json"));
+    assert.deepEqual(output.skills, { path: ".agents/skills", linked: skills });
+
+    for (const skill of skills) {
+      const link = resolve(projectDirectory, ".agents/skills", skill);
+      assert.ok(lstatSync(link).isSymbolicLink(), link);
+      assert.equal(isAbsolute(readlinkSync(link)), false);
+      assert.equal(resolve(dirname(link), readlinkSync(link)), resolve(packagedSkillsDirectory, skill));
+    }
+
+    const repeat = assertSuccessEnvelope(run(projectDirectory, "init", "--skills", "--json"));
+    assert.deepEqual(repeat.skills, { path: ".agents/skills", linked: skills });
+
+    const projectOwnedSkill = resolve(collisionDirectory, ".agents/skills/righting-eslint");
+    mkdirSync(projectOwnedSkill, { recursive: true });
+    writeFileSync(resolve(projectOwnedSkill, "SKILL.md"), "# Project-owned skill\n");
+
+    const collision = run(collisionDirectory, "init", "--skills", "--json");
+    assertFailureEnvelope(collision, "skill-collision", ".agents/skills/righting-eslint", "resolve-skill-collision");
+    assert.equal(readFileSync(resolve(projectOwnedSkill, "SKILL.md"), "utf8"), "# Project-owned skill\n");
+    assert.equal(existsSync(resolve(collisionDirectory, "righting.json")), false);
+    assert.equal(existsSync(resolve(collisionDirectory, "AGENTS.md")), false);
+
+    writeFileSync(resolve(ancestorCollisionDirectory, ".agents"), "Project-owned path\n");
+    const ancestorCollision = run(ancestorCollisionDirectory, "init", "--skills", "--json");
+    assertFailureEnvelope(ancestorCollision, "skill-collision", ".agents", "resolve-skill-collision");
+    assert.equal(readFileSync(resolve(ancestorCollisionDirectory, ".agents"), "utf8"), "Project-owned path\n");
+    assert.equal(existsSync(resolve(ancestorCollisionDirectory, "righting.json")), false);
+    assert.equal(existsSync(resolve(ancestorCollisionDirectory, "AGENTS.md")), false);
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
+    rmSync(collisionDirectory, { recursive: true, force: true });
+    rmSync(ancestorCollisionDirectory, { recursive: true, force: true });
+  }
+});
+
+test("righting init reports invalid options with the schema-version-1 failure envelope", () => {
+  const projectDirectory = createProject();
+
+  try {
+    const result = run(projectDirectory, "init", "--json", "--unknown");
+    assertFailureEnvelope(result, "invalid-options", undefined, "review-command-options");
+    assert.equal(existsSync(resolve(projectDirectory, "righting.json")), false);
+    assert.equal(existsSync(resolve(projectDirectory, "AGENTS.md")), false);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }

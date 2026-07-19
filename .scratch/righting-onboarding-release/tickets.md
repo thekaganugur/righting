@@ -12,10 +12,10 @@ Work the **frontier**: any ticket whose blockers are all done. For a purely line
 
 **Blocked by:** None — can start immediately.
 
-- [ ] The exact starter is the only successful incomplete policy; a starter combined with configuration fails with precise replacement/removal remediation, without partial project writes.
-- [ ] Managed policy guidance contains only the policy pointer and preserves project-owned content; repeat initialization preserves an existing valid policy without claiming approval, adapter activation, or onboarding completion.
-- [ ] `init --json` provides the additive schema-version-1 success and expected-failure envelopes, including machine-actionable error codes and next actions; baseline JSON semantics remain unchanged.
-- [ ] Opt-in skill links remain relative, repeatable, collision-safe, and fully preflighted; normal `init` output mentions the optional skills route once.
+- [x] The exact starter is the only successful incomplete policy; a starter combined with configuration fails with precise replacement/removal remediation, without partial project writes.
+- [x] Managed policy guidance contains only the policy pointer and preserves project-owned content; repeat initialization preserves an existing valid policy without claiming approval, adapter activation, or onboarding completion.
+- [x] `init --json` provides the additive schema-version-1 success and expected-failure envelopes, including machine-actionable error codes and next actions; baseline JSON semantics remain unchanged.
+- [x] Opt-in skill links remain relative, repeatable, collision-safe, and fully preflighted; normal `init` output mentions the optional skills route once.
 
 ## Read-only policy inspection and capability catalog
 

@@ -118,14 +118,17 @@ test("dogfood project completes the approved Righting integration and repair wor
     const initialized = righting(projectDirectory, "init", "--skills", "--json");
     assertSuccess(initialized);
     assert.deepEqual(JSON.parse(initialized.stdout), {
+      schemaVersion: 1,
       command: "init",
+      ok: true,
       policy: {
         path: "righting.json",
         created: true,
         status: "incomplete",
-        required: ["aliases", "mappings"],
+        required: ["aliases", "mappings", "maintainer-approval"],
       },
       guidance: { path: "AGENTS.md", updated: true },
+      nextAction: "obtain-policy-approval",
       skills: {
         path: ".agents/skills",
         linked: ["righting-design-review", "righting-eslint", "righting-integrate"],
@@ -140,17 +143,20 @@ test("dogfood project completes the approved Righting integration and repair wor
     }
 
     configureApprovedPolicy(projectDirectory, approvedPolicy);
-    const guidance = righting(projectDirectory, "docs", "--json");
-    assertSuccess(guidance);
-    assert.deepEqual(JSON.parse(guidance.stdout), {
-      command: "docs",
-      policy: { path: "righting.json", status: "complete" },
+    const refreshed = righting(projectDirectory, "init", "--json");
+    assertSuccess(refreshed);
+    assert.deepEqual(JSON.parse(refreshed.stdout), {
+      schemaVersion: 1,
+      command: "init",
+      ok: true,
+      policy: { path: "righting.json", created: false, status: "valid" },
       guidance: { path: "AGENTS.md", updated: true },
     });
     const agentGuidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
     assert.match(agentGuidance, /Keep project-owned delivery instructions here\./);
-    assert.match(agentGuidance, /context firewall/i);
-    assert.match(agentGuidance, /righting init --skills/);
+    assert.match(agentGuidance, /This project has a Righting architecture policy in `righting\.json`\./);
+    assert.match(agentGuidance, /Read it before changing mapped code\./);
+    assert.doesNotMatch(agentGuidance, /context firewall|righting init --skills/i);
 
     const suppressedLegacyDebt = npm(projectDirectory, "run", "lint", "--", "--suppress-rule", "righting/role-dependency");
     assertSuccess(suppressedLegacyDebt);

@@ -65,6 +65,17 @@ const policyKeys = new Set(["preset", "aliases", "mappings", "variations", "over
 
 type JsonRecord = Record<string, unknown>;
 
+export function isExactIncompleteStarter(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 2 &&
+    (value as JsonRecord).preset === "volatility@1" &&
+    (value as JsonRecord).status === "incomplete"
+  );
+}
+
 function fail(message: string): never {
   throw new Error(`righting.json ${message}`);
 }
@@ -389,7 +400,12 @@ export function allowedDependencies(policy: Policy): Record<Role, Role[]> {
 function parsePolicy(source: unknown, policyPath: string): Policy {
   const policy = record(source, "a policy object");
   if (policy.status === "incomplete") {
-    fail("is incomplete; supply approved aliases and mappings before enabling enforcement.");
+    if (!isExactIncompleteStarter(policy)) {
+      fail(
+        'has an incomplete starter with configuration; an incomplete starter may contain only "preset" and "status". After approval, replace it with the complete policy and remove "status": "incomplete".',
+      );
+    }
+    fail("is incomplete; obtain maintainer approval, then replace the starter with aliases and mappings.");
   }
   rejectUnknownKeys(policy, policyKeys, "policy");
   if (policy.preset !== "volatility@1") {

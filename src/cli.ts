@@ -4,14 +4,30 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, symlinkSy
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkBaseline } from "./baseline.js";
-import { renderPolicyGuidance } from "./docs.js";
-import { readPolicy } from "./policy.js";
+import { isExactIncompleteStarter, readPolicy } from "./policy.js";
 
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
 const initUsage = "Usage: righting init [--skills] [--json]";
 const rightingSkillNames = ["righting-design-review", "righting-eslint", "righting-integrate"];
 const packagedSkillsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../../skills");
+
+type InitErrorCode = "invalid-managed-guidance" | "invalid-options" | "invalid-policy" | "missing-packaged-skill" | "skill-collision";
+
+class InitError extends Error {
+  constructor(
+    readonly code: InitErrorCode,
+    message: string,
+    readonly nextAction: string,
+    readonly path?: string,
+  ) {
+    super(message);
+  }
+}
+
+function failInit(code: InitErrorCode, message: string, nextAction: string, path?: string): never {
+  throw new InitError(code, message, nextAction, path);
+}
 
 type SkillLink = {
   source: string;
@@ -32,53 +48,11 @@ const starterPolicy = `${JSON.stringify(
   2,
 )}\n`;
 
-const starterPolicyExample = `{
-  "preset": "volatility@1",
-  "aliases": {
-    "screen": "Client",
-    "workflow": "Manager"
-  },
-  "mappings": [
-    { "alias": "screen", "path": "src/screen/**" },
-    { "alias": "workflow", "path": "src/workflow/**" }
-  ]
-}`;
-const incompletePolicyRequirements = ["aliases", "mappings"] as const;
+const incompletePolicyRequirements = ["aliases", "mappings", "maintainer-approval"] as const;
 
 const managedGuidance = `${managedStart}
-## Righting setup
-
-\`righting.json\` selects \`volatility@1\` but is intentionally incomplete. Righting will not guess your architecture or enable enforcement yet.
-
-### Complete the first policy
-
-1. Choose only the code whose dependencies you want Righting to guard now. You can add mappings later.
-2. Give each local name a canonical role: \`Client\` (interaction), \`Manager\` (workflow), \`Engine\` (decision), \`ResourceAccess\` (data or transport), \`Resource\` (external system), or \`Utility\` (stable shared code).
-3. Add approved \`aliases\` and \`mappings\` to \`righting.json\`. An alias is your local name for a canonical role, such as \`screen\` for \`Client\`.
-
-A minimal policy looks like:
-
-\`\`\`json
-${starterPolicyExample}
-\`\`\`
-
-Start without variations, scopes, or overrides unless you have a specific approved need. Once the policy is complete, run \`righting docs\` to refresh this guidance. Configure an enforcement adapter separately.
-
-### Optional agent support
-
-- Run \`righting init --skills\` to create relative symlinks to packaged Righting skills in \`.agents/skills\` for compatible agents.
-- The \`righting-design-review\` workflow is advisory and never changes policy, CI, or project files automatically.
-- Keep project-owned instructions outside this managed block.
-${managedEnd}`;
-
-const invalidPolicyGuidance = `${managedStart}
-## Righting guidance
-
-\`righting.json\` exists but does not contain a complete valid Righting policy.
-
-- Righting enforcement remains blocked. Repair the policy, then run \`righting docs\` to generate policy guidance.
-- Static adapters can only check source dependencies; they cannot prove runtime behavior.
-- Keep project-owned instructions outside this managed block.
+This project has a Righting architecture policy in \`righting.json\`.
+Read it before changing mapped code.
 ${managedEnd}`;
 
 function replaceManagedGuidance(existing: string | undefined, guidance = managedGuidance): string {
@@ -97,7 +71,12 @@ function replaceManagedGuidance(existing: string | undefined, guidance = managed
   const start = existing.indexOf(managedStart);
   const end = existing.indexOf(managedEnd);
   if (starts !== 1 || ends !== 1 || start > end) {
-    throw new Error("AGENTS.md has an invalid Righting-managed block; repair it before rerunning init.");
+    failInit(
+      "invalid-managed-guidance",
+      "AGENTS.md has an invalid Righting-managed block; repair it before rerunning init.",
+      "repair-managed-guidance",
+      "AGENTS.md",
+    );
   }
 
   return `${existing.slice(0, start)}${guidance}${existing.slice(end + managedEnd.length)}`;
@@ -117,18 +96,38 @@ function pathExists(path: string): boolean {
 }
 
 function planSkillLinks(projectDirectory: string): PlannedSkillLinks {
-  const directory = resolve(projectDirectory, ".agents/skills");
+  const agentDirectory = resolve(projectDirectory, ".agents");
+  const directory = resolve(agentDirectory, "skills");
+  for (const path of [agentDirectory, directory]) {
+    if (pathExists(path) && !lstatSync(path).isDirectory()) {
+      failInit(
+        "skill-collision",
+        `righting init --skills cannot use existing path "${relative(projectDirectory, path)}" as a skills directory.`,
+        "resolve-skill-collision",
+        relative(projectDirectory, path),
+      );
+    }
+  }
   const links = rightingSkillNames.map((name) => {
     const source = resolve(packagedSkillsDirectory, name);
     if (!existsSync(resolve(source, "SKILL.md"))) {
-      throw new Error(`Righting package is missing the packaged skill "${name}".`);
+      failInit(
+        "missing-packaged-skill",
+        `Righting package is missing the packaged skill "${name}".`,
+        "reinstall-righting",
+      );
     }
 
     const target = resolve(directory, name);
     if (pathExists(target)) {
       const expectedLink = lstatSync(target).isSymbolicLink() && resolve(dirname(target), readlinkSync(target)) === source;
       if (!expectedLink) {
-        throw new Error(`righting init --skills cannot replace existing skill "${relative(projectDirectory, target)}".`);
+        failInit(
+          "skill-collision",
+          `righting init --skills cannot replace existing skill "${relative(projectDirectory, target)}".`,
+          "resolve-skill-collision",
+          relative(projectDirectory, target),
+        );
       }
     }
     return { source, target };
@@ -148,62 +147,58 @@ function linkSkills(plan: PlannedSkillLinks): void {
 
 function isIncompleteStarter(policyPath: string): boolean {
   try {
-    const policy = JSON.parse(readFileSync(policyPath, "utf8")) as Record<string, unknown>;
-    return (
-      typeof policy === "object" &&
-      policy !== null &&
-      !Array.isArray(policy) &&
-      Object.keys(policy).length === 2 &&
-      policy.preset === "volatility@1" &&
-      policy.status === "incomplete"
-    );
+    return isExactIncompleteStarter(JSON.parse(readFileSync(policyPath, "utf8")));
   } catch {
     return false;
   }
 }
 
-type PolicyStatus = "complete" | "incomplete" | "invalid";
+type PolicyStatus = "incomplete" | "valid";
 
 type PolicyState = {
   status: PolicyStatus;
-  guidance: string;
 };
 
 function inspectPolicy(policyPath: string): PolicyState {
+  if (isIncompleteStarter(policyPath)) {
+    return { status: "incomplete" };
+  }
+
   try {
-    return {
-      status: "complete",
-      guidance: `${managedStart}\n${renderPolicyGuidance(readPolicy(policyPath))}\n${managedEnd}`,
-    };
-  } catch {
-    return isIncompleteStarter(policyPath)
-      ? { status: "incomplete", guidance: managedGuidance }
-      : { status: "invalid", guidance: invalidPolicyGuidance };
+    readPolicy(policyPath);
+    return { status: "valid" };
+  } catch (error) {
+    failInit(
+      "invalid-policy",
+      error instanceof Error ? error.message : String(error),
+      "repair-policy",
+      "righting.json",
+    );
   }
 }
 
-function policyResult(state: PolicyState, created?: boolean) {
+function initPolicyResult(state: PolicyState, created: boolean) {
   return {
     path: "righting.json",
-    ...(created === undefined ? {} : { created }),
+    created,
     status: state.status,
     ...(state.status === "incomplete" ? { required: incompletePolicyRequirements } : {}),
   };
 }
 
-function updateGuidance(projectDirectory: string, content = managedGuidance): void {
+function updateGuidance(projectDirectory: string): void {
   const path = guidancePath(projectDirectory);
   const existingGuidance = existsSync(path) ? readFileSync(path, "utf8") : undefined;
-  writeFileSync(path, replaceManagedGuidance(existingGuidance, content), "utf8");
+  writeFileSync(path, replaceManagedGuidance(existingGuidance), "utf8");
 }
 
 function initialize(projectDirectory: string, installSkills = false) {
-  const skills = installSkills ? planSkillLinks(projectDirectory) : undefined;
   const policyPath = resolve(projectDirectory, "righting.json");
   const path = guidancePath(projectDirectory);
   const policyCreated = !existsSync(policyPath);
-  const state = policyCreated ? { status: "incomplete" as const, guidance: managedGuidance } : inspectPolicy(policyPath);
-  const guidance = replaceManagedGuidance(existsSync(path) ? readFileSync(path, "utf8") : undefined, state.guidance);
+  const state = policyCreated ? { status: "incomplete" as const } : inspectPolicy(policyPath);
+  const guidance = replaceManagedGuidance(existsSync(path) ? readFileSync(path, "utf8") : undefined);
+  const skills = installSkills ? planSkillLinks(projectDirectory) : undefined;
 
   if (policyCreated) {
     writeFileSync(policyPath, starterPolicy, { encoding: "utf8", flag: "wx" });
@@ -215,12 +210,15 @@ function initialize(projectDirectory: string, installSkills = false) {
   }
 
   return {
-    command: "init",
-    policy: policyResult(state, policyCreated),
+    schemaVersion: 1,
+    command: "init" as const,
+    ok: true as const,
+    policy: initPolicyResult(state, policyCreated),
     guidance: {
       path: "AGENTS.md",
       updated: true,
     },
+    ...(state.status === "incomplete" ? { nextAction: "obtain-policy-approval" } : {}),
     ...(skills === undefined ? {} : { skills: { path: ".agents/skills", linked: rightingSkillNames } }),
   };
 }
@@ -228,13 +226,10 @@ function initialize(projectDirectory: string, installSkills = false) {
 function generateDocs(projectDirectory: string) {
   const policyPath = resolve(projectDirectory, "righting.json");
   const state = inspectPolicy(policyPath);
-  if (state.status === "invalid") {
-    readPolicy(policyPath);
-  }
-  updateGuidance(projectDirectory, state.guidance);
+  updateGuidance(projectDirectory);
   return {
     command: "docs",
-    policy: policyResult(state),
+    policy: { path: "righting.json", status: state.status === "valid" ? "complete" : "incomplete" },
     guidance: {
       path: "AGENTS.md",
       updated: true,
@@ -252,7 +247,7 @@ function initOptions(options: string[]): { json: boolean; skills: boolean } {
     } else if (option === "--skills" && !skills) {
       skills = true;
     } else {
-      throw new Error(initUsage);
+      failInit("invalid-options", initUsage, "review-command-options");
     }
   }
 
@@ -307,13 +302,12 @@ function main(arguments_: string[]): void {
     }
 
     const next =
-      result.policy.status === "incomplete"
-        ? " Next: add approved aliases and mappings to righting.json, then run righting docs. See the Righting setup section in AGENTS.md for roles and an example."
-        : result.policy.status === "invalid"
-          ? " Righting enforcement remains blocked until righting.json is valid."
-          : "";
+      result.policy.status === "incomplete" ? " Next: replace the starter after maintainer approval." : "";
+    const agentSupport = skills
+      ? " Linked Righting skills in .agents/skills."
+      : " Optional compatible-agent support: run righting init --skills.";
     process.stdout.write(
-      `${result.policy.created ? "Created" : "Kept"} righting.json. ${result.guidance.updated ? "Updated" : "Kept"} Righting-managed guidance in AGENTS.md.${skills ? " Linked Righting skills in .agents/skills." : ""}${next}\n`,
+      `${result.policy.created ? "Created" : "Kept"} righting.json. ${result.guidance.updated ? "Updated" : "Kept"} Righting-managed guidance in AGENTS.md.${agentSupport}${next}\n`,
     );
     return;
   }
@@ -331,8 +325,8 @@ function main(arguments_: string[]): void {
     }
     process.stdout.write(
       result.policy.status === "incomplete"
-        ? "Righting is initialized but not enforcing anything yet. Add approved aliases and mappings to righting.json, then run righting docs again. See the Righting setup section in AGENTS.md for roles and an example.\n"
-        : "Updated Righting-managed guidance in AGENTS.md.\n",
+        ? "Righting is initialized but not enforcing anything yet. Replace the starter after maintainer approval.\n"
+        : "Updated the Righting policy pointer in AGENTS.md.\n",
     );
     return;
   }
@@ -355,10 +349,36 @@ function main(arguments_: string[]): void {
   );
 }
 
+const arguments_ = process.argv.slice(2);
+
 try {
-  main(process.argv.slice(2));
+  main(arguments_);
 } catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`righting: ${message}\n`);
+  if (arguments_[0] === "init" && arguments_.includes("--json")) {
+    const failure =
+      error instanceof InitError
+        ? error
+        : new InitError("invalid-policy", error instanceof Error ? error.message : String(error), "repair-policy");
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          command: "init",
+          ok: false,
+          error: {
+            code: failure.code,
+            ...(failure.path === undefined ? {} : { path: failure.path }),
+            message: failure.message,
+            nextAction: failure.nextAction,
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+  } else {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`righting: ${message}\n`);
+  }
   process.exitCode = 1;
 }
