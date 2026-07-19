@@ -1,13 +1,27 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
+import { dirname, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { checkBaseline } from "./baseline.js";
 import { renderPolicyGuidance } from "./docs.js";
 import { readPolicy } from "./policy.js";
 
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
+const initUsage = "Usage: righting init [--skills] [--json]";
+const rightingSkillNames = ["righting-design-review", "righting-eslint", "righting-integrate"];
+const packagedSkillsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../../skills");
+
+type SkillLink = {
+  source: string;
+  target: string;
+};
+
+type PlannedSkillLinks = {
+  directory: string;
+  links: SkillLink[];
+};
 
 const starterPolicy = `${JSON.stringify(
   {
@@ -26,6 +40,7 @@ const managedGuidance = `${managedStart}
 - No aliases, mappings, or enforced boundaries are configured yet. Do not infer them.
 - Do not enable enforcement until a maintainer has supplied and approved architecture decisions about roles, mappings, scopes, and exceptions.
 - No adapter is configured. Static adapters can only check source dependencies; they cannot prove runtime behavior.
+- Run \`righting init --skills\` to create relative symlinks to packaged Righting skills in \`.agents/skills\` for compatible agents.
 - The \`righting-design-review\` workflow is advisory and never changes policy, CI, or project files automatically.
 - Keep project-owned instructions outside this managed block.
 ${managedEnd}`;
@@ -66,6 +81,45 @@ function guidancePath(projectDirectory: string): string {
   return resolve(projectDirectory, "AGENTS.md");
 }
 
+function pathExists(path: string): boolean {
+  try {
+    lstatSync(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function planSkillLinks(projectDirectory: string): PlannedSkillLinks {
+  const directory = resolve(projectDirectory, ".agents/skills");
+  const links = rightingSkillNames.map((name) => {
+    const source = resolve(packagedSkillsDirectory, name);
+    if (!existsSync(resolve(source, "SKILL.md"))) {
+      throw new Error(`Righting package is missing the packaged skill "${name}".`);
+    }
+
+    const target = resolve(directory, name);
+    if (pathExists(target)) {
+      const expectedLink = lstatSync(target).isSymbolicLink() && resolve(dirname(target), readlinkSync(target)) === source;
+      if (!expectedLink) {
+        throw new Error(`righting init --skills cannot replace existing skill "${relative(projectDirectory, target)}".`);
+      }
+    }
+    return { source, target };
+  });
+
+  return { directory, links };
+}
+
+function linkSkills(plan: PlannedSkillLinks): void {
+  mkdirSync(plan.directory, { recursive: true });
+  for (const { source, target } of plan.links) {
+    if (!pathExists(target)) {
+      symlinkSync(relative(dirname(target), source), target, "dir");
+    }
+  }
+}
+
 function isIncompleteStarter(policyPath: string): boolean {
   try {
     const policy = JSON.parse(readFileSync(policyPath, "utf8")) as Record<string, unknown>;
@@ -96,7 +150,8 @@ function updateGuidance(projectDirectory: string, content = managedGuidance): vo
   writeFileSync(path, replaceManagedGuidance(existingGuidance, content), "utf8");
 }
 
-function initialize(projectDirectory: string) {
+function initialize(projectDirectory: string, installSkills = false) {
+  const skills = installSkills ? planSkillLinks(projectDirectory) : undefined;
   const policyPath = resolve(projectDirectory, "righting.json");
   const path = guidancePath(projectDirectory);
   const policyCreated = !existsSync(policyPath);
@@ -108,6 +163,9 @@ function initialize(projectDirectory: string) {
   }
 
   writeFileSync(path, guidance, "utf8");
+  if (skills !== undefined) {
+    linkSkills(skills);
+  }
 
   return {
     command: "init",
@@ -120,6 +178,7 @@ function initialize(projectDirectory: string) {
       path: "AGENTS.md",
       updated: true,
     },
+    ...(skills === undefined ? {} : { skills: { path: ".agents/skills", linked: rightingSkillNames } }),
   };
 }
 
@@ -134,6 +193,23 @@ function generateDocs(projectDirectory: string) {
       updated: true,
     },
   };
+}
+
+function initOptions(options: string[]): { json: boolean; skills: boolean } {
+  let json = false;
+  let skills = false;
+
+  for (const option of options) {
+    if (option === "--json" && !json) {
+      json = true;
+    } else if (option === "--skills" && !skills) {
+      skills = true;
+    } else {
+      throw new Error(initUsage);
+    }
+  }
+
+  return { json, skills };
 }
 
 function baselineOptions(options: string[]): { base: string; migrationReason: string | undefined; json: boolean } {
@@ -176,19 +252,15 @@ function baselineOptions(options: string[]): { base: string; migrationReason: st
 function main(arguments_: string[]): void {
   const [command, ...options] = arguments_;
   if (command === "init") {
-    const json = options.length === 1 && options[0] === "--json";
-    if (options.length !== 0 && !json) {
-      throw new Error("Usage: righting init [--json]");
-    }
-
-    const result = initialize(process.cwd());
+    const { json, skills } = initOptions(options);
+    const result = initialize(process.cwd(), skills);
     if (json) {
       process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
       return;
     }
 
     process.stdout.write(
-      `${result.policy.created ? "Created" : "Kept"} righting.json. ${result.guidance.updated ? "Updated" : "Kept"} Righting-managed guidance in AGENTS.md.\n`,
+      `${result.policy.created ? "Created" : "Kept"} righting.json. ${result.guidance.updated ? "Updated" : "Kept"} Righting-managed guidance in AGENTS.md.${skills ? " Linked Righting skills in .agents/skills." : ""}\n`,
     );
     return;
   }
@@ -222,7 +294,7 @@ function main(arguments_: string[]): void {
   }
 
   throw new Error(
-    "Usage: righting init [--json] | righting docs [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]",
+    "Usage: righting init [--skills] [--json] | righting docs [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]",
   );
 }
 

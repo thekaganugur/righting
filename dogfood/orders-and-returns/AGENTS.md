@@ -53,6 +53,10 @@ Contextual code may use shared code when its role edge is allowed. Contextual Cl
 - Static dependency evidence cannot prove runtime behavior or queue semantics.
 - Righting has no per-file or per-line waiver mechanism; policy-wide variations, overrides, and native legacy-debt suppressions are deliberate exceptions.
 
+## Agent skills
+
+Run `righting init --skills` to create relative symlinks to packaged Righting skills in `.agents/skills` for compatible agents. It never replaces a project-owned skill with the same name.
+
 ## Design review
 
 Use `righting-design-review` for an opt-in advisory review. It examines the policy and relevant code, asks focused questions, and reports evidence, risks, open questions, and static-analysis limits. It does not score work or change policy, CI, or project files automatically.

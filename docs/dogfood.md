@@ -2,6 +2,15 @@
 
 The dogfood project is `dogfood/orders-and-returns`, an independent TypeScript project with its own package, policy, lint config, native suppression, and CI script. Its public workflow is replayed by `test/dogfood.test.ts` through the installed `righting` CLI and its normal `npm run lint` and `npm run ci` scripts.
 
+A package user starts the same agent-ready setup with:
+
+```sh
+npm install -D righting
+npx righting init --skills
+```
+
+Then open a compatible agent, such as Pi or Codex.
+
 ## Approved integration
 
 The project has two contexts: `orders` and `returns`, plus `shared` and unscoped `application` paths. It enables only `contextFirewall` and has no role-edge overrides.
@@ -20,7 +29,7 @@ The exact approved mappings and scopes are in `dogfood/orders-and-returns/righti
 ## Evidence
 
 1. The project starts as a TypeScript project with a modern ESLint flat config and unchanged `lint` script.
-2. `righting init --json` runs with no input, creates the incomplete starter, and preserves the project-owned `AGENTS.md` text.
+2. `righting init --skills --json` runs with no input, creates the incomplete starter, creates relative symlinks to the packaged skills under `.agents/skills`, and preserves the project-owned `AGENTS.md` text.
 3. The approved policy and the additive `eslintConfig()` entry are applied, then `righting docs --json` generates policy guidance including the context firewall.
 4. The pre-existing `src/orders/workflow/legacy-order.ts` dependency is captured only as `righting/role-dependency` native debt. `righting baseline --base HEAD --migration-reason "Adopt the existing legacy order workflow dependency." --json` accepts it, and the suppression is committed with the adopted policy.
 5. A normal `refund-order` feature initially imports the Returns workflow. The unchanged `npm run lint` reports `righting/cross-context-dependency`. The repair imports the shared `return-status` Utility instead, following the approved policy; its normal baseline is within policy.

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, lstatSync, mkdtempSync, readFileSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -33,6 +33,7 @@ function createDogfoodProject(): { projectDirectory: string; approvedPolicy: str
   const approvedPolicy = readFileSync(resolve(projectDirectory, "righting.json"), "utf8");
   rmSync(resolve(projectDirectory, "righting.json"));
   rmSync(resolve(projectDirectory, "eslint-suppressions.json"));
+  rmSync(resolve(projectDirectory, ".agents"), { recursive: true, force: true });
   rmSync(resolve(projectDirectory, "src/orders/workflow/refund-order.ts"));
 
   const configPath = resolve(projectDirectory, "eslint.config.mjs");
@@ -67,7 +68,7 @@ function createDogfoodProject(): { projectDirectory: string; approvedPolicy: str
     assertSuccess(
       run(projectDirectory, "npm", [
         "install",
-        "--no-save",
+        "--save-dev",
         "--no-package-lock",
         "--include=dev",
         "--ignore-scripts",
@@ -82,7 +83,7 @@ function createDogfoodProject(): { projectDirectory: string; approvedPolicy: str
 }
 
 function righting(projectDirectory: string, ...arguments_: string[]) {
-  return run(projectDirectory, resolve(projectDirectory, "node_modules/.bin/righting"), arguments_);
+  return run(projectDirectory, "npx", ["righting", ...arguments_]);
 }
 
 function npm(projectDirectory: string, ...arguments_: string[]) {
@@ -109,13 +110,29 @@ test("dogfood project completes the approved Righting integration and repair wor
     git(projectDirectory, "config", "user.name", "Righting Test");
     commit(projectDirectory, "before righting");
 
-    const initialized = righting(projectDirectory, "init", "--json");
+    const installedPackage = JSON.parse(readFileSync(resolve(projectDirectory, "package.json"), "utf8")) as {
+      devDependencies: Record<string, string>;
+    };
+    assert.equal(typeof installedPackage.devDependencies.righting, "string");
+
+    const initialized = righting(projectDirectory, "init", "--skills", "--json");
     assertSuccess(initialized);
     assert.deepEqual(JSON.parse(initialized.stdout), {
       command: "init",
       policy: { path: "righting.json", created: true, status: "incomplete" },
       guidance: { path: "AGENTS.md", updated: true },
+      skills: {
+        path: ".agents/skills",
+        linked: ["righting-design-review", "righting-eslint", "righting-integrate"],
+      },
     });
+    for (const skill of ["righting-design-review", "righting-eslint", "righting-integrate"]) {
+      const path = resolve(projectDirectory, ".agents/skills", skill);
+      assert.ok(lstatSync(path).isSymbolicLink(), path);
+      assert.equal(isAbsolute(readlinkSync(path)), false);
+      assert.equal(resolve(dirname(path), readlinkSync(path)), resolve(projectDirectory, "node_modules/righting/skills", skill));
+      assert.match(readFileSync(resolve(path, "SKILL.md"), "utf8"), new RegExp(`name: ${skill}`));
+    }
 
     configureApprovedPolicy(projectDirectory, approvedPolicy);
     const guidance = righting(projectDirectory, "docs", "--json");
@@ -127,6 +144,7 @@ test("dogfood project completes the approved Righting integration and repair wor
     const agentGuidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
     assert.match(agentGuidance, /Keep project-owned delivery instructions here\./);
     assert.match(agentGuidance, /context firewall/i);
+    assert.match(agentGuidance, /righting init --skills/);
 
     const suppressedLegacyDebt = npm(projectDirectory, "run", "lint", "--", "--suppress-rule", "righting/role-dependency");
     assertSuccess(suppressedLegacyDebt);

@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { mkdtempSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, relative, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
+const repositoryDirectory = resolve(testDirectory, "../..");
 const cliPath = resolve(testDirectory, "../src/cli.js");
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
@@ -16,8 +16,8 @@ function createProject(): string {
   return mkdtempSync(resolve(tmpdir(), "righting-init-"));
 }
 
-function runInit(projectDirectory: string, json = false) {
-  return spawnSync(process.execPath, [cliPath, "init", ...(json ? ["--json"] : [])], {
+function runInit(projectDirectory: string, json = false, skills = false) {
+  return spawnSync(process.execPath, [cliPath, "init", ...(skills ? ["--skills"] : []), ...(json ? ["--json"] : [])], {
     cwd: projectDirectory,
     encoding: "utf8",
     input: "",
@@ -60,6 +60,7 @@ test("righting init creates an incomplete starter policy and managed guidance", 
       preset: "volatility@1",
       status: "incomplete",
     });
+    assert.equal(existsSync(resolve(projectDirectory, ".agents/skills")), false);
 
     const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
     assert.match(guidance, /Keep this project-owned instruction\./);
@@ -68,6 +69,7 @@ test("righting init creates an incomplete starter policy and managed guidance", 
     assert.match(guidance, /No aliases, mappings, or enforced boundaries are configured yet/);
     assert.match(guidance, /Static adapters can only check source dependencies/);
     assert.match(guidance, /righting-design-review/);
+    assert.match(guidance, /righting init --skills/);
     assert.match(guidance, new RegExp(managedEnd));
 
     const rerun = runInit(projectDirectory, true);
@@ -86,6 +88,58 @@ test("righting init creates an incomplete starter policy and managed guidance", 
       },
     });
     assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
+  }
+});
+
+test("righting init --skills links packaged skills in the standard project location", () => {
+  const projectDirectory = createProject();
+  const skills = ["righting-design-review", "righting-eslint", "righting-integrate"];
+  const packagedSkillsDirectory = resolve(repositoryDirectory, "skills");
+
+  try {
+    const result = runInit(projectDirectory, true, true);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), {
+      command: "init",
+      policy: { path: "righting.json", created: true, status: "incomplete" },
+      guidance: { path: "AGENTS.md", updated: true },
+      skills: { path: ".agents/skills", linked: skills },
+    });
+
+    for (const skill of skills) {
+      const link = resolve(projectDirectory, ".agents/skills", skill);
+      assert.ok(lstatSync(link).isSymbolicLink(), link);
+      assert.equal(isAbsolute(readlinkSync(link)), false);
+      assert.equal(resolve(dirname(link), readlinkSync(link)), resolve(packagedSkillsDirectory, skill));
+      assert.match(readFileSync(resolve(link, "SKILL.md"), "utf8"), new RegExp(`name: ${skill}`));
+    }
+
+    const rerun = runInit(projectDirectory, true, true);
+    assert.equal(rerun.status, 0, rerun.stderr);
+    assert.deepEqual(JSON.parse(rerun.stdout).skills, { path: ".agents/skills", linked: skills });
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
+  }
+});
+
+test("righting init --skills refuses to replace a project-owned skill", () => {
+  const projectDirectory = createProject();
+  const skillPath = resolve(projectDirectory, ".agents/skills/righting-eslint");
+
+  try {
+    mkdirSync(skillPath, { recursive: true });
+    writeFileSync(resolve(skillPath, "SKILL.md"), "# Project-owned skill\n");
+
+    const result = runInit(projectDirectory, true, true);
+
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /cannot replace existing skill/i);
+    assert.equal(readFileSync(resolve(skillPath, "SKILL.md"), "utf8"), "# Project-owned skill\n");
+    assert.equal(existsSync(resolve(projectDirectory, "righting.json")), false);
+    assert.equal(existsSync(resolve(projectDirectory, "AGENTS.md")), false);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }
@@ -238,6 +292,7 @@ test("righting docs generates durable policy guidance without replacing project 
     assert.match(guidance, /partially checked/);
     assert.match(guidance, /guidance only/);
     assert.match(guidance, /righting-design-review/);
+    assert.match(guidance, /righting init --skills/);
     assert.match(guidance, /`CONTEXT\.md`/);
     assert.match(guidance, /`src\/example\.ts`/);
 

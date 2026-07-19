@@ -96,6 +96,7 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 - [x] `righting-eslint` inspects the existing modern flat config, preserves its settings, adds only adapter configuration, and runs the established lint command.
 - [x] The ESLint integration reports typed-lint presence and outcome and never restructures lint commands without approval.
 - [x] Both skills conform to the Agent Skills standard without harness-specific assumptions.
+- [x] `righting init --skills` creates relative symlinks to packaged skills under `.agents/skills` without replacing project-owned collisions, so compatible agents can discover them.
 
 ## 09. Offer read-only Righting design review
 
