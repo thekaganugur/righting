@@ -69,14 +69,14 @@ Work the **frontier**: any ticket whose blockers are all done. For a purely line
 
 ## Preserve Orders/Returns post-approval repair evidence
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **What to build:** The Orders/Returns fixture remains candid packed-artifact proof of the post-approval enforcement and repair loop, while clean-route fixtures own all first-run assertions.
 
 **Blocked by:** Publish onboarding routes and retire generated guidance.
 
-- [ ] The fixture starts from an approved policy and retains additive flat-config wiring, the unchanged lint command, approved native legacy-debt capture, baseline migration, normal boundary feedback and repair, normal baseline result, and green CI.
-- [ ] The dogfood narrative records real decisions, friction, repair, and static-analysis limits without presenting a universal architecture or onboarding guide.
+- [x] The fixture starts from an approved policy and retains additive flat-config wiring, the unchanged lint command, approved native legacy-debt capture, baseline migration, normal boundary feedback and repair, normal baseline result, and green CI.
+- [x] The dogfood narrative records real decisions, friction, repair, and static-analysis limits without presenting a universal architecture or onboarding guide.
 
 ## Record release-candidate walkthroughs
 

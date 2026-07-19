@@ -1,6 +1,6 @@
 # Orders/Returns dogfood record
 
-This is a candid worked record for `dogfood/orders-and-returns`, not an onboarding route or a recommended project architecture. The project has its own TypeScript package, approved policy, ESLint flat config, native suppression, and CI script. `test/dogfood.test.ts` replays its installed-package integration and repair loop.
+This is a candid worked record for `dogfood/orders-and-returns`, not an onboarding route or a recommended project architecture. Clean packed-route fixtures own first-run assertions; this project starts after approval with its own TypeScript package, policy, ESLint flat config, native suppression, and CI script. `test/dogfood.test.ts` replays its packed-artifact integration, debt-adoption, and repair loop.
 
 ## Approved choices
 
