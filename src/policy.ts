@@ -65,6 +65,8 @@ const policyKeys = new Set(["preset", "aliases", "mappings", "variations", "over
 
 type JsonRecord = Record<string, unknown>;
 
+export const incompletePolicyRequirements = ["aliases", "mappings", "maintainer-approval"] as const;
+
 export function isExactIncompleteStarter(value: unknown): boolean {
   return (
     typeof value === "object" &&
@@ -74,6 +76,14 @@ export function isExactIncompleteStarter(value: unknown): boolean {
     (value as JsonRecord).preset === "volatility@1" &&
     (value as JsonRecord).status === "incomplete"
   );
+}
+
+export function isExactIncompleteStarterFile(policyPath: string): boolean {
+  try {
+    return isExactIncompleteStarter(JSON.parse(readFileSync(policyPath, "utf8")));
+  } catch {
+    return false;
+  }
 }
 
 function fail(message: string): never {

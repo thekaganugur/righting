@@ -4,11 +4,13 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, symlinkSy
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkBaseline } from "./baseline.js";
-import { isExactIncompleteStarter, readPolicy } from "./policy.js";
+import { inspectPolicy as inspect, renderInspection } from "./inspect.js";
+import { incompletePolicyRequirements, isExactIncompleteStarterFile, readPolicy } from "./policy.js";
 
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
 const initUsage = "Usage: righting init [--skills] [--json]";
+const inspectUsage = "Usage: righting inspect [--all] [--json]";
 const rightingSkillNames = ["righting-design-review", "righting-eslint", "righting-integrate"];
 const packagedSkillsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../../skills");
 
@@ -47,8 +49,6 @@ const starterPolicy = `${JSON.stringify(
   null,
   2,
 )}\n`;
-
-const incompletePolicyRequirements = ["aliases", "mappings", "maintainer-approval"] as const;
 
 const managedGuidance = `${managedStart}
 This project has a Righting architecture policy in \`righting.json\`.
@@ -145,14 +145,6 @@ function linkSkills(plan: PlannedSkillLinks): void {
   }
 }
 
-function isIncompleteStarter(policyPath: string): boolean {
-  try {
-    return isExactIncompleteStarter(JSON.parse(readFileSync(policyPath, "utf8")));
-  } catch {
-    return false;
-  }
-}
-
 type PolicyStatus = "incomplete" | "valid";
 
 type PolicyState = {
@@ -160,7 +152,7 @@ type PolicyState = {
 };
 
 function inspectPolicy(policyPath: string): PolicyState {
-  if (isIncompleteStarter(policyPath)) {
+  if (isExactIncompleteStarterFile(policyPath)) {
     return { status: "incomplete" };
   }
 
@@ -184,12 +176,6 @@ function initPolicyResult(state: PolicyState, created: boolean) {
     status: state.status,
     ...(state.status === "incomplete" ? { required: incompletePolicyRequirements } : {}),
   };
-}
-
-function updateGuidance(projectDirectory: string): void {
-  const path = guidancePath(projectDirectory);
-  const existingGuidance = existsSync(path) ? readFileSync(path, "utf8") : undefined;
-  writeFileSync(path, replaceManagedGuidance(existingGuidance), "utf8");
 }
 
 function initialize(projectDirectory: string, installSkills = false) {
@@ -223,20 +209,6 @@ function initialize(projectDirectory: string, installSkills = false) {
   };
 }
 
-function generateDocs(projectDirectory: string) {
-  const policyPath = resolve(projectDirectory, "righting.json");
-  const state = inspectPolicy(policyPath);
-  updateGuidance(projectDirectory);
-  return {
-    command: "docs",
-    policy: { path: "righting.json", status: state.status === "valid" ? "complete" : "incomplete" },
-    guidance: {
-      path: "AGENTS.md",
-      updated: true,
-    },
-  };
-}
-
 function initOptions(options: string[]): { json: boolean; skills: boolean } {
   let json = false;
   let skills = false;
@@ -252,6 +224,23 @@ function initOptions(options: string[]): { json: boolean; skills: boolean } {
   }
 
   return { json, skills };
+}
+
+function inspectOptions(options: string[]): { all: boolean; json: boolean } {
+  let all = false;
+  let json = false;
+
+  for (const option of options) {
+    if (option === "--all" && !all) {
+      all = true;
+    } else if (option === "--json" && !json) {
+      json = true;
+    } else {
+      failInit("invalid-options", inspectUsage, "review-command-options");
+    }
+  }
+
+  return { all, json };
 }
 
 function baselineOptions(options: string[]): { base: string; migrationReason: string | undefined; json: boolean } {
@@ -312,22 +301,20 @@ function main(arguments_: string[]): void {
     return;
   }
 
-  if (command === "docs") {
-    const json = options.length === 1 && options[0] === "--json";
-    if (options.length !== 0 && !json) {
-      throw new Error("Usage: righting docs [--json]");
+  if (command === "inspect") {
+    const { all, json } = inspectOptions(options);
+    let result: ReturnType<typeof inspect>;
+    try {
+      result = inspect(resolve(process.cwd(), "righting.json"), all);
+    } catch (error) {
+      failInit(
+        "invalid-policy",
+        error instanceof Error ? error.message : String(error),
+        "repair-policy",
+        "righting.json",
+      );
     }
-
-    const result = generateDocs(process.cwd());
-    if (json) {
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-      return;
-    }
-    process.stdout.write(
-      result.policy.status === "incomplete"
-        ? "Righting is initialized but not enforcing anything yet. Replace the starter after maintainer approval.\n"
-        : "Updated the Righting policy pointer in AGENTS.md.\n",
-    );
+    process.stdout.write(`${json ? JSON.stringify(result, null, 2) : renderInspection(result, all)}\n`);
     return;
   }
 
@@ -345,7 +332,7 @@ function main(arguments_: string[]): void {
   }
 
   throw new Error(
-    "Usage: righting init [--skills] [--json] | righting docs [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]",
+    "Usage: righting init [--skills] [--json] | righting inspect [--all] [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]",
   );
 }
 
@@ -354,7 +341,7 @@ const arguments_ = process.argv.slice(2);
 try {
   main(arguments_);
 } catch (error) {
-  if (arguments_[0] === "init" && arguments_.includes("--json")) {
+  if ((arguments_[0] === "init" || arguments_[0] === "inspect") && arguments_.includes("--json")) {
     const failure =
       error instanceof InitError
         ? error
@@ -363,7 +350,7 @@ try {
       `${JSON.stringify(
         {
           schemaVersion: 1,
-          command: "init",
+          command: arguments_[0],
           ok: false,
           error: {
             code: failure.code,

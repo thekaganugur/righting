@@ -33,11 +33,11 @@ Completion: the maintainer has approved the exact policy and any requested setup
 
 ## 3. Apply the approved policy
 
-Run `righting init --json` when the project needs its starter files; preserve existing policy when it is not approved for replacement. Apply the approved complete policy, then run `righting docs --json` so only Righting's marked block in `AGENTS.md` is regenerated.
+Run `righting init --json` when the project needs its starter files; preserve existing policy when it is not approved for replacement. Apply the approved complete policy, then run `righting inspect --json` to report its normalized configuration, effective relationships, applicable capability records, and unknown adapter status.
 
 Use `righting-eslint` to add the ESLint adapter when enforcement is approved. Keep any unsupported ESLint result as a reported prerequisite rather than changing lint tooling.
 
-Completion: `righting.json` contains the approved decisions and generated guidance describes that policy.
+Completion: `righting.json` contains the approved decisions and read-only inspection reports that policy without claiming adapter activation.
 
 ## 4. Establish baseline intent deliberately
 
@@ -53,6 +53,6 @@ Completion: the migration base, migration reason, baseline outcome, normal-work 
 
 ## 5. Report the integration record
 
-Report the approved aliases, mappings, scopes, variations, overrides, changed files, guidance result, lint result, typed-lint result from `righting-eslint`, and any baseline result. State that ESLint provides static dependency evidence only; it cannot prove runtime behavior or queued Manager interactions.
+Report the approved aliases, mappings, scopes, variations, overrides, changed files, inspection result, lint result, typed-lint result from `righting-eslint`, and any baseline result. Use the applicable `righting inspect --json` capability records for established and unproven claims; inspection does not establish adapter activation.
 
 Completion: the record contains every approved decision, changed file, command outcome, prerequisite, baseline limitation, and static-analysis limitation.

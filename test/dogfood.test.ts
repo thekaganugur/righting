@@ -114,6 +114,9 @@ test("dogfood project completes the approved Righting integration and repair wor
       devDependencies: Record<string, string>;
     };
     assert.equal(typeof installedPackage.devDependencies.righting, "string");
+    const capabilityReference = readFileSync(resolve(projectDirectory, "node_modules/righting/docs/capabilities.md"), "utf8");
+    assert.match(capabilityReference, /# Righting capability catalog/);
+    assert.match(capabilityReference, /manager-interaction/);
 
     const initialized = righting(projectDirectory, "init", "--skills", "--json");
     assertSuccess(initialized);
@@ -157,6 +160,31 @@ test("dogfood project completes the approved Righting integration and repair wor
     assert.match(agentGuidance, /This project has a Righting architecture policy in `righting\.json`\./);
     assert.match(agentGuidance, /Read it before changing mapped code\./);
     assert.doesNotMatch(agentGuidance, /context firewall|righting init --skills/i);
+
+    const inspected = righting(projectDirectory, "inspect", "--json");
+    assertSuccess(inspected);
+    const inspection = JSON.parse(inspected.stdout) as {
+      schemaVersion: number;
+      command: string;
+      ok: boolean;
+      policy: { status: string };
+      adapter: { status: string };
+      capabilities: Array<{ id: string; coverage: string }>;
+    };
+    assert.equal(inspection.schemaVersion, 1);
+    assert.equal(inspection.command, "inspect");
+    assert.equal(inspection.ok, true);
+    assert.equal(inspection.policy.status, "valid");
+    assert.equal(inspection.adapter.status, "unknown");
+    assert.deepEqual(
+      inspection.capabilities.map(({ id, coverage }) => ({ id, coverage })),
+      [
+        { id: "role-dependency", coverage: "lint-enforced" },
+        { id: "manager-interaction", coverage: "partially-checked" },
+        { id: "context-firewall", coverage: "lint-enforced" },
+        { id: "design-judgment", coverage: "guidance-only" },
+      ],
+    );
 
     const suppressedLegacyDebt = npm(projectDirectory, "run", "lint", "--", "--suppress-rule", "righting/role-dependency");
     assertSuccess(suppressedLegacyDebt);
