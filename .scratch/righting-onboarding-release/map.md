@@ -20,6 +20,9 @@ Produce an implementation-ready route to a release-ready, non-interactive Righti
 
 <!-- Closed tickets only. -->
 
+- [Clarify the incomplete-policy transition](issues/01-clarify-incomplete-policy-transition.md) — Keep approval in the human integration record; replace the exact incomplete starter with a valid policy that omits `status`.
+- [Define the stable agent setup contract](issues/02-define-stable-agent-setup-contract.md) — Publish an additive `schemaVersion: 1` JSON envelope with inspectable policy condition, structured next actions, and machine-readable failures.
+
 ## Not yet specified
 
 - The final package README and dogfood narrative changes, once the setup workflow is decided.
