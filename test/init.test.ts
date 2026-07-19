@@ -50,6 +50,7 @@ test("righting init creates an incomplete starter policy and managed guidance", 
         path: "righting.json",
         created: true,
         status: "incomplete",
+        required: ["aliases", "mappings"],
       },
       guidance: {
         path: "AGENTS.md",
@@ -66,8 +67,9 @@ test("righting init creates an incomplete starter policy and managed guidance", 
     assert.match(guidance, /Keep this project-owned instruction\./);
     assert.match(guidance, new RegExp(managedStart));
     assert.match(guidance, /intentionally incomplete/);
-    assert.match(guidance, /No aliases, mappings, or enforced boundaries are configured yet/);
-    assert.match(guidance, /Static adapters can only check source dependencies/);
+    assert.match(guidance, /Complete the first policy/);
+    assert.match(guidance, /A minimal policy looks like/);
+    assert.match(guidance, /Start without variations, scopes, or overrides/);
     assert.match(guidance, /righting-design-review/);
     assert.match(guidance, /righting init --skills/);
     assert.match(guidance, new RegExp(managedEnd));
@@ -80,7 +82,8 @@ test("righting init creates an incomplete starter policy and managed guidance", 
       policy: {
         path: "righting.json",
         created: false,
-        status: "existing",
+        status: "incomplete",
+        required: ["aliases", "mappings"],
       },
       guidance: {
         path: "AGENTS.md",
@@ -88,6 +91,43 @@ test("righting init creates an incomplete starter policy and managed guidance", 
       },
     });
     assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
+
+    const humanReadable = runInit(projectDirectory);
+    assert.equal(humanReadable.status, 0, humanReadable.stderr);
+    assert.match(humanReadable.stdout, /Next: add approved aliases and mappings/i);
+    assert.match(humanReadable.stdout, /Righting setup section in AGENTS\.md/i);
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
+  }
+});
+
+test("righting docs keeps an incomplete starter actionable", () => {
+  const projectDirectory = createProject();
+
+  try {
+    assert.equal(runInit(projectDirectory, true).status, 0);
+
+    const result = runDocs(projectDirectory, true);
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), {
+      command: "docs",
+      policy: {
+        path: "righting.json",
+        status: "incomplete",
+        required: ["aliases", "mappings"],
+      },
+      guidance: { path: "AGENTS.md", updated: true },
+    });
+    assert.match(result.stderr, /^$/);
+
+    const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
+    assert.match(guidance, /Complete the first policy/);
+    assert.match(guidance, /A minimal policy looks like/);
+
+    const humanReadable = runDocs(projectDirectory);
+    assert.equal(humanReadable.status, 0, humanReadable.stderr);
+    assert.match(humanReadable.stdout, /not enforcing anything yet/i);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }
@@ -104,7 +144,12 @@ test("righting init --skills links packaged skills in the standard project locat
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), {
       command: "init",
-      policy: { path: "righting.json", created: true, status: "incomplete" },
+      policy: {
+        path: "righting.json",
+        created: true,
+        status: "incomplete",
+        required: ["aliases", "mappings"],
+      },
       guidance: { path: "AGENTS.md", updated: true },
       skills: { path: ".agents/skills", linked: skills },
     });
@@ -164,7 +209,7 @@ test("righting init preserves an invalid existing policy and reports it accurate
       policy: {
         path: "righting.json",
         created: false,
-        status: "existing",
+        status: "invalid",
       },
       guidance: {
         path: "AGENTS.md",
@@ -233,6 +278,11 @@ test("righting init refreshes valid existing policy guidance", () => {
     const result = runInit(projectDirectory, true);
 
     assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout).policy, {
+      path: "righting.json",
+      created: false,
+      status: "complete",
+    });
     const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
     assert.match(guidance, /`page` \(Client\)/);
     assert.match(guidance, /`Client` → `Manager`, `Utility`/);
@@ -279,6 +329,7 @@ test("righting docs generates durable policy guidance without replacing project 
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout), {
       command: "docs",
+      policy: { path: "righting.json", status: "complete" },
       guidance: { path: "AGENTS.md", updated: true },
     });
 

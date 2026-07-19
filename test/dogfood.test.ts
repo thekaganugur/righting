@@ -119,7 +119,12 @@ test("dogfood project completes the approved Righting integration and repair wor
     assertSuccess(initialized);
     assert.deepEqual(JSON.parse(initialized.stdout), {
       command: "init",
-      policy: { path: "righting.json", created: true, status: "incomplete" },
+      policy: {
+        path: "righting.json",
+        created: true,
+        status: "incomplete",
+        required: ["aliases", "mappings"],
+      },
       guidance: { path: "AGENTS.md", updated: true },
       skills: {
         path: ".agents/skills",
@@ -139,6 +144,7 @@ test("dogfood project completes the approved Righting integration and repair wor
     assertSuccess(guidance);
     assert.deepEqual(JSON.parse(guidance.stdout), {
       command: "docs",
+      policy: { path: "righting.json", status: "complete" },
       guidance: { path: "AGENTS.md", updated: true },
     });
     const agentGuidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");

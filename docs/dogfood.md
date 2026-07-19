@@ -2,14 +2,20 @@
 
 The dogfood project is `dogfood/orders-and-returns`, an independent TypeScript project with its own package, policy, lint config, native suppression, and CI script. Its public workflow is replayed by `test/dogfood.test.ts` through the installed `righting` CLI and its normal `npm run lint` and `npm run ci` scripts.
 
-A package user starts the same agent-ready setup with:
+A package user starts with:
 
 ```sh
 npm install -D righting
-npx righting init --skills
+npx righting init
 ```
 
-Then open a compatible agent, such as Pi or Codex.
+`init` creates a safe incomplete policy and a setup guide in `AGENTS.md`. It never guesses architecture: choose approved local aliases and path mappings, then run `npx righting docs`. Start with only the code you want to guard; variations, scopes, and overrides can wait.
+
+For agent-assisted policy decisions, add packaged skills explicitly:
+
+```sh
+npx righting init --skills
+```
 
 ## Approved integration
 

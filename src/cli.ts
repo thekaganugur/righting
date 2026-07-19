@@ -32,14 +32,40 @@ const starterPolicy = `${JSON.stringify(
   2,
 )}\n`;
 
+const starterPolicyExample = `{
+  "preset": "volatility@1",
+  "aliases": {
+    "screen": "Client",
+    "workflow": "Manager"
+  },
+  "mappings": [
+    { "alias": "screen", "path": "src/screen/**" },
+    { "alias": "workflow", "path": "src/workflow/**" }
+  ]
+}`;
+const incompletePolicyRequirements = ["aliases", "mappings"] as const;
+
 const managedGuidance = `${managedStart}
-## Righting guidance
+## Righting setup
 
-\`righting.json\` selects \`volatility@1\` but is intentionally incomplete.
+\`righting.json\` selects \`volatility@1\` but is intentionally incomplete. Righting will not guess your architecture or enable enforcement yet.
 
-- No aliases, mappings, or enforced boundaries are configured yet. Do not infer them.
-- Do not enable enforcement until a maintainer has supplied and approved architecture decisions about roles, mappings, scopes, and exceptions.
-- No adapter is configured. Static adapters can only check source dependencies; they cannot prove runtime behavior.
+### Complete the first policy
+
+1. Choose only the code whose dependencies you want Righting to guard now. You can add mappings later.
+2. Give each local name a canonical role: \`Client\` (interaction), \`Manager\` (workflow), \`Engine\` (decision), \`ResourceAccess\` (data or transport), \`Resource\` (external system), or \`Utility\` (stable shared code).
+3. Add approved \`aliases\` and \`mappings\` to \`righting.json\`. An alias is your local name for a canonical role, such as \`screen\` for \`Client\`.
+
+A minimal policy looks like:
+
+\`\`\`json
+${starterPolicyExample}
+\`\`\`
+
+Start without variations, scopes, or overrides unless you have a specific approved need. Once the policy is complete, run \`righting docs\` to refresh this guidance. Configure an enforcement adapter separately.
+
+### Optional agent support
+
 - Run \`righting init --skills\` to create relative symlinks to packaged Righting skills in \`.agents/skills\` for compatible agents.
 - The \`righting-design-review\` workflow is advisory and never changes policy, CI, or project files automatically.
 - Keep project-owned instructions outside this managed block.
@@ -136,12 +162,33 @@ function isIncompleteStarter(policyPath: string): boolean {
   }
 }
 
-function existingPolicyGuidance(policyPath: string): string {
+type PolicyStatus = "complete" | "incomplete" | "invalid";
+
+type PolicyState = {
+  status: PolicyStatus;
+  guidance: string;
+};
+
+function inspectPolicy(policyPath: string): PolicyState {
   try {
-    return `${managedStart}\n${renderPolicyGuidance(readPolicy(policyPath))}\n${managedEnd}`;
+    return {
+      status: "complete",
+      guidance: `${managedStart}\n${renderPolicyGuidance(readPolicy(policyPath))}\n${managedEnd}`,
+    };
   } catch {
-    return isIncompleteStarter(policyPath) ? managedGuidance : invalidPolicyGuidance;
+    return isIncompleteStarter(policyPath)
+      ? { status: "incomplete", guidance: managedGuidance }
+      : { status: "invalid", guidance: invalidPolicyGuidance };
   }
+}
+
+function policyResult(state: PolicyState, created?: boolean) {
+  return {
+    path: "righting.json",
+    ...(created === undefined ? {} : { created }),
+    status: state.status,
+    ...(state.status === "incomplete" ? { required: incompletePolicyRequirements } : {}),
+  };
 }
 
 function updateGuidance(projectDirectory: string, content = managedGuidance): void {
@@ -155,8 +202,8 @@ function initialize(projectDirectory: string, installSkills = false) {
   const policyPath = resolve(projectDirectory, "righting.json");
   const path = guidancePath(projectDirectory);
   const policyCreated = !existsSync(policyPath);
-  const content = policyCreated ? managedGuidance : existingPolicyGuidance(policyPath);
-  const guidance = replaceManagedGuidance(existsSync(path) ? readFileSync(path, "utf8") : undefined, content);
+  const state = policyCreated ? { status: "incomplete" as const, guidance: managedGuidance } : inspectPolicy(policyPath);
+  const guidance = replaceManagedGuidance(existsSync(path) ? readFileSync(path, "utf8") : undefined, state.guidance);
 
   if (policyCreated) {
     writeFileSync(policyPath, starterPolicy, { encoding: "utf8", flag: "wx" });
@@ -169,11 +216,7 @@ function initialize(projectDirectory: string, installSkills = false) {
 
   return {
     command: "init",
-    policy: {
-      path: "righting.json",
-      created: policyCreated,
-      status: policyCreated ? "incomplete" : "existing",
-    },
+    policy: policyResult(state, policyCreated),
     guidance: {
       path: "AGENTS.md",
       updated: true,
@@ -183,11 +226,15 @@ function initialize(projectDirectory: string, installSkills = false) {
 }
 
 function generateDocs(projectDirectory: string) {
-  const policy = readPolicy(resolve(projectDirectory, "righting.json"));
-  const guidance = `${managedStart}\n${renderPolicyGuidance(policy)}\n${managedEnd}`;
-  updateGuidance(projectDirectory, guidance);
+  const policyPath = resolve(projectDirectory, "righting.json");
+  const state = inspectPolicy(policyPath);
+  if (state.status === "invalid") {
+    readPolicy(policyPath);
+  }
+  updateGuidance(projectDirectory, state.guidance);
   return {
     command: "docs",
+    policy: policyResult(state),
     guidance: {
       path: "AGENTS.md",
       updated: true,
@@ -259,8 +306,14 @@ function main(arguments_: string[]): void {
       return;
     }
 
+    const next =
+      result.policy.status === "incomplete"
+        ? " Next: add approved aliases and mappings to righting.json, then run righting docs. See the Righting setup section in AGENTS.md for roles and an example."
+        : result.policy.status === "invalid"
+          ? " Righting enforcement remains blocked until righting.json is valid."
+          : "";
     process.stdout.write(
-      `${result.policy.created ? "Created" : "Kept"} righting.json. ${result.guidance.updated ? "Updated" : "Kept"} Righting-managed guidance in AGENTS.md.${skills ? " Linked Righting skills in .agents/skills." : ""}\n`,
+      `${result.policy.created ? "Created" : "Kept"} righting.json. ${result.guidance.updated ? "Updated" : "Kept"} Righting-managed guidance in AGENTS.md.${skills ? " Linked Righting skills in .agents/skills." : ""}${next}\n`,
     );
     return;
   }
@@ -276,7 +329,11 @@ function main(arguments_: string[]): void {
       process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
       return;
     }
-    process.stdout.write("Updated Righting-managed guidance in AGENTS.md.\n");
+    process.stdout.write(
+      result.policy.status === "incomplete"
+        ? "Righting is initialized but not enforcing anything yet. Add approved aliases and mappings to righting.json, then run righting docs again. See the Righting setup section in AGENTS.md for roles and an example.\n"
+        : "Updated Righting-managed guidance in AGENTS.md.\n",
+    );
     return;
   }
 
