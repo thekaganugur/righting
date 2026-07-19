@@ -57,15 +57,15 @@ Work the **frontier**: any ticket whose blockers are all done. For a purely line
 
 ## Prove the packed agent-assisted journey
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **What to build:** Release automation proves the same clean onboarding journey works for a compatible agent through `init --skills --json`, using the stable JSON contract and safely discoverable packaged skills without treating automated steps as maintainer approval.
 
 **Blocked by:** Prove the packed manual-maintainer journey.
 
-- [ ] The agent fixture starts from the same clean and pre-approved-policy fixtures as the manual route, differing only in opt-in skill discovery.
-- [ ] It verifies relative skill links, collision-safe ownership, schema-version-1 JSON semantics, and a JSON-driven progression to the approved policy and inspection result.
-- [ ] It never parses human output or claims that a maintainer’s architecture or adapter decision was automated.
+- [x] The agent fixture starts from the same clean and pre-approved-policy fixtures as the manual route, differing only in opt-in skill discovery.
+- [x] It verifies relative skill links, collision-safe ownership, schema-version-1 JSON semantics, and a JSON-driven progression to the approved policy and inspection result.
+- [x] It never parses human output or claims that a maintainer’s architecture or adapter decision was automated.
 
 ## Preserve Orders/Returns post-approval repair evidence
 
