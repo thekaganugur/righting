@@ -25,10 +25,10 @@ Work the **frontier**: any ticket whose blockers are all done. For a purely line
 
 **Blocked by:** Approval-first `init` and v1 JSON contract.
 
-- [ ] Exact incomplete starters inspect successfully with requirements and next action but no effective rules; malformed policies return the common non-zero structured failure.
-- [ ] Valid inspection exposes aliases, mappings, variations, scopes, overrides, protected dependencies, and computed allowed dependencies in human and JSON forms.
-- [ ] A package-owned capability catalog supplies stable semantic IDs, coverage classifications, established and unproven claims, and adapter diagnostic mappings; default inspection shows applicable records and `--all` separates available-but-unconfigured records.
-- [ ] Inspection is demonstrably read-only and explicitly states that adapter activation, runtime behavior, and queued Manager interaction semantics are unproven or unknown.
+- [x] Exact incomplete starters inspect successfully with requirements and next action but no effective rules; malformed policies return the common non-zero structured failure.
+- [x] Valid inspection exposes aliases, mappings, variations, scopes, overrides, protected dependencies, and computed allowed dependencies in human and JSON forms.
+- [x] A package-owned capability catalog supplies stable semantic IDs, coverage classifications, established and unproven claims, and adapter diagnostic mappings; default inspection shows applicable records and `--all` separates available-but-unconfigured records.
+- [x] Inspection is demonstrably read-only and explicitly states that adapter activation, runtime behavior, and queued Manager interaction semantics are unproven or unknown.
 
 ## Publish onboarding routes and retire generated guidance
 
