@@ -114,7 +114,7 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Guide deliberate Righting integrations; Offer read-only Righting design review.
 
-- [ ] The dogfood project completes non-interactive integration with user-approved aliases, scopes or managed area, generated guidance, and committed legacy debt where needed.
-- [ ] A normal feature change encounters an actionable boundary failure in the project’s normal lint loop and is repaired using the policy or a golden example.
-- [ ] The final project passes CI without a human architecture intervention.
-- [ ] The dogfood record identifies evidence and open refinement questions for design review, adapter performance, composition-root scope, stronger baseline identity, and future adapters.
+- [x] The dogfood project completes non-interactive integration with user-approved aliases, scopes or managed area, generated guidance, and committed legacy debt where needed.
+- [x] A normal feature change encounters an actionable boundary failure in the project’s normal lint loop and is repaired using the policy or a golden example.
+- [x] The final project passes CI without a human architecture intervention.
+- [x] The dogfood record identifies evidence and open refinement questions for design review, adapter performance, composition-root scope, stronger baseline identity, and future adapters.

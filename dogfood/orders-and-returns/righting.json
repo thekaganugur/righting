@@ -1,0 +1,31 @@
+{
+  "preset": "volatility@1",
+  "aliases": {
+    "Screen": "Client",
+    "Workflow": "Manager",
+    "Rules": "Engine",
+    "Gateway": "ResourceAccess",
+    "Api": "Resource",
+    "Shared": "Utility"
+  },
+  "mappings": [
+    { "alias": "Screen", "path": "src/orders/screen/**" },
+    { "alias": "Screen", "path": "src/returns/screen/**" },
+    { "alias": "Workflow", "path": "src/orders/workflow/**" },
+    { "alias": "Workflow", "path": "src/returns/workflow/**" },
+    { "alias": "Rules", "path": "src/orders/rules/**" },
+    { "alias": "Rules", "path": "src/returns/rules/**" },
+    { "alias": "Gateway", "path": "src/orders/gateway/**" },
+    { "alias": "Gateway", "path": "src/returns/gateway/**" },
+    { "alias": "Api", "path": "src/orders/api/**" },
+    { "alias": "Api", "path": "src/returns/api/**" },
+    { "alias": "Shared", "path": "src/shared/**" }
+  ],
+  "variations": ["contextFirewall"],
+  "scopes": [
+    { "kind": "context", "name": "orders", "path": "src/orders/**" },
+    { "kind": "context", "name": "returns", "path": "src/returns/**" },
+    { "kind": "shared", "path": "src/shared/**" },
+    { "kind": "unscoped", "path": "src/application/**" }
+  ]
+}

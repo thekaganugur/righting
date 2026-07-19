@@ -1,0 +1,7 @@
+{
+  "src/orders/workflow/legacy-order.ts": {
+    "righting/role-dependency": {
+      "count": 1
+    }
+  }
+}
