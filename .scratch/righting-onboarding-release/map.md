@@ -10,10 +10,11 @@ Produce an implementation-ready route to a release-ready, non-interactive Righti
 ## Notes
 
 - Primary user: a maintainer who understands and approves architecture decisions, working with a compatible coding agent.
-- The v1 `init` / `docs` workflow remains the baseline, but a narrowly justified non-interactive setup command is allowed if it reduces adoption friction.
+- The v1 `init` workflow remains the baseline; a narrowly justified non-interactive setup command is allowed if it reduces adoption friction.
 - `--json` is a stable public agent-integration contract, not incidental output.
 - The map ends with an implementation handoff; it does not apply code changes or run release validation.
 - Preserve Righting constraints: no architecture inference, no automatic lint migration, no interactive wizard, and no runtime-proof claims.
+- `init` automatically maintains a minimal managed `AGENTS.md` pointer to `righting.json`. Omit facts compatible agents can already discover from project conventions, policy, or installed skills.
 - Consult `.scratch/righting-v1/PRD.md`, `design/2026-07-18-righting-v1.md`, `skills/righting-integrate/SKILL.md`, and the domain vocabulary in the PRD.
 
 ## Decisions so far
@@ -22,10 +23,12 @@ Produce an implementation-ready route to a release-ready, non-interactive Righti
 
 - [Clarify the incomplete-policy transition](issues/01-clarify-incomplete-policy-transition.md) — Keep approval in the human integration record; replace the exact incomplete starter with a valid policy that omits `status`.
 - [Define the stable agent setup contract](issues/02-define-stable-agent-setup-contract.md) — Publish an additive `schemaVersion: 1` JSON envelope with inspectable policy condition, structured next actions, and machine-readable failures.
+- [Design the human-and-agent setup handoff](issues/03-design-human-and-agent-setup-handoff.md) — Keep automatic project guidance to one policy pointer; use explicit discoverable skills or package onboarding for the separate agent and manual routes.
 
 ## Not yet specified
 
 - The final package README and dogfood narrative changes, once the setup workflow is decided.
+
 - Whether a manual walkthrough should reveal further compatible-agent discovery constraints after the intended journey is concrete.
 
 ## Out of scope
