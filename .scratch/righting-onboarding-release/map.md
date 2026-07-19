@@ -1,6 +1,6 @@
 # Release-ready Righting onboarding
 
-Status: open
+Status: resolved
 Labels: wayfinder:map
 
 ## Destination
@@ -10,7 +10,7 @@ Produce an implementation-ready route to a release-ready, non-interactive Righti
 ## Notes
 
 - Primary user: a maintainer who understands and approves architecture decisions, working with a compatible coding agent.
-- The v1 `init` workflow remains the baseline; a narrowly justified non-interactive setup command is allowed if it reduces adoption friction.
+- V1 adds no setup command; `init` remains the setup entry point. A read-only inspection surface is assessed separately.
 - `--json` is a stable public agent-integration contract, not incidental output.
 - The map ends with an implementation handoff; it does not apply code changes or run release validation.
 - Preserve Righting constraints: no architecture inference, no automatic lint migration, no interactive wizard, and no runtime-proof claims.
@@ -24,14 +24,17 @@ Produce an implementation-ready route to a release-ready, non-interactive Righti
 - [Clarify the incomplete-policy transition](issues/01-clarify-incomplete-policy-transition.md) — Keep approval in the human integration record; replace the exact incomplete starter with a valid policy that omits `status`.
 - [Define the stable agent setup contract](issues/02-define-stable-agent-setup-contract.md) — Publish an additive `schemaVersion: 1` JSON envelope with inspectable policy condition, structured next actions, and machine-readable failures.
 - [Design the human-and-agent setup handoff](issues/03-design-human-and-agent-setup-handoff.md) — Keep automatic project guidance to one policy pointer; use explicit discoverable skills or package onboarding for the separate agent and manual routes.
+- [Assess a narrow setup command](issues/04-assess-a-narrow-setup-command.md) — Add no setup command: the remaining valuable command idea is a separately assessed read-only policy inspection surface.
+- [Assess a read-only policy inspection command](issues/06-assess-a-read-only-policy-inspection-command.md) — Add `righting inspect` to render effective policy and structured capability limits without assessing adapter activation.
+- [Define release onboarding evidence](issues/05-define-release-onboarding-evidence.md) — Gate release on packaged-CLI contract and route fixtures, the shared repair loop, and recorded maintainer-alone and maintainer-with-agent walkthroughs.
+- [Specify package onboarding documentation](issues/07-specify-package-onboarding-documentation.md) — Publish a route-chooser README and focused references with one owner per concern, while keeping dogfood candid and project guidance minimal.
 
 ## Not yet specified
 
-- The final package README and dogfood narrative changes, once the setup workflow is decided.
-
-- Whether a manual walkthrough should reveal further compatible-agent discovery constraints after the intended journey is concrete.
 
 ## Out of scope
 
 - Implementing the onboarding changes, tests, or manual release walkthrough; this map stops at an approved handoff.
+- Revising the journey after executing walkthroughs; this map defines the evidence records but does not perform release validation.
+- A future health surface that assesses adapter integration or enforcement status, distinct from `righting inspect`.
 - Architecture inference, automatic policy completion, lint-config migration, interactive setup, and runtime-behaviour verification.
