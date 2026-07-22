@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { test } from "node:test";
@@ -11,6 +11,7 @@ const repositoryDirectory = resolve(testDirectory, "../..");
 const packagedResources = [
   "dist/src/cli.js",
   "dist/src/capabilities.js",
+  "dist/src/suppressions.js",
   "skills/righting-design-review/SKILL.md",
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
@@ -24,8 +25,8 @@ const packagedResources = [
   "docs/dogfood.md",
 ];
 
-function run(command: string, arguments_: string[]) {
-  return spawnSync(command, arguments_, { cwd: repositoryDirectory, encoding: "utf8" });
+function run(command: string, arguments_: string[], cwd = repositoryDirectory) {
+  return spawnSync(command, arguments_, { cwd, encoding: "utf8" });
 }
 
 test("the packed package publishes every onboarding reference without the retired docs command", () => {
@@ -48,6 +49,18 @@ test("the packed package publishes every onboarding reference without the retire
       assert.ok(files.has(resource), `${resource} is missing from the package`);
     }
     assert.equal(files.has("dist/src/docs.js"), false);
+    assert.equal(files.has("docs/agents/issue-tracker.md"), false);
+    assert.equal(files.has("docs/agents/domain.md"), false);
+
+    const consumerDirectory = resolve(packageDirectory, "consumer");
+    mkdirSync(consumerDirectory);
+    writeFileSync(resolve(consumerDirectory, "package.json"), '{"name":"consumer","private":true}\n');
+    const installed = run("npm", ["install", "--save-dev", "--ignore-scripts", tarball], consumerDirectory);
+    assert.equal(installed.status, 0, installed.stderr);
+    const initialized = run("npx", ["righting", "init"], consumerDirectory);
+    assert.equal(initialized.status, 0, initialized.stderr);
+    assert.equal(existsSync(resolve(consumerDirectory, "node_modules/eslint")), false);
+    assert.equal(existsSync(resolve(consumerDirectory, "node_modules/eslint-plugin-boundaries")), false);
 
     const extracted = run("tar", ["-xzf", tarball, "-C", packageDirectory]);
     assert.equal(extracted.status, 0, extracted.stderr);

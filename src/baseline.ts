@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
-import { normalizeEslintSuppressions, type LegacyDebt } from "./eslint.js";
+import { normalizeEslintSuppressions, type LegacyDebt } from "./suppressions.js";
 import { isPolicyExpansion, readPolicy, readPolicySource } from "./policy.js";
 
 const flatConfigNames = [

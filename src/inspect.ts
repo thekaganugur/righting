@@ -35,6 +35,11 @@ type ValidInspection = {
   ok: true;
   policy: { path: "righting.json"; status: "valid" };
   adapter: { status: "unknown" };
+  enforcementCoverage: {
+    mode: "declared-paths-only";
+    paths: string[];
+    unchecked: ["files-outside-declared-paths"];
+  };
   configuration: ReturnType<typeof configurationFor>;
   effectivePolicy: { allowedDependencies: ReturnType<typeof allowedDependencies> };
   capabilities: Capability[];
@@ -75,6 +80,7 @@ function configurationFor(policy: Policy) {
       }
       return [{ alias: mapping.alias, role: policy.aliases[mapping.alias], package: packageName }];
     }),
+    ...(policy.extras === undefined ? {} : { extras: policy.extras }),
   };
 }
 
@@ -104,6 +110,14 @@ export function inspectPolicy(policyPath: string, includeAll = false): Inspectio
     ok: true,
     policy: { path: "righting.json", status: "valid" },
     adapter: { status: "unknown" },
+    enforcementCoverage: {
+      mode: "declared-paths-only",
+      paths: [
+        ...policy.mappings.flatMap((mapping) => (mapping.path === undefined ? [] : [mapping.path])),
+        ...policy.scopes.map((scope) => scope.path),
+      ],
+      unchecked: ["files-outside-declared-paths"],
+    },
     configuration: configurationFor(policy),
     effectivePolicy: { allowedDependencies: allowedDependencies(policy) },
     capabilities,
@@ -136,6 +150,7 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
       ...header,
       `Requires: ${inspection.policy.required.join(", ")}`,
       `Next action: ${inspection.nextAction}`,
+      "Guide: node_modules/righting/docs/manual-maintainer.md",
       "Adapter activation: unknown (not checked)",
     ].join("\n");
   }
@@ -152,6 +167,8 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
   const protectedDependencies = configuration.protectedDependencies.map(
     (dependency) => `- ${dependency.alias} (${dependency.role}): ${dependency.package}`,
   );
+  const extras = "extras" in configuration ? configuration.extras : undefined;
+  const goldenExamples = Object.entries(extras?.goldenExamples ?? {}).map(([name, path]) => `- ${name}: ${path}`);
   const relationships = Object.entries(inspection.effectivePolicy.allowedDependencies).map(
     ([role, allowed]) => `- ${role} -> ${allowed.join(", ")}`,
   );
@@ -161,6 +178,7 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
   return [
     ...header,
     "Policy syntax is valid; maintainer approval and active lint enforcement are not checked.",
+    "Source coverage is limited to declared mapping and scope paths; all other files are unchecked.",
     ...(inspection.warnings === undefined
       ? [""]
       : ["", "Warnings", ...inspection.warnings.map(renderWarning), ""]),
@@ -177,6 +195,14 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
     ...(overrides.length === 0 ? ["- None"] : overrides),
     "Protected dependencies",
     ...(protectedDependencies.length === 0 ? ["- None"] : protectedDependencies),
+    ...(extras === undefined
+      ? []
+      : [
+          "Guidance extras",
+          `Domain vocabulary: ${extras.domainVocabulary ?? "None"}`,
+          "Golden examples",
+          ...(goldenExamples.length === 0 ? ["- None"] : goldenExamples),
+        ]),
     "",
     "Effective role relationships",
     ...relationships,

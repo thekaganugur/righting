@@ -42,7 +42,7 @@ test("a packed Righting artifact proves the manual-maintainer route and JSON con
     assert.equal((incomplete.policy as Json).created, false);
     assert.deepEqual((incomplete.policy as Json).required, ["aliases", "mappings", "maintainer-approval"]);
     assert.equal((incomplete.guidance as Json).path, "AGENTS.md");
-    assert.equal((incomplete.guidance as Json).updated, true);
+    assert.equal((incomplete.guidance as Json).updated, false);
     assert.equal(incomplete.nextAction, "obtain-policy-approval");
 
     const incompleteInspection = assertSuccessEnvelope(righting(projectDirectory, "inspect", "--json"), "inspect", "incomplete");
@@ -89,7 +89,9 @@ test("a packed Righting artifact proves the manual-maintainer route and JSON con
     );
     assert.equal((JSON.parse(readFileSync(resolve(projectDirectory, "package.json"), "utf8")) as { scripts: { lint: string } }).scripts.lint, lintScript);
     assert.match(readFileSync(configPath, "utf8"), /ignores: \["node_modules\/\*\*"\]/);
-    assertCommandSucceeded(runCommand(projectDirectory, "npm", ["run", "lint"]));
+    const lint = runCommand(projectDirectory, "npm", ["run", "lint"]);
+    assertCommandSucceeded(lint);
+    assert.doesNotMatch(`${lint.stdout}\n${lint.stderr}`, /deprecated|boundaries.*warning/i);
 
     writeFileSync(resolve(projectDirectory, "righting.json"), '{"preset":"volatility@1","status":"incomplete","aliases":{"screen":"Client"}}\n');
     const malformed = assertFailureEnvelope(righting(projectDirectory, "inspect", "--json"), "inspect", "invalid-policy", "repair-policy");

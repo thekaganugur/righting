@@ -1,43 +1,10 @@
 import { resolve } from "node:path";
 import boundaries from "eslint-plugin-boundaries";
 import { allowedDependencies, readPolicy, roles, type Role } from "./policy.js";
+export { normalizeEslintSuppressions, type LegacyDebt } from "./suppressions.js";
 
 const externalOrigins = ["external", "core"];
 export const roleDependencyRule = "righting/role-dependency";
-
-export type LegacyDebt = Record<string, Record<string, number>>;
-
-type JsonRecord = Record<string, unknown>;
-
-function record(value: unknown, description: string): JsonRecord {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error(`${description} must be a JSON object.`);
-  }
-
-  return value as JsonRecord;
-}
-
-// This is also the rule ID ESLint stores in eslint-suppressions.json.
-export function normalizeEslintSuppressions(value: unknown): LegacyDebt {
-  const suppressions = record(value, "eslint-suppressions.json");
-  const debt: LegacyDebt = {};
-
-  for (const [file, valueByRule] of Object.entries(suppressions)) {
-    const rules = record(valueByRule, `eslint-suppressions.json entry "${file}"`);
-    const suppression = rules[roleDependencyRule];
-    if (suppression === undefined) {
-      continue;
-    }
-
-    const count = record(suppression, `eslint-suppressions.json ${file} ${roleDependencyRule}`).count;
-    if (typeof count !== "number" || !Number.isInteger(count) || count < 1) {
-      throw new Error(`eslint-suppressions.json ${file} ${roleDependencyRule} count must be a positive integer.`);
-    }
-    debt[file] = { [roleDependencyRule]: count };
-  }
-
-  return debt;
-}
 
 function emptyRoleMap(): Record<Role, string[]> {
   return {
@@ -100,7 +67,7 @@ export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json"
         }),
         ...policy.scopes.map((scope, index) => ({ type: scopeElementType(index), pattern: scope.path })),
       ],
-      "boundaries/elements-single-type": false,
+      "boundaries/elements-single-match": false,
       "boundaries/dependency-nodes": ["import", "export", "require", "dynamic-import"],
     },
     rules: {
@@ -111,14 +78,19 @@ export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json"
           checkInternals: true,
           checkUnknownLocals: true,
           default: "disallow",
-          message: "righting/role-dependency: {{from.element.types}} cannot depend on {{to.element.types}}.",
+          message: "righting/role-dependency: This dependency is forbidden by the declared policy.",
           policies: [
-            ...roles.map((from) => ({
-              from: { element: { types: { allOf: [roleElementType(from)] } } },
-              allow: {
-                to: { element: { types: { anyOf: allowed[from].map((to) => roleElementType(to)) } } },
-              },
-            })),
+            ...roles.flatMap((from) =>
+              roles.map((to) => ({
+                from: { element: { types: { allOf: [roleElementType(from)] } } },
+                ...(allowed[from].includes(to)
+                  ? { allow: { to: { element: { types: { allOf: [roleElementType(to)] } } } } }
+                  : {
+                      disallow: { to: { element: { types: { allOf: [roleElementType(to)] } } } },
+                      message: `righting/role-dependency: ${from} cannot depend on ${to}.`,
+                    }),
+              })),
+            ),
             { allow: { to: { module: { origin: externalOrigins } } } },
             ...roles.flatMap((from) => {
               const packages = protectedPackages(from);

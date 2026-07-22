@@ -100,11 +100,14 @@ test("righting init creates only the exact starter and minimal policy pointer", 
       required: ["aliases", "mappings", "maintainer-approval"],
     });
     assert.equal(repeat.nextAction, "obtain-policy-approval");
+    assert.deepEqual(repeat.guidance, { path: "AGENTS.md", updated: false });
     assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
 
     const humanReadable = run(projectDirectory, "init");
     assert.equal(humanReadable.status, 0, humanReadable.stderr);
-    assert.match(humanReadable.stdout, /replace the starter after maintainer approval/i);
+    assert.match(humanReadable.stdout, /Kept Righting-managed guidance/);
+    assert.match(humanReadable.stdout, /define and approve the replacement/i);
+    assert.match(humanReadable.stdout, /node_modules\/righting\/docs\/manual-maintainer\.md/);
     assert.match(humanReadable.stdout, /righting init --skills/);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
@@ -132,6 +135,7 @@ test("righting init preserves a valid policy without claiming approval or adapte
 
     const humanReadable = run(projectDirectory, "init");
     assert.equal(humanReadable.status, 0, humanReadable.stderr);
+    assert.match(humanReadable.stdout, /Kept Righting-managed guidance/);
     assert.doesNotMatch(humanReadable.stdout, /approval|adapter|onboarding complete/i);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });

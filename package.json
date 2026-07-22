@@ -13,7 +13,8 @@
     "dist/src/",
     "!dist/src/docs.js",
     "skills/",
-    "docs/"
+    "docs/",
+    "!docs/agents/"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json && node scripts/render-capabilities.mjs",
@@ -30,17 +31,21 @@
     "@babel/plugin-syntax-typescript": "^7.29.7",
     "@types/node": "^26.1.1",
     "eslint": "^9.39.5",
+    "eslint-plugin-boundaries": "^7.1.0",
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "eslint-plugin-boundaries": "^7.0.2",
     "micromatch": "^4.0.8"
   },
   "peerDependencies": {
-    "eslint": ">=9.0.0"
+    "eslint": ">=9.0.0",
+    "eslint-plugin-boundaries": ">=7.1.0 <8"
   },
   "peerDependenciesMeta": {
     "eslint": {
+      "optional": true
+    },
+    "eslint-plugin-boundaries": {
       "optional": true
     }
   }

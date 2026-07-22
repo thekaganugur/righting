@@ -201,7 +201,7 @@ function parseAliases(value: unknown): Record<string, Role> {
       fail("aliases cannot contain an empty alias.");
     }
     if (!isRole(role)) {
-      fail(`alias "${alias}" must map to a canonical role.`);
+      fail(`alias "${alias}" must map to one of: ${roles.join(", ")}.`);
     }
     aliases[alias] = role;
   }

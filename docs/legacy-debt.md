@@ -1,6 +1,6 @@
 # Legacy ESLint debt
 
-Righting supports existing **ESLint flat-config** projects only. It never installs ESLint, migrates a legacy `.eslintrc*`, rewrites `eslint.config.*`, or changes the `lint` script.
+Righting supports existing **ESLint 9-or-later flat-config** projects only. It never creates or migrates lint configuration, rewrites `eslint.config.*`, or changes the `lint` script.
 
 ## Establish a baseline
 

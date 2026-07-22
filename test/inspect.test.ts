@@ -110,6 +110,9 @@ test("righting inspect reports an incomplete starter without effective rules or 
     assert.equal("effectivePolicy" in output, false);
     assert.equal("capabilities" in output, false);
     assert.deepEqual(output.adapter, { status: "unknown" });
+    const humanOutput = run(projectDirectory, "inspect");
+    assert.equal(humanOutput.status, 0, humanOutput.stderr);
+    assert.match(humanOutput.stdout, /Guide: node_modules\/righting\/docs\/manual-maintainer\.md/);
     assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
     assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
   } finally {
@@ -203,7 +206,15 @@ test("righting inspect reports normalized policy semantics and capability limits
 
 test("righting inspect warns when a declared mapping matches no current project file", () => {
   const projectDirectory = createProject();
-  const policy = '{"preset":"volatility@1","aliases":{"ui":"Client"},"mappings":[{"alias":"ui","path":"src/missing/**"}]}\n';
+  const policy = `${JSON.stringify({
+    preset: "volatility@1",
+    aliases: { ui: "Client" },
+    mappings: [{ alias: "ui", path: "src/missing/**" }],
+    extras: {
+      domainVocabulary: "righting.json",
+      goldenExamples: { policy: "righting.json" },
+    },
+  })}\n`;
 
   try {
     writeFileSync(resolve(projectDirectory, "righting.json"), policy);
@@ -217,10 +228,22 @@ test("righting inspect warns when a declared mapping matches no current project 
         path: "src/missing/**",
       },
     ]);
+    assert.deepEqual(output.enforcementCoverage, {
+      mode: "declared-paths-only",
+      paths: ["src/missing/**"],
+      unchecked: ["files-outside-declared-paths"],
+    });
+    assert.deepEqual((output.configuration as Record<string, unknown>).extras, {
+      domainVocabulary: "righting.json",
+      goldenExamples: { policy: "righting.json" },
+    });
 
     const humanOutput = run(projectDirectory, "inspect");
     assert.equal(humanOutput.status, 0, humanOutput.stderr);
+    assert.match(humanOutput.stdout, /Source coverage is limited to declared mapping and scope paths; all other files are unchecked\./);
     assert.match(humanOutput.stdout, /Mapping "ui" matches no current project file: src\/missing\/\*\*/);
+    assert.match(humanOutput.stdout, /Domain vocabulary: righting\.json/);
+    assert.match(humanOutput.stdout, /- policy: righting\.json/);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }
@@ -349,7 +372,23 @@ test("righting inspect returns the structured failure envelope for malformed pol
     const malformed = run(projectDirectory, "inspect", "--json");
     assertFailureEnvelope(malformed, "invalid-policy", "righting.json", "repair-policy");
     assert.match((json(malformed).error as { message: string }).message, /may contain only.*preset.*status/i);
+    assert.match((json(malformed).error as { message: string }).message, /node_modules\/righting\/docs\/policy-language\.md/);
     assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
+
+    const humanMalformed = run(projectDirectory, "inspect");
+    assert.notEqual(humanMalformed.status, 0);
+    assert.match(humanMalformed.stderr, /Repair righting\.json using node_modules\/righting\/docs\/policy-language\.md/);
+
+    writeFileSync(
+      resolve(projectDirectory, "righting.json"),
+      '{"preset":"volatility@1","aliases":{"page":"client"},"mappings":[{"alias":"page","path":"src/page/**"}]}\n',
+    );
+    const invalidRole = run(projectDirectory, "inspect", "--json");
+    assertFailureEnvelope(invalidRole, "invalid-policy", "righting.json", "repair-policy");
+    assert.match(
+      (json(invalidRole).error as { message: string }).message,
+      /Client, Manager, Engine, ResourceAccess, Resource, Utility/,
+    );
 
     const invalidOptions = run(projectDirectory, "inspect", "--json", "--all", "--all");
     assertFailureEnvelope(invalidOptions, "invalid-options", undefined, "review-command-options");

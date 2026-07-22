@@ -22,7 +22,7 @@ export const capabilityCatalog = [
     id: "role-dependency",
     coverage: "lint-enforced",
     establishes: ["configured-role-dependency-boundaries", "unresolved-local-import-is-forbidden"],
-    doesNotEstablish: ["runtime-dependency-behavior"],
+    doesNotEstablish: ["files-outside-declared-paths", "runtime-dependency-behavior"],
     adapterRules: ["righting/role-dependency"],
     applicability: "always",
   },

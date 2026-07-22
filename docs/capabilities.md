@@ -13,6 +13,7 @@ Coverage: `lint-enforced`
 
 ### Does not establish
 
+- `files-outside-declared-paths`
 - `runtime-dependency-behavior`
 
 ### Adapter diagnostics

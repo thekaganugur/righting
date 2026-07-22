@@ -122,6 +122,8 @@ test("fixture lint command reports a forbidden Manager dependency with a stable 
 
   assert.equal(result.status, 1, output);
   assert.match(output, /righting\/role-dependency/);
+  assert.match(output, /Manager cannot depend on Client/);
+  assert.doesNotMatch(output, /righting-role-/);
 });
 
 test("fixture stores Righting debt as a namespaced native ESLint suppression", () => {
@@ -297,6 +299,39 @@ test("context firewall rejects a contextual dependency on another context", () =
           const output = `${result.stdout}\n${result.stderr}`;
           assert.equal(result.status, 1, output);
           assert.match(output, /righting\/cross-context-dependency/);
+        });
+      });
+    },
+  );
+});
+
+test("context firewall role diagnostics hide internal scope identifiers", () => {
+  const policy = {
+    preset: "volatility@1",
+    aliases: { screen: "Client", useCase: "Manager" },
+    mappings: [
+      { alias: "screen", path: "src/orders/client/**" },
+      { alias: "useCase", path: "src/orders/manager/**" },
+    ],
+    variations: ["contextFirewall"],
+    scopes: [
+      { kind: "context", name: "orders", path: "src/orders/**" },
+      { kind: "shared", path: "src/shared/**" },
+      { kind: "unscoped", path: "src/application/**" },
+    ],
+  };
+
+  withFixtureFile(
+    "src/orders/manager/forbidden-client.js",
+    'import { value } from "../client/value.js";\n\nexport { value };\n',
+    () => {
+      withFixtureFile("src/orders/client/value.js", 'export const value = "orders";\n', () => {
+        withPolicy(policy, () => {
+          const result = runLint("src/orders/manager/forbidden-client.js");
+          const output = `${result.stdout}\n${result.stderr}`;
+          assert.equal(result.status, 1, output);
+          assert.match(output, /Manager cannot depend on Client/);
+          assert.doesNotMatch(output, /righting-(role|scope)-/);
         });
       });
     },

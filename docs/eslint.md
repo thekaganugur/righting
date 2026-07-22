@@ -1,15 +1,21 @@
 # ESLint adapter
 
-Righting's ESLint adapter is optional and separate from policy approval. It supports an existing modern ESLint flat config; it does not install ESLint, migrate legacy `.eslintrc*` files, rewrite a lint script, or choose policy decisions.
+Righting's ESLint adapter is optional and separate from policy approval. It supports an existing ESLint 9 flat config; it does not create or migrate lint configuration, rewrite a lint script, or choose policy decisions.
 
 ## Prerequisites
 
 Before proposing a change, confirm:
 
 - `righting.json` is an approved complete policy, not the incomplete starter;
-- the project has an existing `eslint.config.*` flat config and established lint command;
+- the project has ESLint 9 or later, `eslint-plugin-boundaries` 7.1, an existing `eslint.config.*` flat config, and an established lint command;
 - `righting/eslint` resolves from that project; and
 - the existing resolver resolves any non-relative local import aliases the project actually uses.
+
+If the adapter dependency is missing and its installation is approved, add it explicitly:
+
+```sh
+npm install --save-dev eslint-plugin-boundaries@^7.1.0
+```
 
 Preserve all existing config entries, parser settings, resolver settings, and typed-lint configuration. Typed lint is neither required nor added by Righting. If a required resolver is absent or the config is not safely additive, report the prerequisite rather than changing lint tooling.
 

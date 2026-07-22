@@ -9,6 +9,8 @@ import { incompletePolicyRequirements, isExactIncompleteStarterFile, readPolicy 
 
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
+const manualGuide = "node_modules/righting/docs/manual-maintainer.md";
+const policyGuide = "node_modules/righting/docs/policy-language.md";
 const initUsage = "Usage: righting init [--skills] [--json]";
 const inspectUsage = "Usage: righting inspect [--all] [--json]";
 const baselineUsage = "Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]";
@@ -34,6 +36,8 @@ const initHelp = [
   "Options:",
   "  --skills  Link packaged skills under .agents/skills for a compatible agent.",
   "  --json    Emit the stable machine-facing response.",
+  "",
+  `Guide: ${manualGuide}`,
 ].join("\n");
 const inspectHelp = [
   "Validate and explain the declared policy without changing the project.",
@@ -197,7 +201,7 @@ function inspectPolicy(policyPath: string): PolicyState {
   } catch (error) {
     failInit(
       "invalid-policy",
-      error instanceof Error ? error.message : String(error),
+      `${error instanceof Error ? error.message : String(error)} Repair righting.json using ${policyGuide}.`,
       "repair-policy",
       "righting.json",
     );
@@ -218,14 +222,18 @@ function initialize(projectDirectory: string, installSkills = false) {
   const path = guidancePath(projectDirectory);
   const policyCreated = !existsSync(policyPath);
   const state = policyCreated ? { status: "incomplete" as const } : inspectPolicy(policyPath);
-  const guidance = replaceManagedGuidance(existsSync(path) ? readFileSync(path, "utf8") : undefined);
+  const existingGuidance = existsSync(path) ? readFileSync(path, "utf8") : undefined;
+  const guidance = replaceManagedGuidance(existingGuidance);
+  const guidanceUpdated = existingGuidance !== guidance;
   const skills = installSkills ? planSkillLinks(projectDirectory) : undefined;
 
   if (policyCreated) {
     writeFileSync(policyPath, starterPolicy, { encoding: "utf8", flag: "wx" });
   }
 
-  writeFileSync(path, guidance, "utf8");
+  if (guidanceUpdated) {
+    writeFileSync(path, guidance, "utf8");
+  }
   if (skills !== undefined) {
     linkSkills(skills);
   }
@@ -237,7 +245,7 @@ function initialize(projectDirectory: string, installSkills = false) {
     policy: initPolicyResult(state, policyCreated),
     guidance: {
       path: "AGENTS.md",
-      updated: true,
+      updated: guidanceUpdated,
     },
     ...(state.status === "incomplete" ? { nextAction: "obtain-policy-approval" } : {}),
     ...(skills === undefined ? {} : { skills: { path: ".agents/skills", linked: rightingSkillNames } }),
@@ -350,7 +358,9 @@ function main(arguments_: string[]): void {
     }
 
     const next =
-      result.policy.status === "incomplete" ? " Next: replace the starter after maintainer approval." : "";
+      result.policy.status === "incomplete"
+        ? ` Next: define and approve the replacement using ${manualGuide}.`
+        : "";
     const agentSupport = skills
       ? " Linked Righting skills in .agents/skills."
       : " Optional compatible-agent support: run righting init --skills.";
@@ -372,7 +382,7 @@ function main(arguments_: string[]): void {
     } catch (error) {
       failInit(
         "invalid-policy",
-        error instanceof Error ? error.message : String(error),
+        `${error instanceof Error ? error.message : String(error)} Repair righting.json using ${policyGuide}.`,
         "repair-policy",
         "righting.json",
       );

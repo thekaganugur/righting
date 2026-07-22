@@ -62,4 +62,32 @@ Keep each of these absent unless it is approved and applicable:
 - `scopes`: required when `contextFirewall` is enabled. Define at least one `context` (with `name`), `shared`, and `unscoped` relative-path scope. Contexts cannot import other contexts; shared code cannot import a context; unscoped code may wire context entry points.
 - `extras`: optional project-relative references for `domainVocabulary` and named `goldenExamples`, consumed by the advisory design-review skill.
 
-Use `npx righting inspect` after replacing the starter to view the normalized configuration and computed allowed role relationships. See the [capability catalog](capabilities.md) for what static analysis establishes and does not establish.
+### Optional field shapes
+
+These are field-shape examples, not recommended decisions. Add only approved fields to the complete policy above.
+
+```json
+{
+  "variations": ["pureEngines", "contextFirewall"],
+  "overrides": [
+    {
+      "name": "client-reads-resource",
+      "from": "Client",
+      "to": "Resource",
+      "effect": "allow",
+      "reason": "Approved project-specific reason."
+    }
+  ],
+  "scopes": [
+    { "kind": "context", "name": "orders", "path": "src/orders/**" },
+    { "kind": "shared", "path": "src/shared/**" },
+    { "kind": "unscoped", "path": "src/application/**" }
+  ],
+  "extras": {
+    "domainVocabulary": "docs/domain.md",
+    "goldenExamples": { "create-order": "docs/examples/create-order.md" }
+  }
+}
+```
+
+Use `npx righting inspect` after replacing the starter to view the normalized configuration, declared-path coverage, guidance extras, and computed allowed role relationships. See the [capability catalog](capabilities.md) for what static analysis establishes and does not establish.

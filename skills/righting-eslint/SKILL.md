@@ -6,13 +6,13 @@ compatibility: Requires an existing ESLint flat config, a resolvable righting/es
 
 # Preserve the lint loop
 
-Righting adds one ESLint config entry to an established flat-config loop. Preserve the loop and make its existing behavior observable before and after the addition. Use `righting inspect --json` capability records for static evidence and limits; do not duplicate policy guidance in project instructions.
+Righting adds one ESLint config entry to an established flat-config loop. Preserve the loop and make its existing behavior observable before and after the addition. Use `npx righting inspect --json` capability records for static evidence and limits; do not duplicate policy guidance in project instructions.
 
 ## 1. Inspect the established setup
 
 Read `package.json`, the existing lint script, `righting.json`, and the flat config: `eslint.config.js`, `eslint.config.mjs`, `eslint.config.cjs`, `eslint.config.ts`, `eslint.config.mts`, or `eslint.config.cts`. Confirm that `righting.json` is an approved complete policy rather than the `status: "incomplete"` starter, and capture existing config entries, parser and resolver settings, project import aliases, and whether typed lint is configured through `parserOptions.project` or `parserOptions.projectService`.
 
-When no complete approved policy exists, report the prerequisite and hand policy decisions to `righting-integrate`; defer adapter configuration. Otherwise, confirm that `righting/eslint` resolves from the config's project and that the configured resolver resolves the mapped local imports. Reuse an existing resolver. For approved TypeScript path aliases, use an already-declared `eslint-import-resolver-typescript` through `settings["import/resolver"].typescript` with `alwaysTryTypes: true` and the project's actual `tsconfig` path; this resolver setting is independent of typed lint. Report a legacy `.eslintrc*`, absent flat config, missing lint script, missing ESLint, unresolved Righting package, or missing resolver as unsupported or as a prerequisite; leave lint tooling unchanged.
+When no complete approved policy exists, report the prerequisite and hand policy decisions to `righting-integrate`; defer adapter configuration. Otherwise, confirm that ESLint 9 or later, `eslint-plugin-boundaries` 7.1, and `righting/eslint` resolve from the config's project and that the configured resolver resolves any non-relative local import aliases the project uses. Reuse an existing resolver. For approved TypeScript path aliases, use an already-declared `eslint-import-resolver-typescript` through `settings["import/resolver"].typescript` with `alwaysTryTypes: true` and the project's actual `tsconfig` path; this resolver setting is independent of typed lint. Report a legacy `.eslintrc*`, absent flat config, missing lint script, missing ESLint, unresolved Righting package, or missing resolver as unsupported or as a prerequisite; leave lint tooling unchanged.
 
 Run the unchanged lint command and record its outcome before proposing a patch.
 
