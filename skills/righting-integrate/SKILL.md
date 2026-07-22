@@ -1,58 +1,59 @@
 ---
 name: righting-integrate
-description: Deliberate Righting integration when a maintainer needs to approve policy aliases, mappings, context scopes, or legacy-baseline intent.
-compatibility: Requires the local righting CLI; use righting-eslint for an existing ESLint flat config.
+description: Integrate Righting when a maintainer wants to adopt or revise righting.json or record legacy-debt intent.
+compatibility: Requires the local righting CLI.
 ---
 
-# Deliberate Righting integration
+# Evidence-led Righting integration
 
-Righting policy is maintainer-supplied. Turn stated decisions into the smallest approved policy; keep every unspecified architectural choice absent.
+Righting records maintainer decisions. Close two evidence ledgers before proposing a policy: **coverage** and **dependencies**.
 
-## 1. Establish the decision record
+## 1. Close the evidence ledgers
 
-Read any existing `righting.json`, root `AGENTS.md`, and project documentation. If Righting is absent, explain that `npx righting init --json` creates only an incomplete starter policy and a managed guidance block.
+Read the existing `righting.json`, root `AGENTS.md`, architecture documentation, and any configured domain-vocabulary or golden-example references. When starter files are absent, explain that `npx righting init --json` creates only the incomplete policy and managed guidance pointer; when righting is not yet installed, make its installation one of the requested actions.
 
-Collect and record these maintainer decisions:
+Build:
 
-- each local alias, its canonical role (`Client`, `Manager`, `Engine`, `ResourceAccess`, `Resource`, or `Utility`), and every path mapping;
-- protected external Resource or Utility packages, if any;
-- named variations: `clientReadsAccess`, `pureEngines`, and, only when contexts are meaningful, `contextFirewall` with explicit context, shared, and unscoped paths;
-- named role-edge overrides and their reasons, after considering the default policy fit, clarification or extraction, and tightening;
-- optional domain-vocabulary and golden-example references; and
-- whether existing Righting findings are intentional legacy debt, plus a pre-adoption migration base ref and reason when adoption is approved.
+- **Coverage ledger:** enumerate every project source file and classify it as mapped to one alias and canonical role, or intentionally unchecked with a reason. Name production entry points, composition roots, generated files, and tests separately. For each proposed glob, record its intended future inclusion rule and expand its current matches; the expansion must contain only files the rule intends.
+- **Dependency ledger:** scan every static `import`, `export`, `require`, and dynamic import from files the candidate would map. Classify each local or protected external dependency by source role, target role, and effective policy result, same-role edges included. Group forbidden and unresolved occurrences by role edge, retaining counts and concrete file locations.
 
-Completion: every proposed policy field is either supplied by the maintainer or intentionally absent.
+Record how each ledger was produced. Label dependency-scan completeness as exhaustive or partial and state every partial boundary.
 
-## 2. Obtain policy approval
+Completion: every source file appears once in the coverage ledger; every glob expresses its stated future inclusion rule; every scanned dependency occurrence is classified; zero-match, multi-match, forbidden, unresolved, and partial evidence are explicit.
 
-Render the exact candidate `righting.json`, the files and commands that would change, the baseline effect, and whether a commit is requested. Request explicit maintainer approval before creating or replacing policy, managed guidance, adapter configuration, suppressions, or a commit.
+## 2. Derive the candidate
 
-Write only approved decisions. Keep aliases, mappings, scopes, variations, and overrides out of the policy until they have been stated and approved.
+Derive each alias, mapping, protected Resource or Utility package, scope, and optional reference from a maintainer statement or project evidence. Explicitly evaluate every named variation in the policy reference (`docs/policy-language.md` in the installed righting package) and record an evidence-backed `propose` or `omit` disposition; proposal evidence precedes maintainer approval.
 
-Completion: the maintainer has approved the exact policy and any requested setup actions.
+For each override, evaluate the default policy first, then responsibility clarification or extraction, then tightening. Record those alternatives and propose the override only when they do not express the evidenced policy-wide decision.
 
-## 3. Apply the approved policy
+Render the smallest exact replacement `righting.json`. Validate it by running the project's installed `righting inspect --json` with a temporary mirror of the project's file tree as the working directory — the same relative paths with empty contents suffice — so structure, glob matches, ambiguity, and extras existence resolve against the project without changing it. Compute its effective role relationships and reclassify the dependency ledger against that exact candidate.
 
-Run `npx righting init --json` when the project needs its starter files; preserve existing policy when it is not approved for replacement. Apply the approved complete policy, then run `npx righting inspect --json` to report its normalized configuration, effective relationships, applicable capability records, and unknown adapter status.
+Completion: the candidate is structurally valid; every field and variation disposition has recorded evidence; every override records the alternatives considered; every alias has a mapping; every path has known matches; no file matches roles ambiguously; both ledgers describe the exact candidate.
 
-Use `righting-eslint` to add the ESLint adapter when enforcement is approved. Keep any unsupported ESLint result as a reported prerequisite rather than changing lint tooling.
+## 3. Obtain exact approval
 
-Completion: `righting.json` contains the approved decisions and read-only inspection reports that policy without claiming adapter activation.
+Present one approval packet containing:
 
-## 4. Establish baseline intent deliberately
+- the exact candidate `righting.json` and its effective role relationships;
+- each named variation's `propose` or `omit` disposition and evidence;
+- each override's evidence and alternatives considered;
+- mapped and intentionally unchecked source areas, including each glob's future inclusion rule;
+- every forbidden or unresolved role edge, with occurrence count and concrete locations;
+- the inspection limits: coverage is limited to declared paths, and a valid policy establishes neither approval, adapter activation, nor runtime behavior;
+- the files and commands that would change;
+- any separately requested adapter, legacy-debt, baseline, or commit scope.
 
-Use the post-integration lint outcome to decide whether legacy debt exists. When the maintainer approves adoption, record a migration base ref from before the policy adoption or enforcement expansion and its migration reason, then hand native suppression capture to `righting-eslint`. After it reports namespaced Righting debt, run:
+Ask the maintainer to approve or revise that exact packet. Stop at the approval request; continue only after an explicit response covering the policy and requested actions.
 
-```sh
-npx righting baseline --base <approved-pre-adoption-ref> --migration-reason "<approved reason>"
-```
+Completion: the maintainer has explicitly approved the exact policy and each additional action that will be performed.
 
-Offer the approved suppression file and policy for the requested commit. When an approved post-adoption base ref includes both the adopted policy and suppression file, run `npx righting baseline --base <approved-post-adoption-ref>` and record its outcome. Otherwise, record the approved future base strategy. The count ratchet detects growth but cannot distinguish a same-count violation swap within one file and policy rule. Do not establish a baseline when there is no approved legacy-debt decision.
+## 4. Apply and verify
 
-Completion: the migration base, migration reason, baseline outcome, normal-work verification outcome or future base strategy, and count-based limitation are recorded.
+Apply only the approved replacement policy and setup actions. Run `npx righting init --json` when starter files or managed guidance are needed, then run `npx righting inspect --json`. Compare normalized configuration, effective relationships, declared-path coverage, capability records, and adapter status with the approved packet.
 
-## 5. Report the integration record
+When enforcement is separately approved, hand the unchanged policy to `righting-eslint`. When legacy-debt adoption is separately approved, follow the [legacy-debt reference](../../docs/legacy-debt.md) with the approved base ref and reason.
 
-Report the approved aliases, mappings, scopes, variations, overrides, changed files, inspection result, lint result, typed-lint result from `righting-eslint`, and any baseline result. Use the applicable `righting inspect --json` capability records for established and unproven claims; inspection does not establish adapter activation.
+Report the approved decisions, ledger summaries, changed files, command outcomes, inspection differences, and remaining evidence limits.
 
-Completion: the record contains every approved decision, changed file, command outcome, prerequisite, baseline limitation, and static-analysis limitation.
+Completion: project files match the approved scope, inspection matches the approved policy, and every command outcome and evidence limit is recorded.
