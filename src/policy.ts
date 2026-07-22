@@ -159,6 +159,26 @@ function projectFiles(projectDirectory: string): string[] {
   return files;
 }
 
+export type UnmatchedPolicyPath = {
+  kind: "mapping" | "scope";
+  name: string;
+  path: string;
+};
+
+export function unmatchedPolicyPaths(policy: Policy, projectDirectory: string): UnmatchedPolicyPath[] {
+  const files = projectFiles(projectDirectory);
+  const hasMatch = (path: string) => files.some((file) => isMatch(file, path));
+
+  return [
+    ...policy.mappings.flatMap((mapping) =>
+      mapping.path === undefined || hasMatch(mapping.path) ? [] : [{ kind: "mapping" as const, name: mapping.alias, path: mapping.path }],
+    ),
+    ...policy.scopes.flatMap((scope) =>
+      hasMatch(scope.path) ? [] : [{ kind: "scope" as const, name: scope.name ?? scope.kind, path: scope.path }],
+    ),
+  ];
+}
+
 function rejectAmbiguousPathMatches(
   projectDirectory: string,
   entries: ReadonlyArray<{ name: string; path: string }>,

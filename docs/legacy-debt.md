@@ -13,13 +13,13 @@ npm run lint -- --suppress-rule righting/role-dependency
 ESLint writes the namespaced `righting/role-dependency` entries to `eslint-suppressions.json`; unrelated entries remain untouched. Commit that file, then verify the intentional adoption or policy expansion against an explicit base ref:
 
 ```sh
-righting baseline --base origin/main --migration-reason "Adopt existing boundary debt."
+npx righting baseline --base origin/main --migration-reason "Adopt existing boundary debt."
 ```
 
 Normal work uses the same command without a migration reason. It passes only when Righting debt is unchanged or smaller:
 
 ```sh
-righting baseline --base origin/main
+npx righting baseline --base origin/main
 ```
 
 Git is required only for `righting baseline`. Ordinary ESLint boundary linting remains available without Git.

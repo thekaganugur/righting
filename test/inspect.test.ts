@@ -201,6 +201,31 @@ test("righting inspect reports normalized policy semantics and capability limits
   }
 });
 
+test("righting inspect warns when a declared mapping matches no current project file", () => {
+  const projectDirectory = createProject();
+  const policy = '{"preset":"volatility@1","aliases":{"ui":"Client"},"mappings":[{"alias":"ui","path":"src/missing/**"}]}\n';
+
+  try {
+    writeFileSync(resolve(projectDirectory, "righting.json"), policy);
+
+    const output = assertSuccessEnvelope(run(projectDirectory, "inspect", "--json"));
+    assert.deepEqual(output.warnings, [
+      {
+        code: "unmatched-policy-path",
+        kind: "mapping",
+        name: "ui",
+        path: "src/missing/**",
+      },
+    ]);
+
+    const humanOutput = run(projectDirectory, "inspect");
+    assert.equal(humanOutput.status, 0, humanOutput.stderr);
+    assert.match(humanOutput.stdout, /Mapping "ui" matches no current project file: src\/missing\/\*\*/);
+  } finally {
+    rmSync(projectDirectory, { recursive: true, force: true });
+  }
+});
+
 test("righting inspect --all separates capabilities that are not configured", () => {
   const projectDirectory = createProject();
   const policy = `${JSON.stringify(

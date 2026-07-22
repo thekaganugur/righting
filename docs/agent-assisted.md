@@ -4,6 +4,8 @@ Use this route when the coding agent supports project-skill discovery; `init --s
 
 ## 1. Set up skill discovery
 
+Requires Node.js 20 or later.
+
 ```sh
 npm install --save-dev righting
 npx righting init --skills --json

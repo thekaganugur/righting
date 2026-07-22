@@ -4,7 +4,7 @@ Righting is a local, static architecture-policy tool. It validates the policy yo
 
 ## First run
 
-Install it in the project:
+Requires Node.js 20 or later. Install it in the project:
 
 ```sh
 npm install --save-dev righting

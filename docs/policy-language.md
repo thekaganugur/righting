@@ -33,7 +33,7 @@ Aliases choose project vocabulary only; they do not create a new role or change 
 - `path`: a project-relative, forward-slash glob for mapped source; or
 - `package`: an external package protected as a `Resource` or `Utility`.
 
-Unresolved local imports are forbidden. Mappings and scopes must not match the same project file ambiguously.
+Unresolved local imports are forbidden from code that matches a role mapping. The ESLint adapter runs only for declared mapping and scope paths, so map every source area that needs role-boundary checks. `inspect` warns when a declared mapping or scope currently matches no project file. Mappings and scopes must not match the same project file ambiguously.
 
 ## Minimal complete shape
 

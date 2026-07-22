@@ -4,6 +4,8 @@ Use this route when no compatible coding agent will consume the packaged skills.
 
 ## 1. Set up
 
+Requires Node.js 20 or later.
+
 ```sh
 npm install --save-dev righting
 npx righting init

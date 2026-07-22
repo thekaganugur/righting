@@ -9,7 +9,7 @@ Before proposing a change, confirm:
 - `righting.json` is an approved complete policy, not the incomplete starter;
 - the project has an existing `eslint.config.*` flat config and established lint command;
 - `righting/eslint` resolves from that project; and
-- the existing resolver resolves the policy's local import aliases.
+- the existing resolver resolves any non-relative local import aliases the project actually uses.
 
 Preserve all existing config entries, parser settings, resolver settings, and typed-lint configuration. Typed lint is neither required nor added by Righting. If a required resolver is absent or the config is not safely additive, report the prerequisite rather than changing lint tooling.
 

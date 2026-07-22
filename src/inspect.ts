@@ -1,5 +1,13 @@
+import { dirname } from "node:path";
 import { capabilitiesFor, type Capability } from "./capabilities.js";
-import { allowedDependencies, incompletePolicyRequirements, isExactIncompleteStarterFile, readPolicy, type Policy } from "./policy.js";
+import {
+  allowedDependencies,
+  incompletePolicyRequirements,
+  isExactIncompleteStarterFile,
+  readPolicy,
+  unmatchedPolicyPaths,
+  type Policy,
+} from "./policy.js";
 
 type IncompleteInspection = {
   schemaVersion: 1;
@@ -14,6 +22,13 @@ type IncompleteInspection = {
   nextAction: "obtain-policy-approval";
 };
 
+type InspectionWarning = {
+  code: "unmatched-policy-path";
+  kind: "mapping" | "scope";
+  name: string;
+  path: string;
+};
+
 type ValidInspection = {
   schemaVersion: 1;
   command: "inspect";
@@ -24,6 +39,7 @@ type ValidInspection = {
   effectivePolicy: { allowedDependencies: ReturnType<typeof allowedDependencies> };
   capabilities: Capability[];
   availableCapabilities?: Capability[];
+  warnings?: InspectionWarning[];
 };
 
 export type Inspection = IncompleteInspection | ValidInspection;
@@ -78,6 +94,10 @@ export function inspectPolicy(policyPath: string, includeAll = false): Inspectio
   const allCapabilities = capabilitiesFor(policy);
   const capabilities = allCapabilities.filter((capability) => capability.applies);
   const availableCapabilities = allCapabilities.filter((capability) => !capability.applies);
+  const warnings = unmatchedPolicyPaths(policy, dirname(policyPath)).map((warning) => ({
+    code: "unmatched-policy-path" as const,
+    ...warning,
+  }));
   return {
     schemaVersion: 1,
     command: "inspect",
@@ -88,11 +108,16 @@ export function inspectPolicy(policyPath: string, includeAll = false): Inspectio
     effectivePolicy: { allowedDependencies: allowedDependencies(policy) },
     capabilities,
     ...(includeAll ? { availableCapabilities } : {}),
+    ...(warnings.length === 0 ? {} : { warnings }),
   };
 }
 
 function list(items: readonly string[]): string {
   return items.length === 0 ? "None" : items.join(", ");
+}
+
+function renderWarning(warning: InspectionWarning): string {
+  return `- ${warning.kind === "mapping" ? "Mapping" : "Scope"} "${warning.name}" matches no current project file: ${warning.path}`;
 }
 
 function renderCapability(capability: Capability): string {
@@ -136,7 +161,9 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
   return [
     ...header,
     "Policy syntax is valid; maintainer approval and active lint enforcement are not checked.",
-    "",
+    ...(inspection.warnings === undefined
+      ? [""]
+      : ["", "Warnings", ...inspection.warnings.map(renderWarning), ""]),
     "Configuration",
     `Preset: ${configuration.preset}`,
     "Aliases",

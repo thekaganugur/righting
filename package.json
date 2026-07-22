@@ -1,7 +1,6 @@
 {
   "name": "righting",
   "version": "0.1.0",
-  "private": true,
   "description": "Local architecture-policy tooling",
   "type": "module",
   "bin": {
