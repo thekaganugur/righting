@@ -23,11 +23,14 @@ Walk the following original Righting-inspired checklist in the order that the av
 
 1. What observable behavior must this change deliver, and where does it enter the system?
 2. Which local aliases should own delivery, coordination, rules, external access, external integration, and stable support for that behavior?
-3. Does each proposed dependency follow an allowed policy edge, or can the behavior fit through an existing boundary by clarifying or extracting a responsibility?
-4. If a Manager coordinates another Manager, what interaction boundary makes the coordination deliberate rather than a direct source dependency?
-5. When contexts apply, which context owns the behavior, and does any dependency cross into another context or from shared code into contextual code?
-6. Which contracts or inputs make the responsibility understandable without exposing another role's details?
-7. What evidence would distinguish an intentional policy-wide variation from a local exception?
+3. Do the proposed names announce each component's role — noun-named Managers and ResourceAccess, gerunds only for Engines, atomic business verbs confined to operation names?
+4. Does each proposed dependency follow an allowed policy edge, or can the behavior fit through an existing boundary by clarifying or extracting a responsibility?
+5. If a Manager coordinates another Manager, what interaction boundary makes the coordination deliberate rather than a direct source dependency?
+6. After this change, how many Managers exist, and does the Engine count stay small relative to them rather than growing one Engine per activity?
+7. Does this change have a Client, Engine, ResourceAccess, or Resource publishing events, or an Engine, ResourceAccess, or Resource subscribing to them?
+8. When contexts apply, which context owns the behavior, and does any dependency cross into another context or from shared code into contextual code?
+9. Which contracts or inputs make the responsibility understandable without exposing another role's details?
+10. What evidence would distinguish an intentional policy-wide variation from a local exception?
 
 Evaluate default-policy fit first, then clarification or extraction, then a tightening. Only when those options cannot express a justified design, suggest a named variation or reason-required global override.
 

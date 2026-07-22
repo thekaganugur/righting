@@ -30,12 +30,23 @@ A complete policy maps local aliases to these canonical roles:
 
 The table is exhaustive: an edge it does not list is forbidden by default. In particular, same-role dependencies are forbidden except `Utility` depending on `Utility`. Allowing another same-role edge requires an override — except Client composition within a context, and from a context to shared Clients, which `contextFirewall` permits.
 
+One logical role often spans many collaborating files — a UI application's components composing one another is the common case — so ordinary intra-role collaboration shows up as a forbidden same-role edge. That is composition within one role, not a defect: express it deliberately with an `allow` override and a recorded reason, or with context-scoped Clients under `contextFirewall`.
+
 Aliases choose project vocabulary only; they do not create a new role or change its default behavior. A complete policy needs at least one alias and mapping, and every alias needs an explicit mapping. A mapping has an alias and one or both of:
 
 - `path`: a project-relative, forward-slash glob for mapped source; or
 - `package`: an external package protected as a `Resource` or `Utility`.
 
 Unresolved local imports are forbidden from code that matches a role mapping. The ESLint adapter runs only for declared mapping and scope paths, so map every source area that needs role-boundary checks. `inspect` warns when a declared mapping or scope currently matches no project file. Mappings and scopes must not match the same project file ambiguously.
+
+## Roles across project shapes
+
+Roles answer the four questions — who interacts, what happens in what order, how it is decided, how data is reached, where state lives — whatever the project's shape. Orientation, not recommendation:
+
+- **Web or UI application:** the UI is typically one Client spread across many files; server handlers that drive workflows are Clients too.
+- **HTTP or queue backend:** route handlers, message consumers, and job entry points are Clients — they are who interacts with the system. A composition root that wires layers belongs to no single role; leave it intentionally unmapped, or `unscoped` under `contextFirewall`.
+- **CLI tool:** command entry points are Clients.
+- **Library:** there may be no Client at all; a public facade that coordinates the library's operations often maps to Manager; no role is required to appear.
 
 ## Minimal complete shape
 
@@ -59,7 +70,7 @@ Use this to understand the JSON shape after approval, not as a recommendation fo
 
 Keep each of these absent unless it is approved and applicable:
 
-- `variations`: named policy-wide opt-ins. `clientReadsAccess` permits `Client` to depend on `ResourceAccess`; `pureEngines` removes `Engine` to `ResourceAccess`; `contextFirewall` enables context checks for projects with independently owned bounded contexts.
+- `variations`: named policy-wide opt-ins. `clientReadsAccess` permits `Client` to depend on `ResourceAccess` — a semi-open relaxation for deliberate policy-wide reads, not a shortcut past a Manager; `pureEngines` removes `Engine` to `ResourceAccess`; `contextFirewall` enables context checks for projects with independently owned bounded contexts.
 - `overrides`: a named, reason-required `allow` or `disallow` change to one canonical role edge. It must actually change the default or variation-derived edge.
 - `scopes`: required when `contextFirewall` is enabled. Define at least one `context` (with `name`), `shared`, and `unscoped` relative-path scope. Context names are unique, and no project file may match more than one scope. Contexts cannot import other contexts; shared code cannot import a context; unscoped code may wire context entry points.
 - `extras`: optional project-relative references for `domainVocabulary` and named `goldenExamples`, consumed by the advisory design-review skill.
