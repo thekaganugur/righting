@@ -9,8 +9,8 @@ import { incompletePolicyRequirements, isExactIncompleteStarterFile, readPolicy 
 
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
-const manualGuide = "node_modules/righting/docs/manual-maintainer.md";
-const policyGuide = "node_modules/righting/docs/policy-language.md";
+const manualPolicyNext = 'define and approve aliases and mappings in righting.json, then remove "status": "incomplete"';
+const agentPolicyNext = "ask your coding agent to use the righting-integrate skill to propose a policy for your approval";
 const initUsage = "Usage: righting init [--skills] [--json]";
 const inspectUsage = "Usage: righting inspect [--all] [--json]";
 const baselineUsage = "Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]";
@@ -37,7 +37,8 @@ const initHelp = [
   "  --skills  Link packaged skills under .agents/skills for a compatible agent.",
   "  --json    Emit the stable machine-facing response.",
   "",
-  `Guide: ${manualGuide}`,
+  `Next without --skills: ${manualPolicyNext}.`,
+  `Next with --skills: ${agentPolicyNext}.`,
 ].join("\n");
 const inspectHelp = [
   "Validate and explain the declared policy without changing the project.",
@@ -201,7 +202,7 @@ function inspectPolicy(policyPath: string): PolicyState {
   } catch (error) {
     failInit(
       "invalid-policy",
-      `${error instanceof Error ? error.message : String(error)} Repair righting.json using ${policyGuide}.`,
+      `${error instanceof Error ? error.message : String(error)} Repair righting.json, then rerun the command.`,
       "repair-policy",
       "righting.json",
     );
@@ -357,10 +358,7 @@ function main(arguments_: string[]): void {
       return;
     }
 
-    const next =
-      result.policy.status === "incomplete"
-        ? ` Next: define and approve the replacement using ${manualGuide}.`
-        : "";
+    const next = result.policy.status === "incomplete" ? ` Next: ${skills ? agentPolicyNext : manualPolicyNext}.` : "";
     const agentSupport = skills
       ? " Linked Righting skills in .agents/skills."
       : " Optional compatible-agent support: run righting init --skills.";
@@ -382,7 +380,7 @@ function main(arguments_: string[]): void {
     } catch (error) {
       failInit(
         "invalid-policy",
-        `${error instanceof Error ? error.message : String(error)} Repair righting.json using ${policyGuide}.`,
+        `${error instanceof Error ? error.message : String(error)} Repair righting.json, then rerun the command.`,
         "repair-policy",
         "righting.json",
       );

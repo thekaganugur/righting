@@ -150,7 +150,8 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
       ...header,
       `Requires: ${inspection.policy.required.join(", ")}`,
       `Next action: ${inspection.nextAction}`,
-      "Guide: node_modules/righting/docs/manual-maintainer.md",
+      'Next: define and approve aliases and mappings in righting.json, then remove "status": "incomplete".',
+      "With linked skills: ask your coding agent to use righting-integrate.",
       "Adapter activation: unknown (not checked)",
     ].join("\n");
   }

@@ -112,7 +112,9 @@ test("righting inspect reports an incomplete starter without effective rules or 
     assert.deepEqual(output.adapter, { status: "unknown" });
     const humanOutput = run(projectDirectory, "inspect");
     assert.equal(humanOutput.status, 0, humanOutput.stderr);
-    assert.match(humanOutput.stdout, /Guide: node_modules\/righting\/docs\/manual-maintainer\.md/);
+    assert.match(humanOutput.stdout, /define and approve aliases and mappings in righting\.json/i);
+    assert.match(humanOutput.stdout, /righting-integrate/);
+    assert.doesNotMatch(humanOutput.stdout, /node_modules/);
     assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
     assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
   } finally {
@@ -372,12 +374,14 @@ test("righting inspect returns the structured failure envelope for malformed pol
     const malformed = run(projectDirectory, "inspect", "--json");
     assertFailureEnvelope(malformed, "invalid-policy", "righting.json", "repair-policy");
     assert.match((json(malformed).error as { message: string }).message, /may contain only.*preset.*status/i);
-    assert.match((json(malformed).error as { message: string }).message, /node_modules\/righting\/docs\/policy-language\.md/);
+    assert.match((json(malformed).error as { message: string }).message, /Repair righting\.json, then rerun the command/);
+    assert.doesNotMatch((json(malformed).error as { message: string }).message, /node_modules/);
     assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
 
     const humanMalformed = run(projectDirectory, "inspect");
     assert.notEqual(humanMalformed.status, 0);
-    assert.match(humanMalformed.stderr, /Repair righting\.json using node_modules\/righting\/docs\/policy-language\.md/);
+    assert.match(humanMalformed.stderr, /Repair righting\.json, then rerun the command/);
+    assert.doesNotMatch(humanMalformed.stderr, /node_modules/);
 
     writeFileSync(
       resolve(projectDirectory, "righting.json"),

@@ -106,8 +106,8 @@ test("righting init creates only the exact starter and minimal policy pointer", 
     const humanReadable = run(projectDirectory, "init");
     assert.equal(humanReadable.status, 0, humanReadable.stderr);
     assert.match(humanReadable.stdout, /Kept Righting-managed guidance/);
-    assert.match(humanReadable.stdout, /define and approve the replacement/i);
-    assert.match(humanReadable.stdout, /node_modules\/righting\/docs\/manual-maintainer\.md/);
+    assert.match(humanReadable.stdout, /define and approve aliases and mappings in righting\.json/i);
+    assert.doesNotMatch(humanReadable.stdout, /node_modules/);
     assert.match(humanReadable.stdout, /righting init --skills/);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
@@ -216,6 +216,11 @@ test("righting init --skills creates repeatable relative links and preflights co
     const repeat = assertSuccessEnvelope(run(projectDirectory, "init", "--skills", "--json"));
     assert.deepEqual(repeat.skills, { path: ".agents/skills", linked: skills });
 
+    const humanReadable = run(projectDirectory, "init", "--skills");
+    assert.equal(humanReadable.status, 0, humanReadable.stderr);
+    assert.match(humanReadable.stdout, /ask your coding agent to use the righting-integrate skill/i);
+    assert.doesNotMatch(humanReadable.stdout, /node_modules|manual-maintainer/i);
+
     const projectOwnedSkill = resolve(collisionDirectory, ".agents/skills/righting-eslint");
     mkdirSync(projectOwnedSkill, { recursive: true });
     writeFileSync(resolve(projectOwnedSkill, "SKILL.md"), "# Project-owned skill\n");
@@ -253,6 +258,8 @@ test("righting help makes setup, configuration, and inspection discoverable with
     assert.equal(init.status, 0, init.stderr);
     assert.match(init.stdout, /does not infer or approve a policy/i);
     assert.match(init.stdout, /--skills/);
+    assert.match(init.stdout, /righting-integrate/);
+    assert.doesNotMatch(init.stdout, /node_modules/);
 
     const inspect = run(projectDirectory, "inspect", "--json", "-h");
     assert.equal(inspect.status, 0, inspect.stderr);
