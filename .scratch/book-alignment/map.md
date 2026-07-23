@@ -36,6 +36,7 @@ Every book rule, sorted by the evidence it needs — the evidence type constrain
 - [Define Righting's AI-oriented operating model](issues/01-define-rightings-ai-oriented-operating-model.md) — `righting.json` is the approved architecture manifest consumed selectively by deterministic adapters and focused advisory skills, with maintainers retaining decision authority.
 - [Define Righting's response to dogfood Engine-to-Engine conflicts](issues/02-rule-on-the-dogfood-engine-to-engine-edges.md) — existing forbidden edges are explicitly baselined debt under the strict desired graph; only an intended future relationship warrants a policy override.
 - [Assess a code-shape evidence surface](issues/03-assess-a-code-shape-evidence-surface.md) — reject a separate evidence surface; add an alias-driven adapter role-visibility warning while leaving semantic naming and cardinality to agent review.
+- [Research change-history evidence for volatility classification](issues/04-research-change-history-evidence-for-volatility.md) — use bounded Git churn, co-change, declaration-join, and coverage facts to guide agent judgment without treating history as volatility proof.
 
 ## Not yet specified
 
