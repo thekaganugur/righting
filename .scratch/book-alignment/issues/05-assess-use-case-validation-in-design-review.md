@@ -7,15 +7,16 @@ Blocked by: 01
 
 ## Question
 
-Should the book's only sanctioned design-validation method — architecture validation — belong in `righting-design-review`, and in what form?
+What should the focused `use-case-validation` capability own, and in what form?
 
 The book's claim (`04-composition.md`, "Architecture Validation"): a design is valid when you can produce an interaction among its components for each core use case — call chain or sequence diagram — without changing the components. Systems typically have two or three core use cases, rarely written down. This is band-5 (design process): it validates the decomposition itself, which no import check can do, and it is currently missing from every righting surface.
 
-Decide:
+Apply the operating model from [Define Righting's AI-oriented operating model](01-define-rightings-ai-oriented-operating-model.md). Decide:
 
-- whether design-review should ask for the project's core use cases and walk one as a call chain over the mapped roles (per change, per policy adoption, or on request);
-- what a project must supply (use-case lists, activity diagrams — the book requires activity diagrams for use cases with nested conditions) and what the skill does when they are absent;
-- how the walkthrough stays advisory and separates "the design supports this use case" from "this import is allowed";
-- or whether validation belongs elsewhere — `righting-integrate`'s adoption flow, a separate skill — or nowhere.
+- the focused skill's trigger and whether it runs per material change, policy adoption, or explicit request;
+- which approved declarations/status belong in `righting.json`, and which use-case lists or activity diagrams are semantic inputs referenced from it;
+- how the skill walks a core use case as a call chain over mapped roles and behaves when inputs are absent or unresolved;
+- how it keeps "the design composes for this use case" distinct from "this import is allowed";
+- which patterns to adapt from `improve-codebase-volatility`'s composition validation.
 
-Keep the review's existing shape: one question at a time, evidence before judgment, no scores or verdicts.
+Keep the focused skill one-question-at-a-time and evidence-before-judgment, with no mechanical proof, score, or architecture verdict.

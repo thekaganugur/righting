@@ -5,7 +5,7 @@ Labels: wayfinder:map
 
 ## Destination
 
-Define Righting's AI-oriented operating model, then use it to decide which book-alignment gaps righting should close and how. Each identified gap — bands 2–5 of the book-rule spectrum below, plus the remaining dogfood adoption tension — ends in an implementation-ready decision or an explicit rejection.
+Define Righting's AI-oriented operating model, then use it to decide which book-alignment gaps righting should close and how. Each identified gap — bands 2–5 of the book-rule spectrum below, plus the dogfood-derived Engine-to-Engine product tension — ends in an implementation-ready decision or an explicit rejection.
 
 ## Notes
 
@@ -13,7 +13,7 @@ Define Righting's AI-oriented operating model, then use it to decide which book-
 - Standing product intent: prevent AI slop and help coding agents produce higher-quality systems. Working hypothesis: deterministic facts and guardrails → evidence-led agent recommendations → maintainer decisions → durable repository records. **Define Righting's AI-oriented operating model** resolves the exact ownership boundaries.
 - Skills to consult: `/grilling` and `/domain-modeling` for grilling tickets; `/research` for the research ticket.
 - Planning only: this map produces decisions, not deliverables. Implementation is a later handoff.
-- The dogfood project `/Users/kgnugur/Codes/Personal/uets-to-task` is read-only evidence; its adoption packet awaits maintainer approval there.
+- The external project `/Users/kgnugur/Codes/Personal/uets-to-task` is read-only product evidence only; its architecture and adoption decisions remain in that project's own process.
 - Already landed before this map (no ticket needed): the Client-composition idiom paragraph and the `clientReadsAccess` semi-open cost note in `docs/policy-language.md`, and the naming/cardinality/event probes (checklist items 3, 6, 7) in `skills/righting-design-review/SKILL.md`.
 
 ### The book-rule spectrum (reference table)
@@ -33,11 +33,12 @@ Every book rule, sorted by the evidence it needs — the evidence type constrain
 
 <!-- Closed tickets only. -->
 
+- [Define Righting's AI-oriented operating model](issues/01-define-rightings-ai-oriented-operating-model.md) — `righting.json` is the approved architecture manifest consumed selectively by deterministic adapters and focused advisory skills, with maintainers retaining decision authority.
+- [Define Righting's response to dogfood Engine-to-Engine conflicts](issues/02-rule-on-the-dogfood-engine-to-engine-edges.md) — existing forbidden edges are explicitly baselined debt under the strict desired graph; only an intended future relationship warrants a policy override.
+
 ## Not yet specified
 
-- Band 3, interaction-mechanism detection (queued Manager calls, publish/subscribe don'ts): partially code-visible but runtime-semantic. Its shape depends on **Define Righting's AI-oriented operating model** and where **Assess a code-shape evidence surface** lands advisory reporting; it likely touches the ESLint adapter.
-- A deterministic agent-evidence contract: candidate-policy validation against a real project, coverage/glob expansion, import occurrences, and resolution facts without architecture inference. Dogfood agents currently improvise these and produce differing counts; ticket the exact product surface after the operating model assigns ownership.
-- Everyday change routing: the lightweight model-invoked check, material-change triggers, and escalation path into the heavier design review. Ticket its shape after the operating model defines the daily agent loop.
+- None currently; the operating-model decision made the remaining capability and routing questions precise enough to ticket.
 
 ## Out of scope
 
