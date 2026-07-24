@@ -3,7 +3,6 @@
 import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { checkBaseline } from "./baseline.js";
 import { inspectPolicy as inspect, renderInspection } from "./inspect.js";
 import { incompletePolicyRequirements, isExactIncompleteStarterFile, readPolicy } from "./policy.js";
 
@@ -13,9 +12,7 @@ const manualPolicyNext = 'define and approve coverage and any project convention
 const agentPolicyNext = "ask your coding agent to use the righting-integrate skill to propose a policy for your approval";
 const initUsage = "Usage: righting init [--skills] [--json]";
 const inspectUsage = "Usage: righting inspect [--all] [--json]";
-const baselineUsage = "Usage: righting baseline --base <git-ref> [--migration-reason <reason>] [--json]";
-const rootUsage =
-  "Usage: righting init [--skills] [--json] | righting inspect [--all] [--json] | righting baseline --base <git-ref> [--migration-reason <reason>] [--json]";
+const rootUsage = "Usage: righting init [--skills] [--json] | righting inspect [--all] [--json]";
 const rootHelp = [
   "Righting validates declared architecture policy; it does not infer architecture, approve decisions, or activate ESLint.",
   "",
@@ -50,7 +47,6 @@ const inspectHelp = [
   "  --all   Include available but unconfigured capabilities.",
   "  --json  Emit the machine-facing policy interpretation.",
 ].join("\n");
-const baselineHelp = ["Check a policy baseline against a git reference.", "", baselineUsage].join("\n");
 const rightingSkillNames = ["righting-design-review", "righting-eslint", "righting-integrate"];
 const packagedSkillsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../../skills");
 
@@ -295,43 +291,6 @@ function inspectOptions(options: string[]): { all: boolean; json: boolean } {
   return { all, json };
 }
 
-function baselineOptions(options: string[]): { base: string; migrationReason: string | undefined; json: boolean } {
-  let base: string | undefined;
-  let migrationReason: string | undefined;
-  let json = false;
-
-  for (let index = 0; index < options.length; index += 1) {
-    const option = options[index];
-    if (option === "--base" || option === "--migration-reason") {
-      const value = options[index + 1];
-      if (value === undefined || value.startsWith("--")) {
-        throw new Error(baselineUsage);
-      }
-      if (option === "--base") {
-        if (base !== undefined) {
-          throw new Error(baselineUsage);
-        }
-        base = value;
-      } else {
-        if (migrationReason !== undefined) {
-          throw new Error(baselineUsage);
-        }
-        migrationReason = value;
-      }
-      index += 1;
-    } else if (option === "--json" && !json) {
-      json = true;
-    } else {
-      throw new Error(baselineUsage);
-    }
-  }
-
-  if (base === undefined) {
-    throw new Error(baselineUsage);
-  }
-  return { base, migrationReason, json };
-}
-
 function main(arguments_: string[]): void {
   const [command, ...options] = arguments_;
   if (command === undefined) {
@@ -386,23 +345,6 @@ function main(arguments_: string[]): void {
       );
     }
     process.stdout.write(`${json ? JSON.stringify(result, null, 2) : renderInspection(result, all)}\n`);
-    return;
-  }
-
-  if (command === "baseline") {
-    if (isHelp(options)) {
-      writeHelp(baselineHelp);
-      return;
-    }
-    const { base, migrationReason, json } = baselineOptions(options);
-    const result = checkBaseline(process.cwd(), base, migrationReason);
-    if (json) {
-      process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-      return;
-    }
-    process.stdout.write(
-      `${result.debt.status === "migration-baseline" ? "Accepted migration baseline" : "Righting baseline is within policy"} against ${base}.\n`,
-    );
     return;
   }
 

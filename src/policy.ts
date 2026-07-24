@@ -771,45 +771,6 @@ export function classifySource(contract: NormalizedContract, sourcePath: string)
   return { kind: "violation", ruleId: "righting/unclassified-source" };
 }
 
-function identity(value: unknown): string {
-  return JSON.stringify(value);
-}
-
-function preservesAll<T>(baseline: readonly T[], current: readonly T[]): boolean {
-  const entries = new Set(current.map(identity));
-  return baseline.every((item) => entries.has(identity(item)));
-}
-
-export function isPolicyExpansion(baseline: Policy, current: Policy): boolean {
-  if (
-    !preservesAll(baseline.coverage, current.coverage) ||
-    !preservesAll(baseline.aliases, current.aliases) ||
-    !preservesAll(baseline.generated.filenameMarkers, current.generated.filenameMarkers) ||
-    !preservesAll(baseline.generated.directorySegments, current.generated.directorySegments) ||
-    !preservesAll(baseline.protectedDependencies, current.protectedDependencies) ||
-    !preservesAll(baseline.scopes, current.scopes) ||
-    !preservesAll(baseline.overrides, current.overrides) ||
-    !preservesAll(baseline.variations, current.variations)
-  ) {
-    return false;
-  }
-  const addedVariations = current.variations.filter((variation) => !baseline.variations.includes(variation));
-  const addedOverrides = current.overrides.filter((override) => !baseline.overrides.some((item) => identity(item) === identity(override)));
-  if (addedVariations.includes("clientReadsAccess") || addedOverrides.some((override) => override.effect === "allow")) {
-    return false;
-  }
-  return (
-    current.coverage.length > baseline.coverage.length ||
-    current.aliases.length > baseline.aliases.length ||
-    current.generated.filenameMarkers.length > baseline.generated.filenameMarkers.length ||
-    current.generated.directorySegments.length > baseline.generated.directorySegments.length ||
-    current.protectedDependencies.length > baseline.protectedDependencies.length ||
-    current.scopes.length > baseline.scopes.length ||
-    addedVariations.length > 0 ||
-    addedOverrides.length > 0
-  );
-}
-
 export function readPolicySource(source: string, policyPath: string): Policy {
   let parsed: unknown;
   try {

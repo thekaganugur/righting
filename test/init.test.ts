@@ -253,6 +253,7 @@ test("righting help makes setup, configuration, and inspection discoverable with
     assert.equal(root.stderr, "");
     assert.match(root.stdout, /Maintainer alone: righting init/);
     assert.match(root.stdout, /Compatible agent: righting init --skills --json/);
+    assert.doesNotMatch(root.stdout, /baseline/);
 
     const init = run(projectDirectory, "init", "--help", "--json");
     assert.equal(init.status, 0, init.stderr);
@@ -264,6 +265,10 @@ test("righting help makes setup, configuration, and inspection discoverable with
     const inspect = run(projectDirectory, "inspect", "--json", "-h");
     assert.equal(inspect.status, 0, inspect.stderr);
     assert.match(inspect.stdout, /does not check approval, ESLint activation, or lint results/i);
+
+    const retiredBaseline = run(projectDirectory, "baseline", "--base", "HEAD");
+    assert.notEqual(retiredBaseline.status, 0);
+    assert.match(retiredBaseline.stderr, /Usage: righting init/);
 
     const invalidRoot = run(projectDirectory, "--help", "unexpected");
     assert.notEqual(invalidRoot.status, 0);

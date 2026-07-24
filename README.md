@@ -46,5 +46,5 @@ This validates and explains the declared adapter-neutral contract. `inspect --js
 ## References
 
 - [Capability catalog](docs/capabilities.md) — static evidence and its limits, generated from the records used by `inspect`.
-- [Legacy debt](docs/legacy-debt.md) — approved native suppression and baseline flow.
+- [Legacy ESLint debt](docs/legacy-debt.md) — approved native suppression, growth detection, and pruning.
 - [Orders/Returns dogfood record](docs/dogfood.md) — a worked record, not onboarding guidance.

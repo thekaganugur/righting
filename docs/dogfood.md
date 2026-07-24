@@ -9,12 +9,12 @@ The project covers `src/**/*.ts` and chose two contexts, `orders` and `returns`,
 ## Integration and repair evidence
 
 1. The existing modern flat config keeps its `lint` script unchanged while adding `eslintConfig()`.
-2. The pre-existing `legacy-order` Manager dependency is captured as approved native `righting/role-dependency` debt and accepted with an explicit migration reason.
+2. The pre-existing `legacy-order` Manager dependency is captured, after separate maintainer approval, as native `righting/role-dependency` debt.
 3. A new Orders refund workflow initially made a direct Returns workflow import. The normal lint loop reported `righting/cross-context-dependency`.
-4. The repair instead uses the shared `return-status` Utility. The normal baseline and unchanged CI then pass.
+4. The repair instead uses the shared `return-status` Utility. The unchanged lint command and CI then pass.
 
 ## Friction and limits
 
 Approval occurred outside Righting; the package cannot witness it. The flat-config adapter requires existing lint and resolver support, and native legacy-debt adoption requires a separate decision. Inspection reports the normalized contract and adapter-neutral capability records but cannot show adapter activation. Static source checks do not prove runtime behavior, use-case validity, contract quality, real volatility, or queued Manager interaction semantics.
 
-The project still has open refinement questions around advisory design-review usefulness, adapter performance at scale, composition-root scope, baseline identity, and future adapters. These are product questions, not instructions for adopters.
+The project still has open refinement questions around advisory design-review usefulness, adapter performance at scale, composition-root scope, stronger native suppression identity, and future adapters. These are product questions, not instructions for adopters.

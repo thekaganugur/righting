@@ -38,6 +38,16 @@ test("a packed Righting artifact proves the manual-maintainer route and JSON con
     assert.match(readFileSync(resolve(projectDirectory, "node_modules/righting/docs/manual-maintainer.md"), "utf8"), /righting init/);
     assert.match(readFileSync(resolve(projectDirectory, "node_modules/righting/docs/eslint.md"), "utf8"), /eslintConfig\(\)/);
 
+    const publicSurface = runCommand(projectDirectory, process.execPath, [
+      "--input-type=module",
+      "--eval",
+      'console.log(JSON.stringify({ core: Object.keys(await import("righting/core")), eslint: Object.keys(await import("righting/eslint")) }));',
+    ]);
+    assertCommandSucceeded(publicSurface);
+    const exports = JSON.parse(publicSurface.stdout) as { core: string[]; eslint: string[] };
+    assert.equal(exports.core.includes("isPolicyExpansion"), false);
+    assert.equal(exports.eslint.includes("normalizeEslintSuppressions"), false);
+
     const incomplete = assertSuccessEnvelope(righting(projectDirectory, "init", "--json"), "init", "incomplete");
     assert.equal((incomplete.policy as Json).created, false);
     assert.deepEqual((incomplete.policy as Json).required, ["coverage", "maintainer-approval"]);

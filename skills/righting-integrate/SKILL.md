@@ -52,7 +52,7 @@ Present one approval packet containing:
 - forbidden or unresolved dependencies with counts and locations;
 - the contract's evidence limits and the separate unknown adapter status;
 - files and commands that would change; and
-- any separately requested adapter, legacy-debt, baseline, or commit scope.
+- any separately requested adapter, legacy-debt, or commit scope.
 
 Ask the maintainer to approve or revise that exact packet. Stop at the approval request; continue only after an explicit response covering the policy and requested actions.
 
@@ -60,6 +60,6 @@ Ask the maintainer to approve or revise that exact packet. Stop at the approval 
 
 Apply only the approved replacement policy and setup actions. Run `npx righting init --json` when starter files or managed guidance are needed, then `npx righting inspect --json`. Compare the returned normalized contract with the approved packet and confirm the retired mapping policy and top-level inspection projections are absent.
 
-When enforcement is separately approved, hand the unchanged policy to `righting-eslint`. When legacy-debt adoption is separately approved, follow the [legacy-debt reference](../../docs/legacy-debt.md) with the approved base ref and reason.
+When enforcement is separately approved, hand the unchanged policy to `righting-eslint`. That skill reports any existing findings and obtains separate maintainer confirmation before using ESLint's native legacy-debt lifecycle.
 
 Report approved decisions, ledger summaries, changed files, command outcomes, contract differences, and remaining evidence limits.

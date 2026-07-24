@@ -12,7 +12,6 @@ const packagedResources = [
   "dist/src/cli.js",
   "dist/src/policy.js",
   "dist/src/capabilities.js",
-  "dist/src/suppressions.js",
   "skills/righting-design-review/SKILL.md",
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
@@ -84,6 +83,8 @@ test("the packed package publishes every onboarding reference without the retire
       assert.ok(files.has(resource), `${resource} is missing from the package`);
     }
     assert.equal(files.has("dist/src/docs.js"), false);
+    assert.equal(files.has("dist/src/baseline.js"), false);
+    assert.equal(files.has("dist/src/suppressions.js"), false);
     assert.equal(files.has("docs/agents/issue-tracker.md"), false);
     assert.equal(files.has("docs/agents/domain.md"), false);
 
@@ -100,8 +101,17 @@ test("the packed package publishes every onboarding reference without the retire
     const extracted = run("tar", ["-xzf", tarball, "-C", packageDirectory]);
     assert.equal(extracted.status, 0, extracted.stderr);
     for (const resource of packagedResources) {
-      assert.doesNotMatch(readFileSync(resolve(packageDirectory, "package", resource), "utf8"), /righting docs/);
+      const contents = readFileSync(resolve(packageDirectory, "package", resource), "utf8");
+      assert.doesNotMatch(contents, /righting docs/);
+      assert.doesNotMatch(contents, /righting baseline/);
     }
+    const eslintReference = readFileSync(resolve(packageDirectory, "package/docs/eslint.md"), "utf8");
+    assert.match(eslintReference, /normalized contract[\s\S]*does not establish[\s\S]*adapter/i);
+    assert.match(eslintReference, /--suppress-rule righting\/role-dependency/);
+    assert.match(eslintReference, /--prune-suppressions/);
+    const eslintSkill = readFileSync(resolve(packageDirectory, "package/skills/righting-eslint/SKILL.md"), "utf8");
+    assert.match(eslintSkill, /ask the maintainer[\s\S]*before running[\s\S]*--suppress-rule/i);
+    assert.match(eslintSkill, /new findings[\s\S]*unchanged lint command/i);
     for (const resource of ["dist/src/policy.js", "dist/src/policy.d.ts", "docs/policy-language.md", "docs/capabilities.md"]) {
       const contents = readFileSync(resolve(packageDirectory, "package", resource), "utf8");
       assert.doesNotMatch(contents, /eslint|suppression-file/i, `${resource} leaks adapter mechanics into the core contract`);

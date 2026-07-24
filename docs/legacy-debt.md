@@ -1,29 +1,27 @@
 # Legacy ESLint debt
 
-Righting supports existing **ESLint 9-or-later flat-config** projects only. It never creates or migrates lint configuration, rewrites `eslint.config.*`, or changes the `lint` script.
+Righting supports existing **ESLint 9-or-later flat-config** projects only. The adapter never creates or migrates lint configuration, rewrites `eslint.config.*`, changes the lint script, or owns a suppression format.
 
-## Establish a baseline
+## Initial adoption
 
-After adding `eslintConfig()` to an existing flat config, let ESLint record only Righting findings in its normal suppression file:
+After adding `eslintConfig()` to an existing flat config, run the established lint command and report existing `righting/role-dependency` findings. Obtain explicit maintainer approval before asking ESLint to record them:
 
 ```sh
 npm run lint -- --suppress-rule righting/role-dependency
 ```
 
-ESLint writes the namespaced `righting/role-dependency` entries to `eslint-suppressions.json`; unrelated entries remain untouched. Commit that file, then verify the intentional adoption or policy expansion against an explicit base ref:
+ESLint writes namespaced entries to the project's `eslint-suppressions.json`; unrelated native suppressions remain ESLint's concern. Review and commit the resulting file with the adapter integration.
+
+## Normal work
+
+Use the unchanged lint command. ESLint applies the committed counts automatically, reports findings beyond them, and rejects stale suppression counts after their findings are fixed. Prune resolved debt with the native lifecycle:
 
 ```sh
-npx righting baseline --base origin/main --migration-reason "Adopt existing boundary debt."
+npm run lint -- --prune-suppressions
 ```
 
-Normal work uses the same command without a migration reason. It passes only when Righting debt is unchanged or smaller:
-
-```sh
-npx righting baseline --base origin/main
-```
-
-Git is required only for `righting baseline`. Ordinary ESLint boundary linting remains available without Git.
+No Righting lifecycle command or Git base is required.
 
 ## Limitation
 
-The ratchet compares counts per file and `righting/role-dependency`. It detects growth, but cannot distinguish a same-count violation swap within the same file and rule.
+ESLint stores counts per file and rule. This prevents count growth but cannot distinguish a same-count finding swap within the same file and `righting/role-dependency` rule.

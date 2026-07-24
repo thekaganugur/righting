@@ -18,12 +18,6 @@ function assertSuccess(result: ReturnType<typeof run>): void {
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 }
 
-function git(projectDirectory: string, ...arguments_: string[]): string {
-  const result = run(projectDirectory, "git", arguments_);
-  assertSuccess(result);
-  return result.stdout.trim();
-}
-
 function createDogfoodProject(): string {
   const projectDirectory = mkdtempSync(resolve(tmpdir(), "righting-dogfood-"));
   cpSync(dogfoodDirectory, projectDirectory, { recursive: true });
@@ -66,42 +60,8 @@ function createDogfoodProject(): string {
   return projectDirectory;
 }
 
-function righting(projectDirectory: string, ...arguments_: string[]) {
-  return run(projectDirectory, "npx", ["righting", ...arguments_]);
-}
-
 function npm(projectDirectory: string, ...arguments_: string[]) {
   return run(projectDirectory, "npm", arguments_);
-}
-
-function createApprovedIntegrationHistory(projectDirectory: string): string {
-  git(projectDirectory, "init");
-  git(projectDirectory, "config", "user.email", "righting@example.test");
-  git(projectDirectory, "config", "user.name", "Righting Test");
-  git(projectDirectory, "add", ".");
-  const approvedTree = git(projectDirectory, "write-tree");
-  git(projectDirectory, "read-tree", "--empty");
-  const beforeTree = git(projectDirectory, "write-tree");
-  const beforeIntegration = git(
-    projectDirectory,
-    "commit-tree",
-    beforeTree,
-    "-m",
-    "before approved Righting integration",
-  );
-  const approvedIntegration = git(
-    projectDirectory,
-    "commit-tree",
-    approvedTree,
-    "-p",
-    beforeIntegration,
-    "-m",
-    "adopt approved Righting policy and legacy debt",
-  );
-  git(projectDirectory, "update-ref", "refs/heads/main", approvedIntegration);
-  git(projectDirectory, "symbolic-ref", "HEAD", "refs/heads/main");
-  git(projectDirectory, "read-tree", approvedIntegration);
-  return beforeIntegration;
 }
 
 test("dogfood project preserves the approved Righting repair workflow", () => {
@@ -128,8 +88,6 @@ test("dogfood project preserves the approved Righting repair workflow", () => {
       "src/orders/workflow/legacy-order.ts": { "righting/role-dependency": { count: 1 } },
     });
 
-    const beforeIntegration = createApprovedIntegrationHistory(projectDirectory);
-
     assertSuccess(npm(projectDirectory, "run", "lint", "--", "--suppress-rule", "righting/role-dependency"));
 
     const typeOnlyImportPath = resolve(projectDirectory, "src/orders/screen/illegal-type-only-import.ts");
@@ -142,18 +100,6 @@ test("dogfood project preserves the approved Righting repair workflow", () => {
     assert.match(`${typeOnlyFailure.stdout}\n${typeOnlyFailure.stderr}`, /righting\/role-dependency/);
     rmSync(typeOnlyImportPath);
 
-    const adopted = righting(
-      projectDirectory,
-      "baseline",
-      "--base",
-      beforeIntegration,
-      "--migration-reason",
-      "Adopt the existing legacy order workflow dependency.",
-      "--json",
-    );
-    assertSuccess(adopted);
-    assert.equal(JSON.parse(adopted.stdout).debt.status, "migration-baseline");
-
     writeFileSync(
       refundPath,
       'import { acceptReturn } from "../../returns/workflow/accept-return.ts";\n\nexport function refundOrder() {\n  return acceptReturn();\n}\n',
@@ -164,9 +110,6 @@ test("dogfood project preserves the approved Righting repair workflow", () => {
 
     writeFileSync(refundPath, repairedRefundWorkflow);
 
-    const baseline = righting(projectDirectory, "baseline", "--base", "HEAD", "--json");
-    assertSuccess(baseline);
-    assert.equal(JSON.parse(baseline.stdout).debt.status, "within-baseline");
     assertSuccess(npm(projectDirectory, "run", "ci"));
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });

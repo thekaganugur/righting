@@ -1,12 +1,12 @@
 ---
 name: righting-eslint
-description: Preserve an existing ESLint flat-config loop when adding and verifying the Righting adapter, including resolver and typed-lint behavior.
+description: Preserve an existing ESLint flat-config loop when adding and verifying the Righting adapter, including resolver, typed-lint, and native suppression behavior.
 compatibility: Requires an existing ESLint flat config, a resolvable righting/eslint package, and the project's established lint command.
 ---
 
 # Preserve the lint loop
 
-Righting adds one ESLint config entry to an established flat-config loop. Preserve the loop and make its existing behavior observable before and after the addition. Use the normalized `contract` from `npx righting inspect --json` for conventions and capability limits; do not duplicate policy guidance in project instructions.
+Righting adds one ESLint config entry to an established flat-config loop. Preserve the loop and make its existing behavior observable before and after the addition. Use the normalized `contract` from `npx righting inspect --json` for conventions and capability limits; do not duplicate policy guidance in project instructions. Inspection does not establish adapter activation or diagnostics.
 
 ## 1. Inspect the established setup
 
@@ -49,8 +49,16 @@ Report:
 
 Completion: the normal lint loop has run and its before/after configuration and outcome are recorded.
 
-## 4. Use native suppressions only for approved legacy debt
+## 4. Adopt legacy debt through ESLint
 
-When `righting-integrate` records approved legacy-debt adoption, run the unchanged lint script with the project's package-manager argument-forwarding syntax and ESLint's `--suppress-rule righting/role-dependency` argument (for npm: `npm run lint -- --suppress-rule righting/role-dependency`). Record the command outcome, review `eslint-suppressions.json` to confirm unrelated suppressions remain intact, then hand its pre-adoption migration base ref and reason to `righting baseline`.
+Only during initial adapter integration, when the activated adapter reports existing `righting/role-dependency` findings, show those findings and ask the maintainer for explicit approval before running any suppression command. Do not infer approval from policy approval and do not suppress when there are no existing findings.
 
-Completion: the suppression command outcome is recorded, and any suppression is namespaced to `righting/role-dependency`, intentional, and ready for the core baseline ratchet.
+After approval, run the unchanged lint script with the project's package-manager argument-forwarding syntax and ESLint's `--suppress-rule righting/role-dependency` argument (for npm: `npm run lint -- --suppress-rule righting/role-dependency`). Record the outcome and review `eslint-suppressions.json` so the added entries are namespaced to `righting/role-dependency` and unrelated suppressions remain intact.
+
+Completion: approved existing findings pass through the unchanged lint command, and the reviewed native suppression file is ready to commit with the adapter integration.
+
+## 5. Keep debt in the native lint loop
+
+For normal work, existing native counts remain suppressed and new findings fail the unchanged lint command. Fix new findings rather than increasing counts. After resolving legacy findings, run the unchanged lint script with ESLint's `--prune-suppressions` argument (for npm: `npm run lint -- --prune-suppressions`) and review the resulting file.
+
+Report ESLint's count-based limitation: it cannot distinguish a same-count finding swap within one file and rule. Righting adds no command, metadata file, Git-base comparison, or approval store for this lifecycle.

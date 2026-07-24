@@ -9,8 +9,6 @@ import {
   type NormalizedContract,
   type Role,
 } from "./policy.js";
-export { normalizeEslintSuppressions, type LegacyDebt } from "./suppressions.js";
-
 const externalOrigins = ["external", "core"];
 const testElementType = "righting-treatment-test";
 const generatedElementType = "righting-treatment-generated";

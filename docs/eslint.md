@@ -1,6 +1,6 @@
 # ESLint adapter
 
-Righting's ESLint adapter is optional and separate from policy approval. It supports an existing ESLint 9 flat config; it does not create or migrate lint configuration, rewrite a lint script, or choose policy decisions.
+Righting's ESLint adapter is optional and separate from the normalized contract. `righting inspect` validates contract semantics and reports adapter-neutral evidence; it does not establish that ESLint is configured, active, resolving imports, or producing diagnostics.
 
 ## Prerequisites
 
@@ -32,10 +32,20 @@ export default [
 ];
 ```
 
-If already-approved TypeScript path aliases need resolver configuration, reuse the project's existing resolver and retain its settings. Do not restructure the configuration or lint script.
+Run the project's established lint command unchanged. Its native `righting/...` diagnostics are the adapter evidence; the [capability catalog](capabilities.md) states what those static diagnostics do and do not establish. Adapter debt status comes from ESLint's lint/prune output and `eslint-suppressions.json`, not from `righting inspect`.
 
-## Verify and manage legacy debt
+## Adopt and maintain legacy debt
 
-Run the project's established lint command unchanged before and after the approved patch. `righting inspect` describes policy semantics and capability limits, but does not establish that this adapter is active.
+During initial adapter integration, report existing `righting/role-dependency` findings and obtain explicit maintainer approval before recording them as legacy debt. Then let ESLint write only those findings to its normal suppression file:
 
-When a maintainer separately approves existing Righting findings as legacy debt, use ESLint's native namespaced suppression flow and then the core baseline ratchet. See [legacy debt](legacy-debt.md). The [capability catalog](capabilities.md) states the static evidence and limits for the adapter diagnostics.
+```sh
+npm run lint -- --suppress-rule righting/role-dependency
+```
+
+Normal lint runs automatically apply `eslint-suppressions.json`. Existing counts stay suppressed while a new finding fails the unchanged lint command. After fixing suppressed findings, remove stale counts through ESLint itself:
+
+```sh
+npm run lint -- --prune-suppressions
+```
+
+Review and commit the native suppression file with the adapter change. Righting adds no baseline command, suppression format, Git comparison, or compatibility read. ESLint's count-based storage cannot distinguish a same-count finding swap within one file and rule, and suppressions apply only to rules configured as errors.
