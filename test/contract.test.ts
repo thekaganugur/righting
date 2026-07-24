@@ -339,6 +339,10 @@ test("project generated conventions preserve generated composition-root treatmen
       generated: true,
       editable: false,
     });
+    assert.deepEqual(classifySource(contract, "source/catalog.auto.ts"), {
+      kind: "violation",
+      ruleId: "righting/unclassified-source",
+    });
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
