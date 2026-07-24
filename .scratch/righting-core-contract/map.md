@@ -1,6 +1,6 @@
 # Adapter-neutral Righting contract
 
-Status: open
+Status: resolved
 Labels: wayfinder:map
 
 ## Destination
@@ -19,11 +19,12 @@ Deliver a small, versioned, opinionated Righting contract and minimal core helpe
 
 ### Rolling delivery
 
-Current waypoint: [Deliver the adoption and agent handoff](issues/08-deliver-adoption-and-agent-handoff.md)
+Current waypoint: None — destination reached.
 
 Delivered:
 - [Deliver the adapter-neutral contract core](issues/04-deliver-adapter-neutral-contract-core.md) — A versioned convention-led contract, deterministic core helpers, and matching coding-agent/adapter semantics now ship through `righting/core`.
 - [Deliver the ESLint adapter boundary](issues/07-deliver-eslint-adapter-boundary.md) — ESLint now owns activation, diagnostics, approved legacy-debt adoption, growth detection, and pruning while consuming the normalized contract unchanged.
+- [Deliver the adoption and agent handoff](issues/08-deliver-adoption-and-agent-handoff.md) — Maintainers and coding agents now share an approval-gated normalized-contract handoff with explicit optional adapter choice and evidence stages through active guardrails.
 
 ## Decisions so far
 
@@ -33,6 +34,7 @@ Delivered:
 - [Define convention and alias semantics](issues/02-define-convention-and-alias-semantics.md) — `volatility@1` classifies declared coverage through additive canonical, project-alias, and evidenced project-generated filename conventions, with explicit test, generated-source, composition-root, ambiguity, and unmatched-source behavior; generated status may apply to a canonical role or composition root.
 - [Choose compatibility for existing policies](issues/03-choose-existing-policy-compatibility.md) — The unused mapping-based policy and inspection projections are replaced atomically in place; the exact incomplete starter remains, while packaged consumers move together to the convention-led contract.
 - [Relocate adapter-owned debt behavior](issues/05-relocate-adapter-debt-behavior.md) — Remove Righting's duplicate baseline machinery; the ESLint adapter uses native suppression adoption, enforcement, and pruning in the existing lint loop, with agent-driven suppression requiring maintainer approval.
+- [Reframe adoption and agent handoff](issues/06-reframe-adoption-and-agent-handoff.md) — Separate policy approval from optional adapter activation, strengthen evidence from observed inconsistency through adapter-native debt, and make available adapters discoverable without presenting ESLint as universal.
 
 ## Not yet specified
 
@@ -44,3 +46,4 @@ Delivered:
 - A universal suppression or legacy-debt format in core.
 - Automatic architecture inference, policy completion, or source refactoring.
 - Runtime-behavior proof or automatic adapter generation.
+- Adapter-authoring support, including a possible `write-righting-adapter` skill, pending a separate future investigation and an explicit adapter-authoring contract.

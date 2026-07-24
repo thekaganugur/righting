@@ -25,10 +25,12 @@ After the approved policy is in place, run:
 npx righting inspect --json
 ```
 
-It reports the normalized contract once under `contract`, including configured provenance, effective role relationships, applicable [capabilities](capabilities.md), and evidence limits. Outside the contract, current `evidence` mechanically summarizes covered-source classifications and lists unclassified or ambiguous paths. Adapter status remains separate and unknown; inspection does not verify approval, imports, dependency edges, or active enforcement.
+It reports the normalized contract once under `contract`, including configured provenance, effective role relationships, applicable [capabilities](capabilities.md), and evidence limits. Outside the contract, current `evidence` mechanically summarizes covered-source classifications and lists unclassified or ambiguous paths as **observed inconsistencies**, not policy exceptions or migration work. Adapter status remains separate and unknown; inspection does not verify approval, imports, dependency edges, or active enforcement.
 
-## 4. Optionally hand off adapter work
+## 4. Choose whether to hand off adapter work
 
-Only after separately approving adapter work, hand it to [`righting-eslint`](../skills/righting-eslint/SKILL.md). It preserves an existing supported ESLint flat-config loop; it does not install, migrate, or restructure lint tooling.
+After policy approval, `righting-integrate` lists available guardrail adapters and recommends a compatible fit. V1 provides only the optional [`righting-eslint`](../skills/righting-eslint/SKILL.md) adapter, which requires an existing supported ESLint flat-config loop; it is not universal. The maintainer explicitly chooses and separately approves whether to invoke it.
 
-The policy reference remains the source for policy semantics, and the linked skills remain the source for their procedures. The short `AGENTS.md` block only points agents to `righting.json` before covered-code changes.
+The handoff gives `righting-eslint` the unchanged normalized contract. Verified diagnostics become **adapter findings**; only separately approved native suppressions become **adapter-native legacy debt**. Only the project's successful normal lint command establishes active ESLint guardrails.
+
+The policy reference remains the source for policy semantics, and the linked skills remain the source for their procedures. The short `AGENTS.md` block directs agents to inspect the normalized contract before covered-code changes and keeps adapter activation explicitly unverified.

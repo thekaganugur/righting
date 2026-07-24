@@ -9,7 +9,7 @@ import { assertCommandSucceeded, createPackedProject, packRighting, righting, ru
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
 const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/manual-maintainer");
-const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nRead it before changing covered code.";
+const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nBefore changing covered code, run `npx righting inspect --json` and use its normalized `contract`.\nAdapter activation remains unknown until separately verified.";
 const approvedPolicyPath = resolve(fixtureDirectory, "righting-approved.json");
 const documentation = ["README.md", "docs/manual-maintainer.md", "docs/policy-language.md", "docs/capabilities.md", "docs/eslint.md", "docs/legacy-debt.md"];
 
@@ -35,7 +35,10 @@ test("a packed Righting artifact proves the manual-maintainer route and JSON con
     for (const resource of documentation) {
       assert.ok(existsSync(resolve(projectDirectory, "node_modules/righting", resource)), `${resource} is missing from the packed artifact`);
     }
-    assert.match(readFileSync(resolve(projectDirectory, "node_modules/righting/docs/manual-maintainer.md"), "utf8"), /righting init/);
+    const manualRoute = readFileSync(resolve(projectDirectory, "node_modules/righting/docs/manual-maintainer.md"), "utf8");
+    assert.match(manualRoute, /righting init/);
+    assert.match(manualRoute, /available guardrail adapter[\s\S]*ESLint[\s\S]*separately choose/i);
+    assert.match(manualRoute, /observed inconsistenc[\s\S]*adapter finding[\s\S]*adapter-native legacy debt[\s\S]*normal lint command/i);
     assert.match(readFileSync(resolve(projectDirectory, "node_modules/righting/docs/eslint.md"), "utf8"), /eslintConfig\(\)/);
 
     const publicSurface = runCommand(projectDirectory, process.execPath, [

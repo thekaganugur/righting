@@ -15,7 +15,7 @@ Read the existing `righting.json`, root `AGENTS.md`, architecture documentation,
 Build from a version-controlled file inventory such as `git ls-files`, not only from proposed coverage directories. Identify source and architecture-relevant executable, configuration, schema, seed, and generated files outside coverage; classify each as covered or intentionally unchecked with a reason.
 
 - **Coverage ledger:** enumerate project source files and classify each as inside a proposed broad coverage rule or intentionally unchecked with a reason. Within coverage, classify each source by a canonical filename convention, a proposed project alias token, test status, generated status paired with a role or composition root, composition root, ambiguity, or `righting/unclassified-source`. Generated status never classifies source by itself. An alias records reusable project vocabulary, not an inventory or path mapping. For each coverage glob, state its future inclusion rule and list current matches. When project evidence identifies generated source that does not match an active generated convention, record the unsupported generated treatment and retain the contract's actual classification, including `righting/unclassified-source` when no independent role applies. Do not assign a role or composition root solely to hide an unsupported generated treatment.
-- **Dependency ledger:** scan static `import`, `export`, `require`, and dynamic import forms from covered source. Classify each local or protected external dependency by source role, target role or treatment, scope, and effective policy result. Group forbidden and unresolved occurrences by stable `righting/...` policy-rule ID, retaining counts and concrete locations.
+- **Dependency ledger:** scan static `import`, `export`, `require`, and dynamic import forms from covered source. Classify each local or protected external dependency by source role, target role or treatment, scope, and effective policy result. Record forbidden and unresolved occurrences as **observed inconsistencies**, grouped by stable `righting/...` policy-rule ID with counts and concrete locations.
 
 Record how each ledger was produced. Label dependency-scan completeness as exhaustive or partial and state every partial boundary.
 
@@ -49,7 +49,7 @@ Present one approval packet containing:
 - each override's evidence and alternatives considered;
 - covered and intentionally unchecked source areas, including each glob's future inclusion rule;
 - aliases, composition roots, test/generated treatment, ambiguities, and unclassified source;
-- forbidden or unresolved dependencies with counts and locations;
+- forbidden or unresolved dependency **observed inconsistencies** with counts and locations;
 - the contract's evidence limits and the separate unknown adapter status;
 - files and commands that would change; and
 - any separately requested adapter, legacy-debt, or commit scope.
@@ -58,8 +58,10 @@ Ask the maintainer to approve or revise that exact packet. Stop at the approval 
 
 ## 4. Apply and verify
 
-Apply only the approved replacement policy and setup actions. Run `npx righting init --json` when starter files or managed guidance are needed, then `npx righting inspect --json`. Compare the returned normalized contract with the approved packet and confirm the retired mapping policy and top-level inspection projections are absent.
+Apply only the approved replacement policy and setup actions. Run `npx righting init --json` when starter files or managed guidance are needed, then `npx righting inspect --json`. Compare the returned normalized contract with the approved packet and confirm the retired mapping policy and top-level inspection projections are absent. Report inspection violations as **observed inconsistencies**, not policy exceptions or source-migration work.
 
-When enforcement is separately approved, hand the unchanged policy to `righting-eslint`. That skill reports any existing findings and obtains separate maintainer confirmation before using ESLint's native legacy-debt lifecycle.
+After policy approval, list the available guardrail adapters and recommend a compatible fit. V1 provides only the optional `righting-eslint` adapter, which requires an existing supported ESLint setup; do not present ESLint as universal. The maintainer explicitly chooses whether to activate an adapter—never invoke one automatically or infer adapter approval from policy approval.
 
-Report approved decisions, ledger summaries, changed files, command outcomes, contract differences, and remaining evidence limits.
+When the maintainer chooses ESLint enforcement, hand the unchanged normalized contract to `righting-eslint`. That skill turns verified diagnostics into **adapter findings** and obtains separate maintainer confirmation before recording approved findings as **adapter-native legacy debt**. Only a successful run of the project's normal lint command establishes active ESLint guardrails.
+
+Report approved decisions, ledger summaries, changed files, command outcomes, contract differences, available-adapter recommendation, and remaining evidence limits.

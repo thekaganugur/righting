@@ -88,7 +88,8 @@ const starterPolicy = `${JSON.stringify(
 
 const managedGuidance = `${managedStart}
 This project has a Righting architecture policy in \`righting.json\`.
-Read it before changing covered code.
+Before changing covered code, run \`npx righting inspect --json\` and use its normalized \`contract\`.
+Adapter activation remains unknown until separately verified.
 ${managedEnd}`;
 
 function replaceManagedGuidance(existing: string | undefined, guidance = managedGuidance): string {

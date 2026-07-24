@@ -10,7 +10,7 @@ const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
 const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/manual-maintainer");
 const approvedPolicyPath = resolve(fixtureDirectory, "righting-approved.json");
-const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nRead it before changing covered code.";
+const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nBefore changing covered code, run `npx righting inspect --json` and use its normalized `contract`.\nAdapter activation remains unknown until separately verified.";
 const skills = ["righting-design-review", "righting-eslint", "righting-integrate"];
 
 test("a packed Righting artifact proves the agent-assisted JSON journey", () => {
@@ -40,6 +40,10 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
       assert.equal(isAbsolute(readlinkSync(link)), false);
       assert.equal(resolve(dirname(link), readlinkSync(link)), source);
     }
+    const integrationSkill = readFileSync(resolve(projectDirectory, ".agents/skills/righting-integrate/SKILL.md"), "utf8");
+    assert.match(integrationSkill, /dependency ledger[\s\S]*observed inconsistencies/i);
+    assert.match(integrationSkill, /list the available guardrail adapters[\s\S]*recommend[\s\S]*maintainer explicitly chooses/i);
+    assert.match(integrationSkill, /unchanged normalized contract[\s\S]*righting-eslint/i);
 
     const incompleteInspection = assertSuccessEnvelope(righting(projectDirectory, "inspect", "--json"), "inspect", "incomplete");
     assert.deepEqual((incompleteInspection.policy as Json).required, ["coverage", "maintainer-approval"]);

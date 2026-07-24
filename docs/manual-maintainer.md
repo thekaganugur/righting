@@ -28,11 +28,17 @@ Render the exact replacement `righting.json`, review it, and record explicit mai
 npx righting inspect
 ```
 
-Inspection reports normalized policy semantics and applicable [capability limits](capabilities.md). `inspect --json` also reports current covered-source classification counts plus unclassified or ambiguous paths outside the contract. It does not check imports, dependency edges, adapter activation, lint results, approval provenance, or runtime behavior.
+Inspection reports normalized policy semantics and applicable [capability limits](capabilities.md). `inspect --json` also reports current covered-source classification counts plus unclassified or ambiguous paths outside the contract. These are **observed inconsistencies**, not policy exceptions or required source-migration work. Inspection does not check imports, dependency edges, adapter activation, lint results, approval provenance, or runtime behavior.
 
-## 5. Optionally enforce imports
+## 5. Separately choose whether to enforce imports
 
-If ESLint enforcement is separately wanted and the project already has a supported flat config, follow the [additive ESLint route](eslint.md). Approve adapter changes and any [legacy-debt](legacy-debt.md) adoption separately from policy approval.
+Available guardrail adapters:
+
+- [ESLint](eslint.md) — recommended only when the project already has a supported ESLint flat config.
+
+ESLint is optional, not universal. Separately choose and approve whether to invoke it after policy approval.
+
+A verified adapter diagnostic is an **adapter finding**. Only maintainer-approved native suppression becomes **adapter-native legacy debt**; follow the separate [legacy-debt lifecycle](legacy-debt.md). Only a successful run of the project's normal lint command establishes active ESLint guardrails.
 
 ## If setup stops at managed guidance
 
