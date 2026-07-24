@@ -49,6 +49,21 @@ test("the integration skill keeps unsupported source treatments visible", () => 
   assert.match(skill, /exact[\s\S]*contract[\s\S]*evidence[\s\S]*JSON[\s\S]*prose/i, "source/catalog.client.ts");
 });
 
+test("the integration skill keeps contextFirewall optional and context design separate", () => {
+  const skill = readFileSync(resolve(repositoryDirectory, "skills/righting-integrate/SKILL.md"), "utf8");
+  const start = skill.indexOf("### `contextFirewall`");
+  const end = skill.indexOf("\nValidate the exact candidate", start);
+  assert.ok(start >= 0 && end > start);
+  const guidance = skill.slice(start, end);
+
+  assert.match(guidance, /policy readiness[\s\S]*design suggestion/i);
+  assert.match(guidance, /single-context[\s\S]*does not[\s\S]*(good|sound)/i);
+  assert.match(guidance, /bounded-context specialist[\s\S]*optional[\s\S]*do not invoke/i);
+  assert.match(guidance, /for each result[\s\S]*recommendation[\s\S]*pros and cons/i);
+  assert.match(guidance, /one question at a time/i);
+  assert.match(guidance, /do not[\s\S]*(infer|derive)[\s\S]*context policy[\s\S]*domain vocabulary alone/i);
+});
+
 test("the packed package publishes every onboarding reference without the retired docs command", () => {
   const packageDirectory = mkdtempSync(resolve(tmpdir(), "righting-package-docs-"));
 

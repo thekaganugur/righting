@@ -89,7 +89,7 @@ Protected packages follow the same effective role graph as source roles.
 
 Keep optional fields absent unless approved and applicable:
 
-- `variations`: `clientReadsAccess`, `pureEngines`, and `contextFirewall`.
+- `variations`: `clientReadsAccess`, `pureEngines`, and `contextFirewall`. The firewall continuously checks approved static import boundaries, but premature scopes can encode accidental structure and force harmful constraints. Use it only for maintainer-identified context identities and relationships, with exact scopes explicitly approved; source folders, imports, and vocabulary differences are evidence to investigate, not context policy by themselves. Without approved contexts, omit it and `scopes`—the policy remains complete. A single-context declaration does not establish that the current boundary is well designed; reassessing that boundary belongs to an optional bounded-context specialist.
 - `overrides`: named, reason-required global `allow` or `disallow` changes to one canonical role edge. An override must change the effective edge.
 - `scopes`: required with `contextFirewall`; include at least one named `context`, one `shared`, and one `unscoped` path rule.
 - `guidance`: project-relative `domainVocabulary` and named `goldenExamples` references for coding-agent guidance.

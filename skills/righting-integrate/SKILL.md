@@ -27,6 +27,15 @@ Start with the smallest complete policy: `{"preset":"volatility@1","coverage":[.
 
 Explicitly evaluate every named variation in the installed `docs/policy-language.md` and record an evidence-backed `propose` or `omit` disposition. For each override, evaluate default-policy fit, responsibility clarification or extraction, and tightening before proposing a reasoned global relaxation.
 
+### `contextFirewall`
+
+Keep this check small and report two independent results:
+
+- **Policy readiness:** propose it only when maintainer statements or project-owned architecture documentation already identify context boundaries and relationships that map unambiguously to context, shared, and unscoped paths. Otherwise omit the variation and scopes; omission does not make Righting adoption incomplete. A single-context declaration settles current readiness only; it does not establish that the existing boundary is good.
+- **Design suggestion:** use already gathered architecture, vocabulary, ownership, and dependency evidence to note possible boundary pressure, such as conflicting models or terms, unclear shared ownership, or recurring cross-area coupling. These observations may justify a bounded-context specialist; recommend it only as an optional next step when the existing boundaries deserve reassessment. Do not invoke it, conduct context discovery, or block the rest of Righting adoption. Do not infer or derive context policy from directories, folder names, paths, the import graph, or domain vocabulary alone.
+
+For each result, report the recommendation, evidence, and material pros and cons. When maintainer input is needed, ask one question at a time and keep it short.
+
 Validate the exact candidate by running the project's installed `righting inspect --json` in a temporary mirror of the project tree. Treat its `evidence.sourceSummary` counts and `evidence.sourceViolations` paths as authoritative for covered-source classification; resolve any ledger disagreement instead of recalculating or overriding them. Retain the exact `contract` and `evidence` JSON returned by inspection and include them verbatim in the approval packet; a prose projection or renamed summary does not satisfy exact validation. Compare the returned `contract.configured` provenance and `contract.effective` semantics with both ledgers. Reclassify the separately produced dependency ledger against that exact contract.
 
 Completion: the candidate is structurally valid; every optional field has evidence; every coverage rule has known matches; aliases are convention tokens rather than path mappings; classifications are deterministic or explicitly violating; both ledgers describe the exact normalized contract.
