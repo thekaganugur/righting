@@ -44,6 +44,9 @@ test("the integration skill keeps unsupported source treatments visible", () => 
     /do not[\s\S]*(role|composition root)[\s\S]*hide[\s\S]*generated treatment/i,
     syntheticGeneratedPath,
   );
+  assert.match(skill, /version-controlled file inventory[\s\S]*outside coverage/, "public/catalog-worker.js");
+  assert.match(skill, /composition-root token[\s\S]*non-test[\s\S]*maintainer statement/, "source/launchpad.test.ts");
+  assert.match(skill, /exact[\s\S]*contract[\s\S]*evidence[\s\S]*JSON[\s\S]*prose/i, "source/catalog.client.ts");
 });
 
 test("the packed package publishes every onboarding reference without the retired docs command", () => {
