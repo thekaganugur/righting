@@ -25,7 +25,7 @@ After the approved policy is in place, run:
 npx righting inspect --json
 ```
 
-It reports the normalized contract once under `contract`, including configured provenance, effective role relationships, applicable [capabilities](capabilities.md), and evidence limits. Adapter status remains separate and unknown; inspection does not verify approval or active enforcement.
+It reports the normalized contract once under `contract`, including configured provenance, effective role relationships, applicable [capabilities](capabilities.md), and evidence limits. Outside the contract, current `evidence` mechanically summarizes covered-source classifications and lists unclassified or ambiguous paths. Adapter status remains separate and unknown; inspection does not verify approval, imports, dependency edges, or active enforcement.
 
 ## 4. Optionally hand off adapter work
 

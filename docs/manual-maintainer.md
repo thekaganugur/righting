@@ -28,7 +28,7 @@ Render the exact replacement `righting.json`, review it, and record explicit mai
 npx righting inspect
 ```
 
-Inspection reports normalized policy semantics and applicable [capability limits](capabilities.md). It does not check adapter activation, lint results, approval provenance, or runtime behavior.
+Inspection reports normalized policy semantics and applicable [capability limits](capabilities.md). `inspect --json` also reports current covered-source classification counts plus unclassified or ambiguous paths outside the contract. It does not check imports, dependency edges, adapter activation, lint results, approval provenance, or runtime behavior.
 
 ## 5. Optionally enforce imports
 

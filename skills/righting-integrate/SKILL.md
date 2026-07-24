@@ -27,7 +27,7 @@ Start with the smallest complete policy: `{"preset":"volatility@1","coverage":[.
 
 Explicitly evaluate every named variation in the installed `docs/policy-language.md` and record an evidence-backed `propose` or `omit` disposition. For each override, evaluate default-policy fit, responsibility clarification or extraction, and tightening before proposing a reasoned global relaxation.
 
-Validate the exact candidate by running the project's installed `righting inspect --json` in a temporary mirror of the project tree. Compare the returned `contract.configured` provenance and `contract.effective` semantics with both ledgers. Reclassify the dependency ledger against that exact contract.
+Validate the exact candidate by running the project's installed `righting inspect --json` in a temporary mirror of the project tree. Treat its `evidence.sourceSummary` counts and `evidence.sourceViolations` paths as authoritative for covered-source classification; resolve any ledger disagreement instead of recalculating or overriding them. Compare the returned `contract.configured` provenance and `contract.effective` semantics with both ledgers. Reclassify the separately produced dependency ledger against that exact contract.
 
 Completion: the candidate is structurally valid; every optional field has evidence; every coverage rule has known matches; aliases are convention tokens rather than path mappings; classifications are deterministic or explicitly violating; both ledgers describe the exact normalized contract.
 

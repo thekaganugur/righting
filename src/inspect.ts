@@ -2,12 +2,15 @@ import { readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, relative, sep } from "node:path";
 import {
+  classifySource,
   incompletePolicyRequirements,
   isExactIncompleteStarterFile,
   normalizePolicy,
   readPolicy,
+  roles,
   type ContractCapability,
   type NormalizedContract,
+  type Role,
 } from "./policy.js";
 
 const { isMatch } = createRequire(import.meta.url)("micromatch") as {
@@ -39,6 +42,21 @@ type ValidInspection = {
   policy: { path: "righting.json"; status: "valid" };
   adapter: { status: "unknown" };
   contract: NormalizedContract;
+  evidence: {
+    sourceSummary: {
+      covered: number;
+      roles: Record<Role, number>;
+      tests: number;
+      compositionRoots: number;
+      unclassified: number;
+      ambiguous: number;
+    };
+    sourceViolations: Array<{
+      path: string;
+      ruleId: "righting/unclassified-source" | "righting/ambiguous-source";
+      roles?: Role[];
+    }>;
+  };
   warnings?: InspectionWarning[];
 };
 
@@ -59,6 +77,45 @@ function projectFiles(projectDirectory: string): string[] {
   }
   visit(projectDirectory);
   return files;
+}
+
+function sourceEvidence(contract: NormalizedContract, files: string[]): ValidInspection["evidence"] {
+  const sourceSummary = {
+    covered: 0,
+    roles: Object.fromEntries(roles.map((role) => [role, 0])) as Record<Role, number>,
+    tests: 0,
+    compositionRoots: 0,
+    unclassified: 0,
+    ambiguous: 0,
+  };
+  const sourceViolations: ValidInspection["evidence"]["sourceViolations"] = [];
+
+  for (const path of [...files].sort()) {
+    const classification = classifySource(contract, path);
+    if (classification.kind === "outside-coverage") {
+      continue;
+    }
+    sourceSummary.covered++;
+    if (classification.kind === "role") {
+      sourceSummary.roles[classification.role]++;
+      sourceSummary.tests += Number(classification.test);
+    } else if (classification.kind === "test") {
+      sourceSummary.tests++;
+    } else if (classification.kind === "composition-root") {
+      sourceSummary.compositionRoots++;
+      sourceSummary.tests += Number(classification.test);
+    } else {
+      const kind = classification.ruleId === "righting/unclassified-source" ? "unclassified" : "ambiguous";
+      sourceSummary[kind]++;
+      sourceViolations.push({
+        path,
+        ruleId: classification.ruleId,
+        ...(classification.ruleId === "righting/ambiguous-source" ? { roles: classification.roles } : {}),
+      });
+    }
+  }
+
+  return { sourceSummary, sourceViolations };
 }
 
 export function inspectPolicy(policyPath: string, _includeAll = false): Inspection {
@@ -85,6 +142,7 @@ export function inspectPolicy(policyPath: string, _includeAll = false): Inspecti
     policy: { path: "righting.json", status: "valid" },
     adapter: { status: "unknown" },
     contract,
+    evidence: sourceEvidence(contract, files),
     ...(warnings.length === 0 ? {} : { warnings }),
   };
 }

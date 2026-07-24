@@ -41,7 +41,7 @@ Both routes require a maintainer to choose and explicitly approve broad source c
 npx righting inspect
 ```
 
-This validates and explains the declared adapter-neutral contract only. It does **not** check source imports, approval provenance, or adapter activation. Coding agents and independent consumers can use the same helpers through `righting/core`; to enforce imports, separately approve an adapter such as the [additive ESLint integration](docs/eslint.md).
+This validates and explains the declared adapter-neutral contract. `inspect --json` also reports current covered-source classification counts and concrete classification violations outside the contract. It does **not** check imports, dependency edges, approval provenance, or adapter activation. Coding agents and independent consumers can use the same helpers through `righting/core`; to enforce imports, separately approve an adapter such as the [additive ESLint integration](docs/eslint.md).
 
 ## References
 

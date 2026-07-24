@@ -122,6 +122,55 @@ test("righting inspect exposes normalized semantics exactly once under contract"
   }
 });
 
+test("righting inspect reports mechanical source evidence outside the contract", () => {
+  const directory = createProject();
+  try {
+    mkdirSync(resolve(directory, "source/widgets"), { recursive: true });
+    for (const path of [
+      "source/widgets/catalog.ts",
+      "source/widgets/catalog.test.ts",
+      "source/wireup.auto.ts",
+      "source/orphan.auto.ts",
+      "source/widgets/conflict.manager.ts",
+    ]) {
+      writeFileSync(resolve(directory, path), "export {};\n");
+    }
+    writeFileSync(
+      resolve(directory, "righting.json"),
+      JSON.stringify({
+        preset: "volatility@1",
+        coverage: ["source/**/*.ts"],
+        aliases: [{ name: "widget", role: "Client", directorySegments: ["widgets"] }],
+        generated: { filenameMarkers: [".auto."] },
+        compositionRoots: ["wireup"],
+      }),
+    );
+
+    const output = success(run(directory, "inspect", "--json"));
+    assert.deepEqual(output.evidence, {
+      sourceSummary: {
+        covered: 5,
+        roles: { Client: 2, Manager: 0, Engine: 0, ResourceAccess: 0, Resource: 0, Utility: 0 },
+        tests: 1,
+        compositionRoots: 1,
+        unclassified: 1,
+        ambiguous: 1,
+      },
+      sourceViolations: [
+        { path: "source/orphan.auto.ts", ruleId: "righting/unclassified-source" },
+        {
+          path: "source/widgets/conflict.manager.ts",
+          ruleId: "righting/ambiguous-source",
+          roles: ["Client", "Manager"],
+        },
+      ],
+    });
+    assert.equal("evidence" in (output.contract as Record<string, unknown>), false);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("righting inspect warns when a coverage rule matches no current source", () => {
   const directory = createProject();
   try {
