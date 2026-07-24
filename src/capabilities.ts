@@ -16,6 +16,7 @@ export function renderCapabilityCatalogReference(): string {
     preset: "volatility@1",
     coverage: ["**/*"],
     aliases: [],
+    generated: { filenameMarkers: [], directorySegments: [] },
     protectedDependencies: [{ package: "example-resource", role: "Resource" }],
     variations: ["contextFirewall"],
     overrides: [],

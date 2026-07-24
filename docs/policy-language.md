@@ -66,8 +66,8 @@ Each alias needs at least one token. Filename tokens are exact dotted markers; d
 ## Explicit source treatments
 
 - Tests use `.test.` / `.spec.` or the `test`, `tests`, and `__tests__` directory segments. They remain visible inside coverage. Their outgoing role dependencies are exempt, while governed production source cannot depend on them.
-- Generated source uses `.generated.` or the `generated` directory segment. It must still resolve to a canonical role and remains governed by that role; its normalized classification tells coding agents not to edit it.
-- The extensionless filename token `composition-root` identifies non-role wiring source. Add project tokens with `compositionRoots`, for example `"compositionRoots": ["main", "bootstrap"]`. Governed role source cannot depend on a composition root.
+- Generated source uses `.generated.` or the `generated` directory segment. Add project markers only for evidenced generator vocabulary, for example `"generated": {"filenameMarkers": [".auto."], "directorySegments": ["autogen"]}`. Markers are exact dotted filename tokens and directories are exact path segments. Generated role source remains governed by its role, while its normalized classification tells coding agents not to edit it.
+- The extensionless filename token `composition-root` identifies non-role wiring source. Add project tokens with `compositionRoots`, for example `"compositionRoots": ["main", "bootstrap"]`. A generated composition root keeps its non-role wiring semantics and is reported as non-editable. Governed role source cannot depend on a composition root.
 - Other covered source produces `righting/unclassified-source`. The violation does not remove or invalidate the normalized contract.
 
 ## Protected dependencies

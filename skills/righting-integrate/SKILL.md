@@ -14,7 +14,7 @@ Read the existing `righting.json`, root `AGENTS.md`, architecture documentation,
 
 Build:
 
-- **Coverage ledger:** enumerate project source files and classify each as inside a proposed broad coverage rule or intentionally unchecked with a reason. Within coverage, classify each source by a canonical filename convention, a proposed project alias token, test/generated treatment, composition root, ambiguity, or `righting/unclassified-source`. An alias records reusable project vocabulary, not an inventory or path mapping. For each coverage glob, state its future inclusion rule and list current matches.
+- **Coverage ledger:** enumerate project source files and classify each as inside a proposed broad coverage rule or intentionally unchecked with a reason. Within coverage, classify each source by a canonical filename convention, a proposed project alias token, test/generated treatment, composition root, ambiguity, or `righting/unclassified-source`. An alias records reusable project vocabulary, not an inventory or path mapping. For each coverage glob, state its future inclusion rule and list current matches. When project evidence identifies generated source that does not match an active generated convention, record the unsupported generated treatment and retain the contract's actual classification, including `righting/unclassified-source` when no independent role applies. Do not assign a role or composition root solely to hide an unsupported generated treatment.
 - **Dependency ledger:** scan static `import`, `export`, `require`, and dynamic import forms from covered source. Classify each local or protected external dependency by source role, target role or treatment, scope, and effective policy result. Group forbidden and unresolved occurrences by stable `righting/...` policy-rule ID, retaining counts and concrete locations.
 
 Record how each ledger was produced. Label dependency-scan completeness as exhaustive or partial and state every partial boundary.
@@ -23,7 +23,7 @@ Completion: every source file has one coverage disposition; every covered source
 
 ## 2. Derive the candidate
 
-Start with the smallest complete policy: `{"preset":"volatility@1","coverage":[...]}`. Add an alias only when project vocabulary needs exact filename-suffix or directory-segment tokens beyond the active canonical conventions. Add composition-root tokens, protected Resource or Utility packages, scopes, variations, overrides, and guidance references only from maintainer statements or project evidence.
+Start with the smallest complete policy: `{"preset":"volatility@1","coverage":[...]}`. Add an alias only when project vocabulary needs exact filename-suffix or directory-segment tokens beyond the active canonical conventions. Add generated filename markers or directory segments only for evidenced generator vocabulary. Add composition-root tokens, protected Resource or Utility packages, scopes, variations, overrides, and guidance references only from maintainer statements or project evidence.
 
 Explicitly evaluate every named variation in the installed `docs/policy-language.md` and record an evidence-backed `propose` or `omit` disposition. For each override, evaluate default-policy fit, responsibility clarification or extraction, and tightening before proposing a reasoned global relaxation.
 

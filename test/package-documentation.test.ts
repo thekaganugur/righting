@@ -30,6 +30,22 @@ function run(command: string, arguments_: string[], cwd = repositoryDirectory) {
   return spawnSync(command, arguments_, { cwd, encoding: "utf8" });
 }
 
+test("the integration skill keeps unsupported source treatments visible", () => {
+  const skill = readFileSync(resolve(repositoryDirectory, "skills/righting-integrate/SKILL.md"), "utf8");
+  const syntheticGeneratedPath = "source/catalog/catalog-map.auto.ts";
+
+  assert.match(
+    skill,
+    /generated source[\s\S]*active generated convention[\s\S]*righting\/unclassified-source/,
+    syntheticGeneratedPath,
+  );
+  assert.match(
+    skill,
+    /do not[\s\S]*(role|composition root)[\s\S]*hide[\s\S]*generated treatment/i,
+    syntheticGeneratedPath,
+  );
+});
+
 test("the packed package publishes every onboarding reference without the retired docs command", () => {
   const packageDirectory = mkdtempSync(resolve(tmpdir(), "righting-package-docs-"));
 

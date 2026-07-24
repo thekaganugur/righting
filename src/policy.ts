@@ -18,6 +18,11 @@ export type AliasConvention = {
   directorySegments: string[];
 };
 
+export type GeneratedConvention = {
+  filenameMarkers: string[];
+  directorySegments: string[];
+};
+
 export type ProtectedDependency = {
   package: string;
   role: "Resource" | "Utility";
@@ -46,6 +51,7 @@ export type Policy = {
   preset: "volatility@1";
   coverage: string[];
   aliases: AliasConvention[];
+  generated: GeneratedConvention;
   protectedDependencies: ProtectedDependency[];
   variations: Variation[];
   overrides: RoleEdgeOverride[];
@@ -72,6 +78,7 @@ export type NormalizedContract = {
   configured: {
     coverage: string[];
     aliases: AliasConvention[];
+    generated: GeneratedConvention;
     protectedDependencies: ProtectedDependency[];
     variations: Variation[];
     overrides: RoleEdgeOverride[];
@@ -121,7 +128,7 @@ export type SourceClassification =
   | { kind: "outside-coverage" }
   | { kind: "role"; role: Role; test: boolean; generated: boolean; editable: boolean }
   | { kind: "test"; generated: false; editable: true }
-  | { kind: "composition-root"; test: boolean; generated: false; editable: true }
+  | { kind: "composition-root"; test: boolean; generated: boolean; editable: boolean }
   | { kind: "violation"; ruleId: "righting/unclassified-source" }
   | { kind: "violation"; ruleId: "righting/ambiguous-source"; roles: Role[] };
 
@@ -152,6 +159,7 @@ const policyKeys = new Set([
   "preset",
   "coverage",
   "aliases",
+  "generated",
   "protectedDependencies",
   "variations",
   "overrides",
@@ -160,6 +168,7 @@ const policyKeys = new Set([
   "guidance",
 ]);
 const aliasKeys = new Set(["name", "role", "filenameSuffixes", "directorySegments"]);
+const generatedKeys = new Set(["filenameMarkers", "directorySegments"]);
 const protectedDependencyKeys = new Set(["package", "role"]);
 const overrideKeys = new Set(["name", "from", "to", "effect", "reason"]);
 const scopeKeys = new Set(["kind", "name", "path"]);
@@ -282,6 +291,30 @@ function parseAliases(value: unknown): AliasConvention[] {
     }
     return { name, role: alias.role, filenameSuffixes, directorySegments };
   });
+}
+
+function parseGenerated(value: unknown): GeneratedConvention {
+  if (value === undefined) {
+    return { filenameMarkers: [], directorySegments: [] };
+  }
+  const generated = record(value, "generated conventions");
+  rejectUnknownKeys(generated, generatedKeys, "generated conventions");
+  const filenameMarkers = strings(generated.filenameMarkers, "generated filenameMarkers");
+  const directorySegments = strings(generated.directorySegments, "generated directorySegments");
+  if (filenameMarkers.length === 0 && directorySegments.length === 0) {
+    fail("generated conventions must define a filename marker or directory segment.");
+  }
+  for (const marker of filenameMarkers) {
+    if (!marker.startsWith(".") || !marker.endsWith(".") || marker.includes("/") || marker.includes("\\")) {
+      fail(`generated filename marker "${marker}" must be an exact dotted filename token.`);
+    }
+  }
+  for (const segment of directorySegments) {
+    if (segment === "." || segment === ".." || segment.includes("/") || segment.includes("\\")) {
+      fail(`generated directory segment "${segment}" must be one exact path segment.`);
+    }
+  }
+  return { filenameMarkers, directorySegments };
 }
 
 function validatePackage(packageName: string): void {
@@ -478,6 +511,7 @@ function parsePolicy(source: unknown, policyPath: string): Policy {
     preset: "volatility@1",
     coverage: parseCoverage(policy.coverage),
     aliases: parseAliases(policy.aliases),
+    generated: parseGenerated(policy.generated),
     protectedDependencies: parseProtectedDependencies(policy.protectedDependencies),
     variations: parseVariations(policy.variations),
     overrides: parseOverrides(policy.overrides),
@@ -579,6 +613,10 @@ export function normalizePolicy(policy: Policy): NormalizedContract {
     configured: {
       coverage: [...policy.coverage],
       aliases: policy.aliases.map((alias) => ({ ...alias, filenameSuffixes: [...alias.filenameSuffixes], directorySegments: [...alias.directorySegments] })),
+      generated: {
+        filenameMarkers: [...policy.generated.filenameMarkers],
+        directorySegments: [...policy.generated.directorySegments],
+      },
       protectedDependencies: policy.protectedDependencies.map((dependency) => ({ ...dependency })),
       variations: [...policy.variations],
       overrides: policy.overrides.map((override) => ({ ...override })),
@@ -595,8 +633,8 @@ export function normalizePolicy(policy: Policy): NormalizedContract {
         roles: roleConventions,
         tests: { filenameMarkers: [...testConventions.filenameMarkers], directorySegments: [...testConventions.directorySegments] },
         generated: {
-          filenameMarkers: [...generatedConventions.filenameMarkers],
-          directorySegments: [...generatedConventions.directorySegments],
+          filenameMarkers: [...generatedConventions.filenameMarkers, ...policy.generated.filenameMarkers],
+          directorySegments: [...generatedConventions.directorySegments, ...policy.generated.directorySegments],
         },
         compositionRoots: ["composition-root", ...policy.compositionRoots],
       },
@@ -724,8 +762,8 @@ export function classifySource(contract: NormalizedContract, sourcePath: string)
     return { kind: "role", role: matches[0]!, test, generated, editable: !generated };
   }
   const basename = filename.includes(".") ? filename.slice(0, filename.indexOf(".")) : filename;
-  if (!generated && contract.effective.conventions.compositionRoots.includes(basename)) {
-    return { kind: "composition-root", test, generated: false, editable: true };
+  if (contract.effective.conventions.compositionRoots.includes(basename)) {
+    return { kind: "composition-root", test, generated, editable: !generated };
   }
   if (test && !generated) {
     return { kind: "test", generated: false, editable: true };
@@ -746,6 +784,8 @@ export function isPolicyExpansion(baseline: Policy, current: Policy): boolean {
   if (
     !preservesAll(baseline.coverage, current.coverage) ||
     !preservesAll(baseline.aliases, current.aliases) ||
+    !preservesAll(baseline.generated.filenameMarkers, current.generated.filenameMarkers) ||
+    !preservesAll(baseline.generated.directorySegments, current.generated.directorySegments) ||
     !preservesAll(baseline.protectedDependencies, current.protectedDependencies) ||
     !preservesAll(baseline.scopes, current.scopes) ||
     !preservesAll(baseline.overrides, current.overrides) ||
@@ -761,6 +801,8 @@ export function isPolicyExpansion(baseline: Policy, current: Policy): boolean {
   return (
     current.coverage.length > baseline.coverage.length ||
     current.aliases.length > baseline.aliases.length ||
+    current.generated.filenameMarkers.length > baseline.generated.filenameMarkers.length ||
+    current.generated.directorySegments.length > baseline.generated.directorySegments.length ||
     current.protectedDependencies.length > baseline.protectedDependencies.length ||
     current.scopes.length > baseline.scopes.length ||
     addedVariations.length > 0 ||

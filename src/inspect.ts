@@ -151,6 +151,8 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
     `Coverage: ${list(contract.configured.coverage)}`,
     "Aliases",
     ...(aliases.length === 0 ? ["- None"] : aliases),
+    `Generated filename markers: ${list(contract.configured.generated.filenameMarkers)}`,
+    `Generated directories: ${list(contract.configured.generated.directorySegments)}`,
     `Composition roots: ${list(contract.configured.compositionRoots)}`,
     `Variations: ${list(contract.configured.variations)}`,
     "Scopes",

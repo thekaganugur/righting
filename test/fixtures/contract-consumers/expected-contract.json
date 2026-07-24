@@ -12,6 +12,7 @@
         "directorySegments": []
       }
     ],
+    "generated": { "filenameMarkers": [], "directorySegments": [] },
     "protectedDependencies": [{ "package": "@example/database", "role": "Resource" }],
     "variations": [],
     "overrides": [],

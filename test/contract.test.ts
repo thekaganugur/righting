@@ -73,6 +73,7 @@ test("the minimal complete policy normalizes to the standalone adapter-neutral c
     assert.deepEqual(contract.configured, {
       coverage: ["src/**/*.ts"],
       aliases: [],
+      generated: { filenameMarkers: [], directorySegments: [] },
       protectedDependencies: [],
       variations: [],
       overrides: [],
@@ -297,6 +298,46 @@ test("classification applies coverage, aliases, ambiguity, and explicit source t
       kind: "violation",
       ruleId: "righting/ambiguous-source",
       roles: ["Client", "Engine"],
+    });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("project generated conventions preserve generated composition-root treatment", () => {
+  const directory = project();
+  try {
+    const contract = normalizePolicy(
+      policy(
+        {
+          preset: "volatility@1",
+          coverage: ["source/**/*.ts"],
+          generated: {
+            filenameMarkers: [".auto."],
+            directorySegments: ["autogen"],
+          },
+          compositionRoots: ["catalog-map"],
+        },
+        directory,
+      ),
+    );
+
+    assert.deepEqual(contract.configured.generated, {
+      filenameMarkers: [".auto."],
+      directorySegments: ["autogen"],
+    });
+    assert.deepEqual(classifySource(contract, "source/catalog-map.auto.ts"), {
+      kind: "composition-root",
+      test: false,
+      generated: true,
+      editable: false,
+    });
+    assert.deepEqual(classifySource(contract, "source/autogen/catalog.client.ts"), {
+      kind: "role",
+      role: "Client",
+      test: false,
+      generated: true,
+      editable: false,
     });
   } finally {
     rmSync(directory, { recursive: true, force: true });
