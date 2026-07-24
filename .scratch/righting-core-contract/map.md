@@ -27,12 +27,15 @@ Delivered:
 
 <!-- Closed tickets only. -->
 
+- [Define the normalized contract surface](issues/01-define-normalized-contract-surface.md) — Approved policies normalize to one versioned, self-contained, adapter-neutral rules contract shared by coding agents and guardrails; repository snapshots and adapter mechanics stay outside.
+- [Define convention and alias semantics](issues/02-define-convention-and-alias-semantics.md) — `volatility@1` classifies declared coverage through additive canonical and project-alias filename conventions, with explicit test, generated-source, composition-root, ambiguity, and unmatched-source behavior.
+- [Choose compatibility for existing policies](issues/03-choose-existing-policy-compatibility.md) — The unused mapping-based policy and inspection projections are replaced atomically in place; the exact incomplete starter remains, while packaged consumers move together to the convention-led contract.
+
 ## Not yet specified
 
 - The adapter-authoring and conformance surface after the normalized contract exists.
 - How adapter-native suppression limitations and guardrail status are presented uniformly without core owning their formats.
 - The agent-facing guidance and `righting-integrate` lifecycle after conventions replace exhaustive mappings.
-- Release and migration evidence for existing consumers of the v1 policy language and JSON inspection contract.
 
 ## Out of scope
 
