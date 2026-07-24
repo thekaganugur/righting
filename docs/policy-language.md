@@ -1,10 +1,10 @@
 # Righting policy language
 
-`righting.json` is a project-owned, JSON policy using the `volatility@1` preset. It declares decisions Righting can validate; it does not infer an architecture or record approval.
+`righting.json` is a maintainer-owned, adapter-neutral policy using the `volatility@1` preset. Righting validates declared decisions; it does not infer architecture or record approval.
 
 ## Incomplete starter
 
-`righting init` creates exactly this file:
+`righting init` creates exactly:
 
 ```json
 {
@@ -13,71 +13,86 @@
 }
 ```
 
-It is the only valid incomplete policy. Do not add configuration to it. After explicit maintainer approval, replace it with a complete policy and remove `status`.
+This exact starter is the only valid incomplete policy and produces no normalized contract. After explicit maintainer approval, replace it rather than extending it.
 
-## Canonical roles and aliases
-
-A complete policy maps local aliases to these canonical roles:
-
-| Role | Default allowed dependencies |
-| --- | --- |
-| `Client` | `Manager`, `Utility` |
-| `Manager` | `Engine`, `ResourceAccess`, `Utility` |
-| `Engine` | `ResourceAccess`, `Utility` |
-| `ResourceAccess` | `Resource`, `Utility` |
-| `Resource` | `Utility` |
-| `Utility` | `Utility` |
-
-The table is exhaustive: an edge it does not list is forbidden by default. In particular, same-role dependencies are forbidden except `Utility` depending on `Utility`. Allowing another same-role edge requires an override — except Client composition within a context, and from a context to shared Clients, which `contextFirewall` permits.
-
-One logical role often spans many collaborating files — a UI application's components composing one another is the common case — so ordinary intra-role collaboration shows up as a forbidden same-role edge. That is composition within one role, not a defect: express it deliberately with an `allow` override and a recorded reason, or with context-scoped Clients under `contextFirewall`.
-
-Aliases choose project vocabulary only; they do not create a new role or change its default behavior. A complete policy needs at least one alias and mapping, and every alias needs an explicit mapping. A mapping has an alias and one or both of:
-
-- `path`: a project-relative, forward-slash glob for mapped source; or
-- `package`: an external package protected as a `Resource` or `Utility`.
-
-Unresolved local imports are forbidden from code that matches a role mapping. The ESLint adapter runs only for declared mapping and scope paths, so map every source area that needs role-boundary checks. `inspect` warns when a declared mapping or scope currently matches no project file. Mappings and scopes must not match the same project file ambiguously.
-
-## Roles across project shapes
-
-Roles answer the four questions — who interacts, what happens in what order, how it is decided, how data is reached, where state lives — whatever the project's shape. Orientation, not recommendation:
-
-- **Web or UI application:** the UI is typically one Client spread across many files; server handlers that drive workflows are Clients too.
-- **HTTP or queue backend:** route handlers, message consumers, and job entry points are Clients — they are who interacts with the system. A composition root that wires layers belongs to no single role; leave it intentionally unmapped, or `unscoped` under `contextFirewall`.
-- **CLI tool:** command entry points are Clients.
-- **Library:** there may be no Client at all; a public facade that coordinates the library's operations often maps to Manager; no role is required to appear.
-
-## Minimal complete shape
-
-Use this to understand the JSON shape after approval, not as a recommendation for names, roles, or folders. Choose and approve your aliases and paths before replacing the incomplete starter.
+## Minimal complete policy
 
 ```json
 {
   "preset": "volatility@1",
-  "aliases": {
-    "ui": "Client",
-    "application": "Manager"
-  },
-  "mappings": [
-    { "alias": "ui", "path": "src/ui/**" },
-    { "alias": "application", "path": "src/application/**" }
+  "coverage": ["src/**/*.ts"]
+}
+```
+
+`coverage` contains broad project-relative source globs. Source outside coverage is intentionally unchecked. Covered source is classified by canonical conventions, project aliases, or an explicit treatment.
+
+## Canonical roles and dependency graph
+
+| Role | Default allowed dependencies | Filename suffix | Directory segment |
+| --- | --- | --- | --- |
+| `Client` | `Manager`, `Utility` | `.client.` | `clients` |
+| `Manager` | `Engine`, `ResourceAccess`, `Utility` | `.manager.` | `managers` |
+| `Engine` | `ResourceAccess`, `Utility` | `.engine.` | `engines` |
+| `ResourceAccess` | `Resource`, `Utility` | `.access.` | `access` |
+| `Resource` | `Utility` | `.resource.` | `resources` |
+| `Utility` | `Utility` | `.utility.` | `utilities` |
+
+Suffix and directory conventions are additive and may be mixed. Multiple matches for one role are valid; matches for different roles produce `righting/ambiguous-source`. An edge absent from the table is forbidden by default.
+
+## Aliases
+
+Aliases add project vocabulary and exact filename or directory tokens to one canonical role. Canonical conventions remain active. An alias does not create a role, path-map individual files, or change dependency behavior.
+
+```json
+{
+  "aliases": [
+    {
+      "name": "screen",
+      "role": "Client",
+      "filenameSuffixes": [".screen."],
+      "directorySegments": ["screens"]
+    },
+    {
+      "name": "repository",
+      "role": "ResourceAccess",
+      "filenameSuffixes": [".repository."]
+    }
   ]
 }
 ```
 
-## Optional decisions
+Each alias needs at least one token. Filename tokens are exact dotted markers; directory tokens are exact path segments. Multiple aliases for one role are peers.
 
-Keep each of these absent unless it is approved and applicable:
+## Explicit source treatments
 
-- `variations`: named policy-wide opt-ins. `clientReadsAccess` permits `Client` to depend on `ResourceAccess` — a semi-open relaxation for deliberate policy-wide reads, not a shortcut past a Manager; `pureEngines` removes `Engine` to `ResourceAccess`; `contextFirewall` enables context checks for projects with independently owned bounded contexts.
-- `overrides`: a named, reason-required `allow` or `disallow` change to one canonical role edge. It must actually change the default or variation-derived edge.
-- `scopes`: required when `contextFirewall` is enabled. Define at least one `context` (with `name`), `shared`, and `unscoped` relative-path scope. Context names are unique, and no project file may match more than one scope. Contexts cannot import other contexts; shared code cannot import a context; unscoped code may wire context entry points.
-- `extras`: optional project-relative references for `domainVocabulary` and named `goldenExamples`, consumed by the advisory design-review skill.
+- Tests use `.test.` / `.spec.` or the `test`, `tests`, and `__tests__` directory segments. They remain visible inside coverage. Their outgoing role dependencies are exempt, while governed production source cannot depend on them.
+- Generated source uses `.generated.` or the `generated` directory segment. It must still resolve to a canonical role and remains governed by that role; its normalized classification tells coding agents not to edit it.
+- The extensionless filename token `composition-root` identifies non-role wiring source. Add project tokens with `compositionRoots`, for example `"compositionRoots": ["main", "bootstrap"]`. Governed role source cannot depend on a composition root.
+- Other covered source produces `righting/unclassified-source`. The violation does not remove or invalidate the normalized contract.
 
-### Optional field shapes
+## Protected dependencies
 
-These are field-shape examples, not recommended decisions. Add only approved fields to the complete policy above.
+External packages are ordinary dependencies unless explicitly classified as a protected `Resource` or `Utility`:
+
+```json
+{
+  "protectedDependencies": [
+    { "package": "@example/database", "role": "Resource" },
+    { "package": "@example/shared", "role": "Utility" }
+  ]
+}
+```
+
+Protected packages follow the same effective role graph as source roles.
+
+## Optional policy decisions
+
+Keep optional fields absent unless approved and applicable:
+
+- `variations`: `clientReadsAccess`, `pureEngines`, and `contextFirewall`.
+- `overrides`: named, reason-required global `allow` or `disallow` changes to one canonical role edge. An override must change the effective edge.
+- `scopes`: required with `contextFirewall`; include at least one named `context`, one `shared`, and one `unscoped` path rule.
+- `guidance`: project-relative `domainVocabulary` and named `goldenExamples` references for coding-agent guidance.
 
 ```json
 {
@@ -88,7 +103,7 @@ These are field-shape examples, not recommended decisions. Add only approved fie
       "from": "Client",
       "to": "Resource",
       "effect": "allow",
-      "reason": "Approved project-specific reason."
+      "reason": "Approved project-wide read model."
     }
   ],
   "scopes": [
@@ -96,11 +111,26 @@ These are field-shape examples, not recommended decisions. Add only approved fie
     { "kind": "shared", "path": "src/shared/**" },
     { "kind": "unscoped", "path": "src/application/**" }
   ],
-  "extras": {
-    "domainVocabulary": "docs/domain.md",
+  "guidance": {
+    "domainVocabulary": "CONTEXT.md",
     "goldenExamples": { "create-order": "docs/examples/create-order.md" }
   }
 }
 ```
 
-Use `npx righting inspect` after replacing the starter to view the normalized configuration, declared-path coverage, guidance extras, and computed allowed role relationships. See the [capability catalog](capabilities.md) for what static analysis establishes and does not establish.
+`contextFirewall` forbids context-to-context and shared-to-context dependencies. Contextual source may use shared source when the role graph permits it; unscoped source may wire context entry points. A source matching multiple scope patterns produces `righting/ambiguous-scope`; no scope pattern takes precedence.
+
+## Normalized contract
+
+`righting inspect --json` places approved semantics once under `contract`. `contractVersion` versions this adapter-neutral interface independently from `volatility@1`. The contract retains configured provenance and exposes effective conventions, the closed role graph, protected-dependency and scope rules, stable `righting/...` policy-rule IDs, adapter-neutral capabilities, and evidence limits. Repository file snapshots and adapter mechanics are not contract data.
+
+Core consumers can import the same helpers from `righting/core`:
+
+```js
+import { classifySource, normalizePolicy, readPolicy } from "righting/core";
+
+const contract = normalizePolicy(readPolicy("righting.json"));
+const classification = classifySource(contract, "src/orders/create.manager.ts");
+```
+
+Use `npx righting inspect` after replacing the starter to validate and explain the normalized contract.

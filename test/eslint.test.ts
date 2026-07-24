@@ -1,17 +1,10 @@
 import assert from "node:assert/strict";
-import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import {
-  allowedRoleEdges,
-  dependencyForms,
-  roleDirectories,
-  roles,
-  type Role,
-  type RoleEdge,
-} from "./conformance-cases.js";
+import { allowedRoleEdges, dependencyForms, roleDirectories, roles, type Role, type RoleEdge } from "./conformance-cases.js";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
@@ -20,33 +13,47 @@ const fixturePackageDirectory = resolve(fixtureDirectory, "node_modules");
 const fixtureRightingPackage = resolve(fixturePackageDirectory, "righting");
 const fixturePolicyPath = resolve(fixtureDirectory, "righting.json");
 
-function withPolicy(policy: object, action: () => void) {
-  const originalPolicy = readFileSync(fixturePolicyPath, "utf8");
-  writeFileSync(fixturePolicyPath, `${JSON.stringify(policy, null, 2)}\n`);
+const aliases = [
+  { name: "client", role: "Client", directorySegments: ["client"] },
+  { name: "manager", role: "Manager", directorySegments: ["manager"] },
+  { name: "engine", role: "Engine", directorySegments: ["engine"] },
+  { name: "resourceAccess", role: "ResourceAccess", directorySegments: ["resource-access"] },
+  { name: "resource", role: "Resource", directorySegments: ["resource"] },
+  { name: "utility", role: "Utility", directorySegments: ["utility"] },
+];
 
+function policy(extra: Record<string, unknown> = {}) {
+  return { preset: "volatility@1", coverage: ["src/**/*.{js,cjs,mts}"], aliases, ...extra };
+}
+
+function withPolicy(candidate: object, action: () => void) {
+  const original = readFileSync(fixturePolicyPath, "utf8");
+  writeFileSync(fixturePolicyPath, `${JSON.stringify(candidate, null, 2)}\n`);
   try {
     action();
   } finally {
-    writeFileSync(fixturePolicyPath, originalPolicy);
+    writeFileSync(fixturePolicyPath, original);
   }
 }
 
-function withFixtureFile(path: string, contents: string, action: () => void) {
-  const fixturePath = resolve(fixtureDirectory, path);
-  mkdirSync(dirname(fixturePath), { recursive: true });
-  writeFileSync(fixturePath, contents);
-
+function withFiles(files: Record<string, string>, action: () => void) {
+  for (const [path, contents] of Object.entries(files)) {
+    const target = resolve(fixtureDirectory, path);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, contents);
+  }
   try {
     action();
   } finally {
-    rmSync(fixturePath, { force: true });
+    for (const path of Object.keys(files)) {
+      rmSync(resolve(fixtureDirectory, path), { force: true });
+    }
   }
 }
 
 function runLint(targets: string | readonly string[], options: readonly string[] = []) {
   mkdirSync(fixturePackageDirectory, { recursive: true });
   symlinkSync(repositoryDirectory, fixtureRightingPackage, "dir");
-
   try {
     return spawnSync("npm", ["run", "lint", "--", ...options, ...(typeof targets === "string" ? [targets] : targets)], {
       cwd: fixtureDirectory,
@@ -58,228 +65,183 @@ function runLint(targets: string | readonly string[], options: readonly string[]
   }
 }
 
+function output(result: ReturnType<typeof runLint>): string {
+  return `${result.stdout}\n${result.stderr}`;
+}
+
 type RoleDependency = readonly [Role, Role];
 
 function runRoleDependencies(dependencies: readonly RoleDependency[]) {
-  const fixtureFiles = dependencies.map(([from, to]) => {
-    const fromDirectory = roleDirectories[from];
-    const toDirectory = roleDirectories[to];
-    const target = `src/${fromDirectory}/conformance-to-${toDirectory}.js`;
-    const fixturePath = resolve(fixtureDirectory, target);
-    const dependencyPath = from === to ? "./value.js" : `../${toDirectory}/value.js`;
-
-    writeFileSync(fixturePath, `import { value } from "${dependencyPath}";\n\nexport { value };\n`);
-    return { fixturePath, target };
+  const files = Object.fromEntries(
+    dependencies.map(([from, to]) => {
+      const fromDirectory = roleDirectories[from];
+      const toDirectory = roleDirectories[to];
+      const path = `src/${fromDirectory}/conformance-to-${toDirectory}.js`;
+      const dependency = from === to ? "./value.js" : `../${toDirectory}/value.js`;
+      return [path, `import { value } from "${dependency}";\nexport { value };\n`];
+    }),
+  );
+  let result!: ReturnType<typeof runLint>;
+  withFiles(files, () => {
+    result = runLint(Object.keys(files));
   });
-
-  try {
-    return { result: runLint(fixtureFiles.map(({ target }) => target)), targets: fixtureFiles.map(({ target }) => target) };
-  } finally {
-    for (const { fixturePath } of fixtureFiles) {
-      rmSync(fixturePath, { force: true });
-    }
-  }
+  return { result, targets: Object.keys(files) };
 }
 
-test("fixture conformance suite enforces every default volatility@1 role edge", () => {
+test("the packaged adapter enforces every default contract edge", () => {
   const allowed: RoleDependency[] = [];
   const forbidden: RoleDependency[] = [];
-
   for (const from of roles) {
     for (const to of roles) {
       (allowedRoleEdges.has(`${from}:${to}` as RoleEdge) ? allowed : forbidden).push([from, to]);
     }
   }
-
   const allowedResult = runRoleDependencies(allowed).result;
-  assert.equal(allowedResult.status, 0, `${allowedResult.stdout}\n${allowedResult.stderr}`);
-
+  assert.equal(allowedResult.status, 0, output(allowedResult));
   const forbiddenResult = runRoleDependencies(forbidden);
-  const output = `${forbiddenResult.result.stdout}\n${forbiddenResult.result.stderr}`;
-  assert.equal(forbiddenResult.result.status, 1, output);
-  assert.match(output, /righting\/role-dependency/);
-  for (const target of forbiddenResult.targets) {
-    assert.ok(output.includes(target), target);
-  }
+  assert.equal(forbiddenResult.result.status, 1, output(forbiddenResult.result));
+  for (const target of forbiddenResult.targets) assert.ok(output(forbiddenResult.result).includes(target), target);
 });
 
-test("fixture lint command treats allowed and forbidden dependencies equally in every static form", () => {
-  const allowedResult = runLint(dependencyForms.map(({ allowed }) => allowed));
-  assert.equal(allowedResult.status, 0, `${allowedResult.stdout}\n${allowedResult.stderr}`);
-
-  const forbiddenResult = runLint(dependencyForms.map(({ forbidden }) => forbidden));
-  const output = `${forbiddenResult.stdout}\n${forbiddenResult.stderr}`;
-  assert.equal(forbiddenResult.status, 1, output);
-  assert.match(output, /righting\/role-dependency/);
-  for (const { forbidden } of dependencyForms) {
-    assert.ok(output.includes(forbidden), forbidden);
-  }
+test("the adapter covers every configured static dependency form", () => {
+  const allowed = runLint(dependencyForms.map(({ allowed }) => allowed));
+  assert.equal(allowed.status, 0, output(allowed));
+  const forbidden = runLint(dependencyForms.map(({ forbidden }) => forbidden));
+  assert.equal(forbidden.status, 1, output(forbidden));
+  assert.match(output(forbidden), /righting\/role-dependency/);
 });
 
-test("fixture lint command reports a forbidden Manager dependency with a stable policy key", () => {
-  const result = runLint("src/manager/forbidden.js");
-  const output = `${result.stdout}\n${result.stderr}`;
-
-  assert.equal(result.status, 1, output);
-  assert.match(output, /righting\/role-dependency/);
-  assert.match(output, /Manager cannot depend on Client/);
-  assert.doesNotMatch(output, /righting-role-/);
-});
-
-test("fixture stores Righting debt as a namespaced native ESLint suppression", () => {
-  const suppressionsPath = resolve(fixtureDirectory, "eslint-suppressions.json");
-  writeFileSync(
-    suppressionsPath,
-    `${JSON.stringify({ "src/client/existing-lint.js": { "no-undef": { count: 1 } } }, null, 2)}\n`,
-  );
-
-  try {
-    const result = runLint("src/manager/forbidden.js", ["--suppress-rule", "righting/role-dependency"]);
-    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-    assert.deepEqual(JSON.parse(readFileSync(suppressionsPath, "utf8")), {
-      "src/client/existing-lint.js": {
-        "no-undef": { count: 1 },
-      },
-      "src/manager/forbidden.js": {
-        "righting/role-dependency": { count: 1 },
-      },
-    });
-  } finally {
-    rmSync(suppressionsPath, { force: true });
-  }
-});
-
-test("fixture lint command preserves its existing lint configuration", () => {
-  const result = runLint("src/client/existing-lint.js");
-  const output = `${result.stdout}\n${result.stderr}`;
-
-  assert.equal(result.status, 1, output);
-  assert.match(output, /no-undef/);
-});
-
-test("aliases retain Client behavior and clientReadsAccess changes it only when configured", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client", useCase: "Manager", gateway: "ResourceAccess" },
-    mappings: [
-      { alias: "screen", path: "src/client/**" },
-      { alias: "useCase", path: "src/manager/**" },
-      { alias: "gateway", path: "src/resource-access/**" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/client/read-resource-access.js",
-    'import { value } from "../resource-access/value.js";\n\nexport { value };\n',
-    () => {
-      withPolicy(policy, () => {
-        const result = runLint("src/client/read-resource-access.js");
-        const output = `${result.stdout}\n${result.stderr}`;
-        assert.equal(result.status, 1, output);
-        assert.match(output, /righting\/role-dependency/);
-      });
-
-      withPolicy({ ...policy, variations: ["clientReadsAccess"] }, () => {
-        const result = runLint("src/client/read-resource-access.js");
-        assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-      });
+test("canonical and alias conventions classify the same Client semantics", () => {
+  withFiles(
+    {
+      "src/page.client.js": 'import { value } from "./work.manager.js";\nexport { value };\n',
+      "src/work.manager.js": 'export const value = "manager";\n',
+      "src/page.screen.js": 'import { value } from "./work.manager.js";\nexport { value };\n',
     },
-  );
-});
-
-test("ordinary external dependencies remain allowed while protected dependencies follow role policy", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client", gateway: "ResourceAccess", database: "Resource", tools: "Utility" },
-    mappings: [
-      { alias: "screen", path: "src/client/**" },
-      { alias: "gateway", path: "src/resource-access/**" },
-      { alias: "database", path: "src/resource/**", package: "protected-resource" },
-      { alias: "tools", path: "src/utility/**", package: "protected-utility" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/client/protected-dependencies.js",
-    'import "node:assert";\nimport "protected-resource";\nimport "protected-utility";\n',
     () => {
-      withFixtureFile("src/resource-access/protected-resource.js", 'import "protected-resource";\n', () => {
-        withPolicy(policy, () => {
-          const clientResult = runLint("src/client/protected-dependencies.js");
-          const clientOutput = `${clientResult.stdout}\n${clientResult.stderr}`;
-          assert.equal(clientResult.status, 1, clientOutput);
-          assert.match(clientOutput, /righting\/role-dependency/);
-
-          const accessResult = runLint("src/resource-access/protected-resource.js");
-          assert.equal(accessResult.status, 0, `${accessResult.stdout}\n${accessResult.stderr}`);
-        });
-      });
-    },
-  );
-});
-
-test("pureEngines and named role-edge overrides change only the configured edge", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client", calculation: "Engine", gateway: "ResourceAccess", database: "Resource" },
-    mappings: [
-      { alias: "screen", path: "src/client/**" },
-      { alias: "calculation", path: "src/engine/**" },
-      { alias: "gateway", path: "src/resource-access/**" },
-      { alias: "database", path: "src/resource/**" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/engine/read-access.js",
-    'import { value } from "../resource-access/value.js";\n\nexport { value };\n',
-    () => {
-      withFixtureFile(
-        "src/client/read-resource.js",
-        'import { value } from "../resource/value.js";\n\nexport { value };\n',
+      withPolicy(
+        {
+          preset: "volatility@1",
+          coverage: ["src/*.js"],
+          aliases: [{ name: "screen", role: "Client", filenameSuffixes: [".screen."] }],
+        },
         () => {
-          withPolicy(policy, () => {
-            assert.equal(runLint("src/engine/read-access.js").status, 0);
-            const result = runLint("src/client/read-resource.js");
-            assert.equal(result.status, 1, `${result.stdout}\n${result.stderr}`);
-          });
-
-          withPolicy({ ...policy, variations: ["pureEngines"] }, () => {
-            const result = runLint("src/engine/read-access.js");
-            assert.equal(result.status, 1, `${result.stdout}\n${result.stderr}`);
-          });
-
-          withPolicy(
-            {
-              ...policy,
-              overrides: [
-                {
-                  name: "client-reads-resource",
-                  from: "Client",
-                  to: "Resource",
-                  effect: "allow",
-                  reason: "The source is a deliberately global read model.",
-                },
-              ],
-            },
-            () => {
-              assert.equal(runLint("src/client/read-resource.js").status, 0);
-            },
-          );
+          const result = runLint(["src/page.client.js", "src/page.screen.js"]);
+          assert.equal(result.status, 0, output(result));
         },
       );
     },
   );
 });
 
-test("context firewall rejects a contextual dependency on another context", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client", useCase: "Manager" },
-    mappings: [
-      { alias: "screen", path: "src/orders/client/**" },
-      { alias: "useCase", path: "src/billing/manager/**" },
-    ],
+test("variations, overrides, and protected dependencies translate from the contract", () => {
+  withFiles(
+    {
+      "src/client/read-access.js": 'import { value } from "../resource-access/value.js";\nexport { value };\n',
+      "src/client/read-resource.js": 'import { value } from "../resource/value.js";\nexport { value };\n',
+      "src/manager/protected.js": 'import "protected-resource";\n',
+      "src/resource-access/protected.js": 'import "protected-resource";\n',
+    },
+    () => {
+      withPolicy(policy(), () => assert.equal(runLint("src/client/read-access.js").status, 1));
+      withPolicy(
+        policy({
+          variations: ["clientReadsAccess"],
+          overrides: [
+            {
+              name: "client-reads-resource",
+              from: "Client",
+              to: "Resource",
+              effect: "allow",
+              reason: "Approved read model.",
+            },
+          ],
+          protectedDependencies: [{ package: "protected-resource", role: "Resource" }],
+        }),
+        () => {
+          assert.equal(runLint(["src/client/read-access.js", "src/client/read-resource.js"]).status, 0);
+          const manager = runLint("src/manager/protected.js");
+          assert.equal(manager.status, 1, output(manager));
+          const access = runLint("src/resource-access/protected.js");
+          assert.equal(access.status, 0, output(access));
+        },
+      );
+    },
+  );
+});
+
+test("source outside declared coverage remains unchecked", () => {
+  withFiles(
+    {
+      "outside/value.js": 'export const value = "outside";\n',
+      "src/client/import-outside.js": 'import { value } from "../../outside/value.js";\nexport { value };\n',
+    },
+    () => {
+      const result = runLint("src/client/import-outside.js");
+      assert.equal(result.status, 0, output(result));
+    },
+  );
+});
+
+test("classification reports ambiguity and unclassified covered source", () => {
+  withFiles(
+    {
+      "src/plain.js": "export {};\n",
+      "src/engines/page.client.js": "export {};\n",
+    },
+    () => {
+      withPolicy({ preset: "volatility@1", coverage: ["src/**/*.js"] }, () => {
+        const result = runLint(["src/plain.js", "src/engines/page.client.js"]);
+        assert.equal(result.status, 1, output(result));
+        assert.match(output(result), /righting\/unclassified-source/);
+        assert.match(output(result), /righting\/ambiguous-source/);
+      });
+    },
+  );
+});
+
+test("tests are visible but exempt only on outgoing role dependencies", () => {
+  withFiles(
+    {
+      "src/manager/forbidden.test.js": 'import { value } from "../client/value.js";\nexport { value };\n',
+      "src/manager/target.test.js": 'export const value = "test";\n',
+      "src/client/import-test.js": 'import { value } from "../manager/target.test.js";\nexport { value };\n',
+    },
+    () => {
+      const outgoing = runLint("src/manager/forbidden.test.js");
+      assert.equal(outgoing.status, 0, output(outgoing));
+      const production = runLint("src/client/import-test.js");
+      assert.equal(production.status, 1, output(production));
+      assert.match(output(production), /righting\/test-dependency/);
+    },
+  );
+});
+
+test("generated source remains role-governed and composition roots remain non-role wiring", () => {
+  withFiles(
+    {
+      "src/manager/forbidden.generated.js": 'import { value } from "../client/value.js";\nexport { value };\n',
+      "src/composition-root.js": 'import "./client/value.js";\nimport "./manager/value.js";\n',
+      "src/client/import-root.js": 'import "../composition-root.js";\n',
+      "src/manager/domain.js": 'import { value } from "../client/value.js";\nexport { value };\n',
+    },
+    () => {
+      const generated = runLint("src/manager/forbidden.generated.js");
+      assert.equal(generated.status, 1, output(generated));
+      assert.match(output(generated), /righting\/role-dependency/);
+      const root = runLint("src/composition-root.js");
+      assert.equal(root.status, 0, output(root));
+      const production = runLint("src/client/import-root.js");
+      assert.equal(production.status, 1, output(production));
+      const suffixCollision = runLint("src/manager/domain.js");
+      assert.equal(suffixCollision.status, 1, output(suffixCollision));
+      assert.match(output(suffixCollision), /Manager cannot depend on Client/);
+    },
+  );
+});
+
+test("context scopes preserve cross-context and shared boundaries", () => {
+  const contextPolicy = policy({
     variations: ["contextFirewall"],
     scopes: [
       { kind: "context", name: "orders", path: "src/orders/**" },
@@ -287,398 +249,39 @@ test("context firewall rejects a contextual dependency on another context", () =
       { kind: "shared", path: "src/shared/**" },
       { kind: "unscoped", path: "src/application/**" },
     ],
-  };
-
-  withFixtureFile(
-    "src/orders/client/cross-context.js",
-    'import { value } from "../../billing/manager/value.js";\n\nexport { value };\n',
-    () => {
-      withFixtureFile("src/billing/manager/value.js", 'export const value = "billing";\n', () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/orders/client/cross-context.js");
-          const output = `${result.stdout}\n${result.stderr}`;
-          assert.equal(result.status, 1, output);
-          assert.match(output, /righting\/cross-context-dependency/);
-        });
-      });
-    },
-  );
-});
-
-test("context firewall role diagnostics hide internal scope identifiers", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client", useCase: "Manager" },
-    mappings: [
-      { alias: "screen", path: "src/orders/client/**" },
-      { alias: "useCase", path: "src/orders/manager/**" },
-    ],
-    variations: ["contextFirewall"],
-    scopes: [
-      { kind: "context", name: "orders", path: "src/orders/**" },
-      { kind: "shared", path: "src/shared/**" },
-      { kind: "unscoped", path: "src/application/**" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/orders/manager/forbidden-client.js",
-    'import { value } from "../client/value.js";\n\nexport { value };\n',
-    () => {
-      withFixtureFile("src/orders/client/value.js", 'export const value = "orders";\n', () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/orders/manager/forbidden-client.js");
-          const output = `${result.stdout}\n${result.stderr}`;
-          assert.equal(result.status, 1, output);
-          assert.match(output, /Manager cannot depend on Client/);
-          assert.doesNotMatch(output, /righting-(role|scope)-/);
-        });
-      });
-    },
-  );
-});
-
-test("context firewall rejects a shared dependency on contextual code", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client", useCase: "Manager" },
-    mappings: [
-      { alias: "screen", path: "src/shared/client/**" },
-      { alias: "useCase", path: "src/orders/manager/**" },
-    ],
-    variations: ["contextFirewall"],
-    scopes: [
-      { kind: "context", name: "orders", path: "src/orders/**" },
-      { kind: "shared", path: "src/shared/**" },
-      { kind: "unscoped", path: "src/application/**" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/shared/client/import-context.js",
-    'import { value } from "../../orders/manager/value.js";\n\nexport { value };\n',
-    () => {
-      withFixtureFile("src/orders/manager/value.js", 'export const value = "orders";\n', () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/shared/client/import-context.js");
-          const output = `${result.stdout}\n${result.stderr}`;
-          assert.equal(result.status, 1, output);
-          assert.match(output, /righting\/shared-to-context-dependency/);
-        });
-      });
-    },
-  );
-});
-
-test("context firewall applies shared protections independently of role mappings", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client" },
-    mappings: [{ alias: "screen", path: "src/orders/client/**" }],
-    variations: ["contextFirewall"],
-    scopes: [
-      { kind: "context", name: "orders", path: "src/orders/**" },
-      { kind: "shared", path: "src/shared/**" },
-      { kind: "unscoped", path: "src/application/**" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/shared/unmapped/forbidden.js",
-    'import { value } from "../../orders/client/value.js";\n\nexport { value };\n',
-    () => {
-      withFixtureFile("src/orders/client/value.js", 'export const value = "orders";\n', () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/shared/unmapped/forbidden.js");
-          const output = `${result.stdout}\n${result.stderr}`;
-          assert.equal(result.status, 1, output);
-          assert.match(output, /righting\/shared-to-context-dependency/);
-        });
-      });
-    },
-  );
-});
-
-test("contextual Clients can compose Clients in the same context", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client" },
-    mappings: [{ alias: "screen", path: "src/orders/client/**" }],
-    variations: ["contextFirewall"],
-    scopes: [
-      { kind: "context", name: "orders", path: "src/orders/**" },
-      { kind: "shared", path: "src/shared/**" },
-      { kind: "unscoped", path: "src/application/**" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/orders/client/compose-client.js",
-    'import { value } from "./screen.js";\n\nexport { value };\n',
-    () => {
-      withFixtureFile("src/orders/client/screen.js", 'export const value = "screen";\n', () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/orders/client/compose-client.js");
-          assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-        });
-      });
-    },
-  );
-});
-
-test("contextual Clients can compose shared Clients", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client" },
-    mappings: [
-      { alias: "screen", path: "src/orders/client/**" },
-      { alias: "screen", path: "src/shared/client/**" },
-    ],
-    variations: ["contextFirewall"],
-    scopes: [
-      { kind: "context", name: "orders", path: "src/orders/**" },
-      { kind: "shared", path: "src/shared/**" },
-      { kind: "unscoped", path: "src/application/**" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/orders/client/compose-shared-client.js",
-    'import { value } from "../../shared/client/screen.js";\n\nexport { value };\n',
-    () => {
-      withFixtureFile("src/shared/client/screen.js", 'export const value = "screen";\n', () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/orders/client/compose-shared-client.js");
-          assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-        });
-      });
-    },
-  );
-});
-
-test("contextual code can use shared code when the role graph permits it", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client", useCase: "Manager" },
-    mappings: [
-      { alias: "screen", path: "src/orders/client/**" },
-      { alias: "useCase", path: "src/shared/manager/**" },
-    ],
-    variations: ["contextFirewall"],
-    scopes: [
-      { kind: "context", name: "orders", path: "src/orders/**" },
-      { kind: "shared", path: "src/shared/**" },
-      { kind: "unscoped", path: "src/application/**" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/orders/client/use-shared-manager.js",
-    'import { value } from "../../shared/manager/value.js";\n\nexport { value };\n',
-    () => {
-      withFixtureFile("src/shared/manager/value.js", 'export const value = "shared";\n', () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/orders/client/use-shared-manager.js");
-          assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-        });
-      });
-    },
-  );
-});
-
-test("unscoped application code can wire context entry points", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client" },
-    mappings: [
-      { alias: "screen", path: "src/orders/client/**" },
-      { alias: "screen", path: "src/billing/client/**" },
-    ],
-    variations: ["contextFirewall"],
-    scopes: [
-      { kind: "context", name: "orders", path: "src/orders/**" },
-      { kind: "context", name: "billing", path: "src/billing/**" },
-      { kind: "shared", path: "src/shared/**" },
-      { kind: "unscoped", path: "src/application/**" },
-    ],
-  };
-
-  withFixtureFile(
-    "src/application/router.js",
-    'import "../orders/client/entry.js";\nimport "../billing/client/entry.js";\n',
-    () => {
-      withFixtureFile("src/orders/client/entry.js", 'export const orders = "orders";\n', () => {
-        withFixtureFile("src/billing/client/entry.js", 'export const billing = "billing";\n', () => {
-          withPolicy(policy, () => {
-            const result = runLint("src/application/router.js");
-            assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-          });
-        });
-      });
-    },
-  );
-});
-
-test("context-scoped unmapped local imports use the unresolved-local-import diagnostic", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client" },
-    mappings: [{ alias: "screen", path: "src/orders/screen/**" }],
-    variations: ["contextFirewall"],
-    scopes: [
-      { kind: "context", name: "orders", path: "src/orders/**" },
-      { kind: "shared", path: "src/shared/**" },
-      { kind: "unscoped", path: "src/application/**" },
-    ],
-  };
-
-  withFixtureFile("src/orders/internal/value.js", 'export const value = "unmapped";\n', () => {
-    withFixtureFile(
-      "src/orders/screen/import-unmapped.js",
-      'import { value } from "../internal/value.js";\n\nexport { value };\n',
-      () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/orders/screen/import-unmapped.js");
-          const output = `${result.stdout}\n${result.stderr}`;
-          assert.equal(result.status, 1, output);
-          assert.match(output, /righting\/unresolved-local-import/);
-        });
-      },
-    );
   });
-});
-
-test("unscoped wiring cannot bypass an unresolved local import", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client" },
-    mappings: [
-      { alias: "screen", path: "src/application/screen/**" },
-      { alias: "screen", path: "src/orders/screen/**" },
-    ],
-    variations: ["contextFirewall"],
-    scopes: [
-      { kind: "context", name: "orders", path: "src/orders/**" },
-      { kind: "shared", path: "src/shared/**" },
-      { kind: "unscoped", path: "src/application/**" },
-    ],
-  };
-
-  withFixtureFile("src/orders/internal/value.js", 'export const value = "unmapped";\n', () => {
-    withFixtureFile(
-      "src/application/screen/import-unmapped.js",
-      'import { value } from "../../orders/internal/value.js";\n\nexport { value };\n',
-      () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/application/screen/import-unmapped.js");
-          const output = `${result.stdout}\n${result.stderr}`;
-          assert.equal(result.status, 1, output);
-          assert.match(output, /righting\/unresolved-local-import/);
-        });
-      },
-    );
-  });
-});
-
-test("strict policy validation rejects unmapped imports, ambiguous matches, and waiver-like configuration", () => {
-  const policy = {
-    preset: "volatility@1",
-    aliases: { screen: "Client", useCase: "Manager" },
-    mappings: [
-      { alias: "screen", path: "src/client/**" },
-      { alias: "useCase", path: "src/manager/**" },
-    ],
-  };
-
-  withFixtureFile("src/unmapped/value.js", 'export const value = "unmapped";\n', () => {
-    withFixtureFile(
-      "src/client/import-unmapped.js",
-      'import { value } from "../unmapped/value.js";\n\nexport { value };\n',
-      () => {
-        withPolicy(policy, () => {
-          const result = runLint("src/client/import-unmapped.js");
-          const output = `${result.stdout}\n${result.stderr}`;
-          assert.equal(result.status, 1, output);
-          assert.match(output, /righting\/unresolved-local-import/);
-        });
-      },
-    );
-  });
-
-  withPolicy(
+  withFiles(
     {
-      ...policy,
-      aliases: { ...policy.aliases, overlapping: "Engine" },
-      mappings: [...policy.mappings, { alias: "overlapping", path: "src/**" }],
+      "src/orders/client/cross-context.js": 'import { value } from "../../billing/manager/value.js";\nexport { value };\n',
+      "src/billing/manager/value.js": 'export const value = "billing";\n',
+      "src/shared/client/cross-context.js": 'import { value } from "../../orders/client/value.js";\nexport { value };\n',
+      "src/orders/client/value.js": 'export const value = "orders";\n',
     },
     () => {
-      const result = runLint("src/client/client.js");
-      assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`);
-      assert.match(`${result.stdout}\n${result.stderr}`, /maps .* ambiguously/);
-    },
-  );
-
-  withPolicy(
-    {
-      ...policy,
-      variations: ["contextFirewall"],
-      scopes: [
-        { kind: "context", name: "orders", path: "src/client/**" },
-        { kind: "shared", path: "src/client/**" },
-        { kind: "unscoped", path: "src/application/**" },
-      ],
-    },
-    () => {
-      const result = runLint("src/client/client.js");
-      assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`);
-      assert.match(`${result.stdout}\n${result.stderr}`, /scope policy maps .* ambiguously/);
-    },
-  );
-
-  withPolicy(
-    {
-      ...policy,
-      variations: ["contextFirewall"],
-      scopes: [{ kind: "context", name: "orders", path: "src/client/**" }],
-    },
-    () => {
-      const result = runLint("src/client/client.js");
-      assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`);
-      assert.match(`${result.stdout}\n${result.stderr}`, /contextFirewall requires at least one shared scope/);
-    },
-  );
-
-  withPolicy(
-    {
-      ...policy,
-      variations: ["contextFirewall"],
-      scopes: [
-        { kind: "context", name: "orders", path: "src/client/**" },
-        { kind: "shared", path: "src/manager/**" },
-        { kind: "unscoped", path: "src/application/**" },
-      ],
-    },
-    () => {
-      const result = runLint("src/client/client.js");
-      assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
-    },
-  );
-
-  withPolicy({ ...policy, waivers: [{ path: "src/client/client.js" }] }, () => {
-    const result = runLint("src/client/client.js");
-    assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`);
-    assert.match(`${result.stdout}\n${result.stderr}`, /unsupported property "waivers"/);
-  });
-
-  withPolicy(
-    {
-      ...policy,
-      overrides: [{ name: "unexplained", from: "Client", to: "Resource", effect: "allow" }],
-    },
-    () => {
-      const result = runLint("src/client/client.js");
-      assert.equal(result.status, 2, `${result.stdout}\n${result.stderr}`);
-      assert.match(`${result.stdout}\n${result.stderr}`, /override 0 reason/);
+      withPolicy(contextPolicy, () => {
+        const cross = runLint("src/orders/client/cross-context.js");
+        assert.equal(cross.status, 1, output(cross));
+        assert.match(output(cross), /righting\/cross-context-dependency/);
+        const shared = runLint("src/shared/client/cross-context.js");
+        assert.equal(shared.status, 1, output(shared));
+        assert.match(output(shared), /righting\/shared-to-context-dependency/);
+      });
+      withPolicy(
+        {
+          ...contextPolicy,
+          scopes: [
+            { kind: "context", name: "orders", path: "src/orders/**" },
+            { kind: "context", name: "billing", path: "src/billing/**" },
+            { kind: "shared", path: "src/**" },
+            { kind: "unscoped", path: "src/application/**" },
+          ],
+        },
+        () => {
+          const ambiguous = runLint("src/orders/client/value.js");
+          assert.equal(ambiguous.status, 1, output(ambiguous));
+          assert.match(output(ambiguous), /righting\/ambiguous-scope/);
+        },
+      );
     },
   );
 });

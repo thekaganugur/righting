@@ -1,19 +1,12 @@
 {
   "preset": "volatility@1",
-  "aliases": {
-    "client": "Client",
-    "manager": "Manager",
-    "engine": "Engine",
-    "resourceAccess": "ResourceAccess",
-    "resource": "Resource",
-    "utility": "Utility"
-  },
-  "mappings": [
-    { "alias": "client", "path": "src/client/**" },
-    { "alias": "manager", "path": "src/manager/**" },
-    { "alias": "engine", "path": "src/engine/**" },
-    { "alias": "resourceAccess", "path": "src/resource-access/**" },
-    { "alias": "resource", "path": "src/resource/**" },
-    { "alias": "utility", "path": "src/utility/**" }
+  "coverage": ["src/**/*.{js,cjs,mts}"],
+  "aliases": [
+    { "name": "client", "role": "Client", "directorySegments": ["client"] },
+    { "name": "manager", "role": "Manager", "directorySegments": ["manager"] },
+    { "name": "engine", "role": "Engine", "directorySegments": ["engine"] },
+    { "name": "resourceAccess", "role": "ResourceAccess", "directorySegments": ["resource-access"] },
+    { "name": "resource", "role": "Resource", "directorySegments": ["resource"] },
+    { "name": "utility", "role": "Utility", "directorySegments": ["utility"] }
   ]
 }

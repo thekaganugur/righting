@@ -1,11 +1,8 @@
 {
   "preset": "volatility@1",
-  "aliases": {
-    "screen": "Client",
-    "workflow": "Manager"
-  },
-  "mappings": [
-    { "alias": "screen", "path": "src/screen/**" },
-    { "alias": "workflow", "path": "src/workflow/**" }
+  "coverage": ["src/**/*.js"],
+  "aliases": [
+    { "name": "screen", "role": "Client", "directorySegments": ["screen"] },
+    { "name": "workflow", "role": "Manager", "directorySegments": ["workflow"] }
   ]
 }

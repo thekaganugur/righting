@@ -1,6 +1,6 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 
 const { isMatch } = createRequire(import.meta.url)("micromatch") as {
   isMatch(path: string, patterns: string | readonly string[]): boolean;
@@ -8,17 +8,22 @@ const { isMatch } = createRequire(import.meta.url)("micromatch") as {
 
 export const roles = ["Client", "Manager", "Engine", "ResourceAccess", "Resource", "Utility"] as const;
 export type Role = (typeof roles)[number];
+export type Variation = "clientReadsAccess" | "pureEngines" | "contextFirewall";
+export type OverrideEffect = "allow" | "disallow";
 
-type Variation = "clientReadsAccess" | "pureEngines" | "contextFirewall";
-type OverrideEffect = "allow" | "disallow";
-
-type Mapping = {
-  alias: string;
-  path?: string;
-  package?: string;
+export type AliasConvention = {
+  name: string;
+  role: Role;
+  filenameSuffixes: string[];
+  directorySegments: string[];
 };
 
-type RoleEdgeOverride = {
+export type ProtectedDependency = {
+  package: string;
+  role: "Resource" | "Utility";
+};
+
+export type RoleEdgeOverride = {
   name: string;
   from: Role;
   to: Role;
@@ -26,27 +31,114 @@ type RoleEdgeOverride = {
   reason: string;
 };
 
-type Scope = {
+export type Scope = {
   kind: "context" | "shared" | "unscoped";
   name?: string;
   path: string;
 };
 
-export type GuidanceExtras = {
+export type Guidance = {
   domainVocabulary?: string;
   goldenExamples?: Record<string, string>;
 };
 
 export type Policy = {
   preset: "volatility@1";
-  aliases: Record<string, Role>;
-  mappings: Mapping[];
-  variations: ReadonlySet<Variation>;
+  coverage: string[];
+  aliases: AliasConvention[];
+  protectedDependencies: ProtectedDependency[];
+  variations: Variation[];
   overrides: RoleEdgeOverride[];
   scopes: Scope[];
-  extras?: GuidanceExtras;
+  compositionRoots: string[];
+  guidance: Guidance;
 };
 
+export type CapabilityCoverage = "statically-enforceable" | "partially-checkable" | "guidance-only";
+
+export type ContractCapability = {
+  id: string;
+  applies: boolean;
+  coverage: CapabilityCoverage;
+  policyRuleIds: string[];
+  establishes: string[];
+  doesNotEstablish: string[];
+};
+
+export type NormalizedContract = {
+  contractVersion: 1;
+  preset: "volatility@1";
+  roles: Role[];
+  configured: {
+    coverage: string[];
+    aliases: AliasConvention[];
+    protectedDependencies: ProtectedDependency[];
+    variations: Variation[];
+    overrides: RoleEdgeOverride[];
+    scopes: Scope[];
+    compositionRoots: string[];
+    guidance: Guidance;
+  };
+  effective: {
+    allowedDependencies: Record<Role, Role[]>;
+    conventions: {
+      roles: Record<Role, { filenameSuffixes: string[]; directorySegments: string[] }>;
+      tests: { filenameMarkers: string[]; directorySegments: string[] };
+      generated: { filenameMarkers: string[]; directorySegments: string[] };
+      compositionRoots: string[];
+    };
+    policyRuleIds: string[];
+    protectedDependencyRules: Array<{
+      package: string;
+      role: "Resource" | "Utility";
+      allowedFrom: Role[];
+      forbiddenFrom: Role[];
+      policyRuleId: "righting/role-dependency";
+    }>;
+    scopeRules: Array<{
+      policyRuleId: "righting/role-dependency" | "righting/cross-context-dependency" | "righting/shared-to-context-dependency";
+      effect: "allow" | "disallow";
+      from: { scope: "context" | "shared" | "unscoped"; role?: "Client" };
+      to: { scope: "context" | "shared"; relation?: "same" | "different"; role?: "Client" };
+    }>;
+    scopeClassification: null | {
+      multipleMatches: { effect: "error"; policyRuleId: "righting/ambiguous-scope" };
+      noMatches: "outside-declared-scopes";
+    };
+    capabilities: ContractCapability[];
+    evidenceLimits: string[];
+  };
+};
+
+export type ScopeClassification =
+  | { kind: "not-applicable" }
+  | { kind: "outside-declared-scopes" }
+  | { kind: "context"; name: string }
+  | { kind: "shared" | "unscoped" }
+  | { kind: "violation"; ruleId: "righting/ambiguous-scope"; scopes: string[] };
+
+export type SourceClassification =
+  | { kind: "outside-coverage" }
+  | { kind: "role"; role: Role; test: boolean; generated: boolean; editable: boolean }
+  | { kind: "test"; generated: false; editable: true }
+  | { kind: "composition-root"; test: boolean; generated: false; editable: true }
+  | { kind: "violation"; ruleId: "righting/unclassified-source" }
+  | { kind: "violation"; ruleId: "righting/ambiguous-source"; roles: Role[] };
+
+const canonicalConventions: Record<Role, { filenameSuffixes: string[]; directorySegments: string[] }> = {
+  Client: { filenameSuffixes: [".client."], directorySegments: ["clients"] },
+  Manager: { filenameSuffixes: [".manager."], directorySegments: ["managers"] },
+  Engine: { filenameSuffixes: [".engine."], directorySegments: ["engines"] },
+  ResourceAccess: { filenameSuffixes: [".access."], directorySegments: ["access"] },
+  Resource: { filenameSuffixes: [".resource."], directorySegments: ["resources"] },
+  Utility: { filenameSuffixes: [".utility."], directorySegments: ["utilities"] },
+};
+
+const testConventions = {
+  filenameMarkers: [".test.", ".spec."],
+  directorySegments: ["test", "tests", "__tests__"],
+};
+const generatedConventions = { filenameMarkers: [".generated."], directorySegments: ["generated"] };
 const defaultAllowedDependencies: Record<Role, Role[]> = {
   Client: ["Manager", "Utility"],
   Manager: ["Engine", "ResourceAccess", "Utility"],
@@ -55,17 +147,27 @@ const defaultAllowedDependencies: Record<Role, Role[]> = {
   Resource: ["Utility"],
   Utility: ["Utility"],
 };
-
-const variations = new Set<Variation>(["clientReadsAccess", "pureEngines", "contextFirewall"]);
-const mappingKeys = new Set(["alias", "path", "package"]);
+const supportedVariations = new Set<Variation>(["clientReadsAccess", "pureEngines", "contextFirewall"]);
+const policyKeys = new Set([
+  "preset",
+  "coverage",
+  "aliases",
+  "protectedDependencies",
+  "variations",
+  "overrides",
+  "scopes",
+  "compositionRoots",
+  "guidance",
+]);
+const aliasKeys = new Set(["name", "role", "filenameSuffixes", "directorySegments"]);
+const protectedDependencyKeys = new Set(["package", "role"]);
 const overrideKeys = new Set(["name", "from", "to", "effect", "reason"]);
 const scopeKeys = new Set(["kind", "name", "path"]);
-const extrasKeys = new Set(["domainVocabulary", "goldenExamples"]);
-const policyKeys = new Set(["preset", "aliases", "mappings", "variations", "overrides", "scopes", "extras"]);
+const guidanceKeys = new Set(["domainVocabulary", "goldenExamples"]);
 
 type JsonRecord = Record<string, unknown>;
 
-export const incompletePolicyRequirements = ["aliases", "mappings", "maintainer-approval"] as const;
+export const incompletePolicyRequirements = ["coverage", "maintainer-approval"] as const;
 
 export function isExactIncompleteStarter(value: unknown): boolean {
   return (
@@ -94,7 +196,6 @@ function record(value: unknown, description: string): JsonRecord {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     fail(`must define ${description}.`);
   }
-
   return value as JsonRecord;
 }
 
@@ -110,16 +211,7 @@ function nonEmptyString(value: unknown, description: string): string {
   if (typeof value !== "string" || value.trim() === "") {
     fail(`${description} must be a non-empty string.`);
   }
-
   return value;
-}
-
-function optionalString(value: unknown, description: string): string | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  return nonEmptyString(value, description);
 }
 
 function isRole(value: unknown): value is Role {
@@ -132,160 +224,103 @@ function validatePath(path: string, description: string): void {
   }
 }
 
-function validatePackage(packageName: string): void {
-  if (packageName.startsWith(".") || packageName.startsWith("/") || packageName.startsWith("node:")) {
-    fail("mapping package must name an external package.");
+function strings(value: unknown, description: string, required = false): string[] {
+  if (value === undefined && !required) {
+    return [];
   }
+  if (!Array.isArray(value) || (required && value.length === 0)) {
+    fail(`${description} must be ${required ? "a non-empty" : "an"} array.`);
+  }
+  const result = value.map((entry, index) => nonEmptyString(entry, `${description} ${index}`));
+  if (new Set(result).size !== result.length) {
+    fail(`${description} cannot contain duplicates.`);
+  }
+  return result;
 }
 
-function projectFiles(projectDirectory: string): string[] {
-  const files: string[] = [];
-  const ignoredDirectories = new Set([".git", "node_modules"]);
-
-  function visit(directory: string): void {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const entryPath = `${directory}/${entry.name}`;
-      if (entry.isDirectory()) {
-        if (!ignoredDirectories.has(entry.name)) {
-          visit(entryPath);
-        }
-      } else if (entry.isFile()) {
-        files.push(relative(projectDirectory, entryPath).split(sep).join("/"));
-      }
-    }
+function parseCoverage(value: unknown): string[] {
+  const coverage = strings(value, "coverage", true);
+  for (const [index, path] of coverage.entries()) {
+    validatePath(path, `coverage ${index}`);
   }
-
-  visit(projectDirectory);
-  return files;
+  return coverage;
 }
 
-export type UnmatchedPolicyPath = {
-  kind: "mapping" | "scope";
-  name: string;
-  path: string;
-};
-
-export function unmatchedPolicyPaths(policy: Policy, projectDirectory: string): UnmatchedPolicyPath[] {
-  const files = projectFiles(projectDirectory);
-  const hasMatch = (path: string) => files.some((file) => isMatch(file, path));
-
-  return [
-    ...policy.mappings.flatMap((mapping) =>
-      mapping.path === undefined || hasMatch(mapping.path) ? [] : [{ kind: "mapping" as const, name: mapping.alias, path: mapping.path }],
-    ),
-    ...policy.scopes.flatMap((scope) =>
-      hasMatch(scope.path) ? [] : [{ kind: "scope" as const, name: scope.name ?? scope.kind, path: scope.path }],
-    ),
-  ];
-}
-
-function rejectAmbiguousPathMatches(
-  projectDirectory: string,
-  entries: ReadonlyArray<{ name: string; path: string }>,
-  description: string,
-): void {
-  for (const file of projectFiles(projectDirectory)) {
-    const matches = entries.filter((entry) => isMatch(file, entry.path));
-    if (matches.length > 1) {
-      fail(`${description} maps "${file}" ambiguously to ${matches.map(({ name }) => `"${name}"`).join(", ")}.`);
-    }
-  }
-}
-
-function parseAliases(value: unknown): Record<string, Role> {
-  const aliasesRecord = record(value, "aliases");
-  const aliases: Record<string, Role> = {};
-
-  for (const [alias, role] of Object.entries(aliasesRecord)) {
-    if (alias.trim() === "") {
-      fail("aliases cannot contain an empty alias.");
-    }
-    if (!isRole(role)) {
-      fail(`alias "${alias}" must map to one of: ${roles.join(", ")}.`);
-    }
-    aliases[alias] = role;
-  }
-
-  if (Object.keys(aliases).length === 0) {
-    fail("must define at least one alias.");
-  }
-
-  return aliases;
-}
-
-function parseMappings(value: unknown, aliases: Record<string, Role>): Mapping[] {
-  if (!Array.isArray(value) || value.length === 0) {
-    fail("must define at least one mapping.");
-  }
-
-  const mappings: Mapping[] = [];
-  const packageAliases = new Map<string, string>();
-
-  for (const [index, candidate] of value.entries()) {
-    const mapping = record(candidate, `mapping ${index}`);
-    rejectUnknownKeys(mapping, mappingKeys, `mapping ${index}`);
-
-    const alias = nonEmptyString(mapping.alias, `mapping ${index} alias`);
-    const role = aliases[alias];
-    if (role === undefined) {
-      fail(`mapping ${index} references unknown alias "${alias}".`);
-    }
-
-    const path = optionalString(mapping.path, `mapping ${index} path`);
-    const packageName = optionalString(mapping.package, `mapping ${index} package`);
-    if (path === undefined && packageName === undefined) {
-      fail(`mapping ${index} must define a path or package.`);
-    }
-    if (path !== undefined) {
-      validatePath(path, `mapping ${index} path`);
-    }
-    if (packageName !== undefined) {
-      validatePackage(packageName);
-      if (role !== "Resource" && role !== "Utility") {
-        fail(`mapping ${index} can protect only a Resource or Utility package.`);
-      }
-      const existingAlias = packageAliases.get(packageName);
-      if (existingAlias !== undefined) {
-        fail(`package "${packageName}" is mapped ambiguously to "${existingAlias}" and "${alias}".`);
-      }
-      packageAliases.set(packageName, alias);
-    }
-
-    mappings.push({ alias, path, package: packageName });
-  }
-
-  for (const alias of Object.keys(aliases)) {
-    if (!mappings.some((mapping) => mapping.alias === alias)) {
-      fail(`alias "${alias}" has no explicit mapping.`);
-    }
-  }
-
-  if (!mappings.some((mapping) => mapping.path !== undefined)) {
-    fail("must map at least one local path.");
-  }
-
-  return mappings;
-}
-
-function parseVariations(value: unknown): ReadonlySet<Variation> {
+function parseAliases(value: unknown): AliasConvention[] {
   if (value === undefined) {
-    return new Set();
+    return [];
   }
   if (!Array.isArray(value)) {
-    fail("variations must be an array of named opt-ins.");
+    fail("aliases must be an array.");
   }
+  const names = new Set<string>();
+  return value.map((candidate, index) => {
+    const alias = record(candidate, `alias ${index}`);
+    rejectUnknownKeys(alias, aliasKeys, `alias ${index}`);
+    const name = nonEmptyString(alias.name, `alias ${index} name`);
+    if (names.has(name)) {
+      fail(`aliases repeat the name "${name}".`);
+    }
+    names.add(name);
+    if (!isRole(alias.role)) {
+      fail(`alias "${name}" must map to one of: ${roles.join(", ")}.`);
+    }
+    const filenameSuffixes = strings(alias.filenameSuffixes, `alias ${index} filenameSuffixes`);
+    const directorySegments = strings(alias.directorySegments, `alias ${index} directorySegments`);
+    if (filenameSuffixes.length === 0 && directorySegments.length === 0) {
+      fail(`alias "${name}" must define a filename suffix or directory segment.`);
+    }
+    for (const suffix of filenameSuffixes) {
+      if (!suffix.startsWith(".") || !suffix.endsWith(".") || suffix.includes("/") || suffix.includes("\\")) {
+        fail(`alias "${name}" filename suffix "${suffix}" must be an exact dotted filename token.`);
+      }
+    }
+    for (const segment of directorySegments) {
+      if (segment === "." || segment === ".." || segment.includes("/") || segment.includes("\\")) {
+        fail(`alias "${name}" directory segment "${segment}" must be one exact path segment.`);
+      }
+    }
+    return { name, role: alias.role, filenameSuffixes, directorySegments };
+  });
+}
 
-  const configured = new Set<Variation>();
-  for (const variation of value) {
-    if (typeof variation !== "string" || !variations.has(variation as Variation)) {
-      fail("variations contains an unsupported opt-in.");
-    }
-    if (configured.has(variation as Variation)) {
-      fail(`variations repeats "${variation}".`);
-    }
-    configured.add(variation as Variation);
+function validatePackage(packageName: string): void {
+  if (packageName.startsWith(".") || packageName.startsWith("/") || packageName.startsWith("node:")) {
+    fail("protected dependency must name an external package.");
   }
+}
 
+function parseProtectedDependencies(value: unknown): ProtectedDependency[] {
+  if (value === undefined) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    fail("protectedDependencies must be an array.");
+  }
+  const packages = new Set<string>();
+  return value.map((candidate, index) => {
+    const dependency = record(candidate, `protected dependency ${index}`);
+    rejectUnknownKeys(dependency, protectedDependencyKeys, `protected dependency ${index}`);
+    const packageName = nonEmptyString(dependency.package, `protected dependency ${index} package`);
+    validatePackage(packageName);
+    if (dependency.role !== "Resource" && dependency.role !== "Utility") {
+      fail(`protected dependency ${index} role must be "Resource" or "Utility".`);
+    }
+    if (packages.has(packageName)) {
+      fail(`protectedDependencies repeat package "${packageName}".`);
+    }
+    packages.add(packageName);
+    return { package: packageName, role: dependency.role };
+  });
+}
+
+function parseVariations(value: unknown): Variation[] {
+  const configured = strings(value, "variations") as Variation[];
+  for (const variation of configured) {
+    if (!supportedVariations.has(variation)) {
+      fail(`variations contains unsupported opt-in "${variation}".`);
+    }
+  }
   return configured;
 }
 
@@ -296,34 +331,29 @@ function parseOverrides(value: unknown): RoleEdgeOverride[] {
   if (!Array.isArray(value)) {
     fail("overrides must be an array.");
   }
-
   const names = new Set<string>();
   const edges = new Set<string>();
   return value.map((candidate, index) => {
     const override = record(candidate, `override ${index}`);
     rejectUnknownKeys(override, overrideKeys, `override ${index}`);
-
     const name = nonEmptyString(override.name, `override ${index} name`);
-    const from = override.from;
-    const to = override.to;
-    const effect = override.effect;
     const reason = nonEmptyString(override.reason, `override ${index} reason`);
-    if (!isRole(from) || !isRole(to)) {
+    if (!isRole(override.from) || !isRole(override.to)) {
       fail(`override ${index} must use canonical roles.`);
     }
-    if (effect !== "allow" && effect !== "disallow") {
+    if (override.effect !== "allow" && override.effect !== "disallow") {
       fail(`override ${index} effect must be "allow" or "disallow".`);
     }
     if (names.has(name)) {
       fail(`overrides repeat the name "${name}".`);
     }
-    const edge = `${from}:${to}`;
+    const edge = `${override.from}:${override.to}`;
     if (edges.has(edge)) {
       fail(`overrides repeat the ${edge} edge.`);
     }
     names.add(name);
     edges.add(edge);
-    return { name, from, to, effect, reason };
+    return { name, from: override.from, to: override.to, effect: override.effect, reason };
   });
 }
 
@@ -334,31 +364,38 @@ function parseScopes(value: unknown): Scope[] {
   if (!Array.isArray(value) || value.length === 0) {
     fail("scopes must be a non-empty array.");
   }
-
   const contextNames = new Set<string>();
   return value.map((candidate, index) => {
     const scope = record(candidate, `scope ${index}`);
     rejectUnknownKeys(scope, scopeKeys, `scope ${index}`);
-
-    const kind = scope.kind;
     const path = nonEmptyString(scope.path, `scope ${index} path`);
     validatePath(path, `scope ${index} path`);
-    if (kind === "context") {
+    if (scope.kind === "context") {
       const name = nonEmptyString(scope.name, `scope ${index} name`);
       if (contextNames.has(name)) {
         fail(`scopes repeat context "${name}".`);
       }
       contextNames.add(name);
-      return { kind, name, path };
+      return { kind: scope.kind, name, path };
     }
-    if (kind === "shared" || kind === "unscoped") {
+    if (scope.kind === "shared" || scope.kind === "unscoped") {
       if (scope.name !== undefined) {
-        fail(`${kind} scope ${index} cannot have a name.`);
+        fail(`${scope.kind} scope ${index} cannot have a name.`);
       }
-      return { kind, path };
+      return { kind: scope.kind, path };
     }
     fail(`scope ${index} kind must be "context", "shared", or "unscoped".`);
   });
+}
+
+function parseCompositionRoots(value: unknown): string[] {
+  const tokens = strings(value, "compositionRoots");
+  for (const token of tokens) {
+    if (token.includes("/") || token.includes("\\") || token.includes(".")) {
+      fail(`composition root "${token}" must be one exact extensionless filename token.`);
+    }
+  }
+  return tokens;
 }
 
 function parseReference(value: unknown, description: string, projectDirectory: string): string {
@@ -374,56 +411,51 @@ function parseReference(value: unknown, description: string, projectDirectory: s
   return reference;
 }
 
-function parseExtras(value: unknown, projectDirectory: string): GuidanceExtras | undefined {
+function parseGuidance(value: unknown, projectDirectory: string): Guidance {
   if (value === undefined) {
-    return undefined;
+    return {};
   }
-
-  const extras = record(value, "extras");
-  rejectUnknownKeys(extras, extrasKeys, "extras");
+  const guidance = record(value, "guidance");
+  rejectUnknownKeys(guidance, guidanceKeys, "guidance");
   const domainVocabulary =
-    extras.domainVocabulary === undefined
+    guidance.domainVocabulary === undefined
       ? undefined
-      : parseReference(extras.domainVocabulary, "extras domainVocabulary", projectDirectory);
+      : parseReference(guidance.domainVocabulary, "guidance domainVocabulary", projectDirectory);
   let goldenExamples: Record<string, string> | undefined;
-  if (extras.goldenExamples !== undefined) {
-    const examples = record(extras.goldenExamples, "extras goldenExamples");
+  if (guidance.goldenExamples !== undefined) {
+    const examples = record(guidance.goldenExamples, "guidance goldenExamples");
     goldenExamples = {};
     for (const [name, reference] of Object.entries(examples)) {
       if (name.trim() === "") {
-        fail("extras goldenExamples cannot contain an empty name.");
+        fail("guidance goldenExamples cannot contain an empty name.");
       }
-      goldenExamples[name] = parseReference(reference, `extras goldenExamples "${name}"`, projectDirectory);
+      goldenExamples[name] = parseReference(reference, `guidance goldenExamples "${name}"`, projectDirectory);
     }
   }
-
-  return { domainVocabulary, goldenExamples };
+  return {
+    ...(domainVocabulary === undefined ? {} : { domainVocabulary }),
+    ...(goldenExamples === undefined ? {} : { goldenExamples }),
+  };
 }
 
 export function allowedDependencies(policy: Policy): Record<Role, Role[]> {
-  const allowed = Object.fromEntries(
-    roles.map((role) => [role, [...defaultAllowedDependencies[role]]]),
-  ) as Record<Role, Role[]>;
-
-  if (policy.variations.has("clientReadsAccess")) {
+  const allowed = Object.fromEntries(roles.map((role) => [role, [...defaultAllowedDependencies[role]]])) as Record<Role, Role[]>;
+  if (policy.variations.includes("clientReadsAccess")) {
     allowed.Client.push("ResourceAccess");
   }
-  if (policy.variations.has("pureEngines")) {
+  if (policy.variations.includes("pureEngines")) {
     allowed.Engine = allowed.Engine.filter((role) => role !== "ResourceAccess");
   }
-
   for (const override of policy.overrides) {
     const currentlyAllowed = allowed[override.from].includes(override.to);
     if ((override.effect === "allow") === currentlyAllowed) {
       fail(`override "${override.name}" does not change the ${override.from}:${override.to} edge.`);
     }
-    if (override.effect === "allow") {
-      allowed[override.from].push(override.to);
-    } else {
-      allowed[override.from] = allowed[override.from].filter((role) => role !== override.to);
-    }
+    allowed[override.from] =
+      override.effect === "allow"
+        ? [...allowed[override.from], override.to]
+        : allowed[override.from].filter((role) => role !== override.to);
   }
-
   return allowed;
 }
 
@@ -435,100 +467,301 @@ function parsePolicy(source: unknown, policyPath: string): Policy {
         'has an incomplete starter with configuration; an incomplete starter may contain only "preset" and "status". After approval, replace it with the complete policy and remove "status": "incomplete".',
       );
     }
-    fail("is incomplete; obtain maintainer approval, then replace the starter with aliases and mappings.");
+    fail("is incomplete; obtain maintainer approval, then replace the starter with coverage and approved conventions.");
   }
   rejectUnknownKeys(policy, policyKeys, "policy");
   if (policy.preset !== "volatility@1") {
     fail("must select the volatility@1 preset.");
   }
-
-  const aliases = parseAliases(policy.aliases);
-  const mappings = parseMappings(policy.mappings, aliases);
-  const configuredVariations = parseVariations(policy.variations);
-  const overrides = parseOverrides(policy.overrides);
-  const scopes = parseScopes(policy.scopes);
-  const projectDirectory = dirname(policyPath);
-  const extras = parseExtras(policy.extras, projectDirectory);
-  if (scopes.length > 0 && !configuredVariations.has("contextFirewall")) {
+  const projectDirectory = resolve(policyPath, "..");
+  const result: Policy = {
+    preset: "volatility@1",
+    coverage: parseCoverage(policy.coverage),
+    aliases: parseAliases(policy.aliases),
+    protectedDependencies: parseProtectedDependencies(policy.protectedDependencies),
+    variations: parseVariations(policy.variations),
+    overrides: parseOverrides(policy.overrides),
+    scopes: parseScopes(policy.scopes),
+    compositionRoots: parseCompositionRoots(policy.compositionRoots),
+    guidance: parseGuidance(policy.guidance, projectDirectory),
+  };
+  if (result.scopes.length > 0 && !result.variations.includes("contextFirewall")) {
     fail("scopes require the contextFirewall variation.");
   }
-  if (configuredVariations.has("contextFirewall")) {
+  if (result.variations.includes("contextFirewall")) {
     for (const kind of ["context", "shared", "unscoped"] as const) {
-      if (!scopes.some((scope) => scope.kind === kind)) {
+      if (!result.scopes.some((scope) => scope.kind === kind)) {
         fail(`contextFirewall requires at least one ${kind} scope.`);
       }
     }
   }
-
-  rejectAmbiguousPathMatches(
-    projectDirectory,
-    mappings.flatMap((mapping) => (mapping.path === undefined ? [] : [{ name: mapping.alias, path: mapping.path }])),
-    "policy",
-  );
-  rejectAmbiguousPathMatches(
-    projectDirectory,
-    scopes.map((scope) => ({ name: scope.name ?? scope.kind, path: scope.path })),
-    "scope policy",
-  );
-
-  const result: Policy = {
-    preset: "volatility@1",
-    aliases,
-    mappings,
-    variations: configuredVariations,
-    overrides,
-    scopes,
-    ...(extras === undefined ? {} : { extras }),
-  };
   allowedDependencies(result);
   return result;
 }
 
-function mappingIdentity({ alias, path, package: packageName }: Mapping): string {
-  return JSON.stringify([alias, path, packageName]);
+function capabilitiesFor(policy: Policy): ContractCapability[] {
+  const allowed = allowedDependencies(policy);
+  const definitions = [
+    {
+      id: "role-dependency",
+      applies: true,
+      coverage: "statically-enforceable" as const,
+      policyRuleIds: [
+        "righting/role-dependency",
+        "righting/unresolved-local-import",
+        "righting/unclassified-source",
+        "righting/ambiguous-source",
+        "righting/test-dependency",
+      ],
+      establishes: ["configured-role-dependency-boundaries", "unresolved-local-import-is-forbidden"],
+      doesNotEstablish: ["files-outside-coverage", "runtime-dependency-behavior"],
+    },
+    {
+      id: "manager-interaction",
+      applies: !allowed.Manager.includes("Manager"),
+      coverage: "partially-checkable" as const,
+      policyRuleIds: ["righting/role-dependency"],
+      establishes: ["direct-manager-import-is-forbidden"],
+      doesNotEstablish: ["queued-interaction-semantics"],
+    },
+    {
+      id: "protected-dependency",
+      applies: policy.protectedDependencies.length > 0,
+      coverage: "statically-enforceable" as const,
+      policyRuleIds: ["righting/role-dependency"],
+      establishes: ["configured-resource-and-utility-package-classification"],
+      doesNotEstablish: ["external-service-runtime-behavior", "utility-package-access-restriction"],
+    },
+    {
+      id: "context-firewall",
+      applies: policy.variations.includes("contextFirewall"),
+      coverage: "statically-enforceable" as const,
+      policyRuleIds: [
+        "righting/cross-context-dependency",
+        "righting/shared-to-context-dependency",
+        "righting/ambiguous-scope",
+      ],
+      establishes: ["cross-context-source-import-is-forbidden", "shared-to-context-source-import-is-forbidden"],
+      doesNotEstablish: ["cross-context-runtime-behavior"],
+    },
+    {
+      id: "design-judgment",
+      applies: true,
+      coverage: "guidance-only" as const,
+      policyRuleIds: [],
+      establishes: [],
+      doesNotEstablish: ["role-responsibility", "real-volatility", "contract-quality", "runtime-behavior", "use-case-validity"],
+    },
+  ];
+  return definitions.map((capability) => ({ ...capability }));
 }
 
-function overrideIdentity({ name, from, to, effect, reason }: RoleEdgeOverride): string {
-  return JSON.stringify([name, from, to, effect, reason]);
+export function normalizePolicy(policy: Policy): NormalizedContract {
+  const roleConventions = Object.fromEntries(
+    roles.map((role) => {
+      const aliases = policy.aliases.filter((alias) => alias.role === role);
+      return [
+        role,
+        {
+          filenameSuffixes: [...canonicalConventions[role].filenameSuffixes, ...aliases.flatMap((alias) => alias.filenameSuffixes)],
+          directorySegments: [
+            ...canonicalConventions[role].directorySegments,
+            ...aliases.flatMap((alias) => alias.directorySegments),
+          ],
+        },
+      ];
+    }),
+  ) as NormalizedContract["effective"]["conventions"]["roles"];
+  return {
+    contractVersion: 1,
+    preset: policy.preset,
+    roles: [...roles],
+    configured: {
+      coverage: [...policy.coverage],
+      aliases: policy.aliases.map((alias) => ({ ...alias, filenameSuffixes: [...alias.filenameSuffixes], directorySegments: [...alias.directorySegments] })),
+      protectedDependencies: policy.protectedDependencies.map((dependency) => ({ ...dependency })),
+      variations: [...policy.variations],
+      overrides: policy.overrides.map((override) => ({ ...override })),
+      scopes: policy.scopes.map((scope) => ({ ...scope })),
+      compositionRoots: [...policy.compositionRoots],
+      guidance: {
+        ...policy.guidance,
+        ...(policy.guidance.goldenExamples === undefined ? {} : { goldenExamples: { ...policy.guidance.goldenExamples } }),
+      },
+    },
+    effective: {
+      allowedDependencies: allowedDependencies(policy),
+      conventions: {
+        roles: roleConventions,
+        tests: { filenameMarkers: [...testConventions.filenameMarkers], directorySegments: [...testConventions.directorySegments] },
+        generated: {
+          filenameMarkers: [...generatedConventions.filenameMarkers],
+          directorySegments: [...generatedConventions.directorySegments],
+        },
+        compositionRoots: ["composition-root", ...policy.compositionRoots],
+      },
+      policyRuleIds: [
+        "righting/role-dependency",
+        "righting/unresolved-local-import",
+        "righting/unclassified-source",
+        "righting/ambiguous-source",
+        "righting/test-dependency",
+        "righting/cross-context-dependency",
+        "righting/shared-to-context-dependency",
+        "righting/ambiguous-scope",
+      ],
+      protectedDependencyRules: policy.protectedDependencies.map((dependency) => {
+        const allowed = allowedDependencies(policy);
+        return {
+          ...dependency,
+          allowedFrom: roles.filter((role) => allowed[role].includes(dependency.role)),
+          forbiddenFrom: roles.filter((role) => !allowed[role].includes(dependency.role)),
+          policyRuleId: "righting/role-dependency" as const,
+        };
+      }),
+      scopeRules: policy.variations.includes("contextFirewall")
+        ? [
+            {
+              policyRuleId: "righting/cross-context-dependency",
+              effect: "disallow",
+              from: { scope: "context" },
+              to: { scope: "context", relation: "different" },
+            },
+            {
+              policyRuleId: "righting/shared-to-context-dependency",
+              effect: "disallow",
+              from: { scope: "shared" },
+              to: { scope: "context" },
+            },
+            {
+              policyRuleId: "righting/role-dependency",
+              effect: "allow",
+              from: { scope: "unscoped" },
+              to: { scope: "context" },
+            },
+            {
+              policyRuleId: "righting/role-dependency",
+              effect: "allow",
+              from: { scope: "context", role: "Client" },
+              to: { scope: "context", relation: "same", role: "Client" },
+            },
+            {
+              policyRuleId: "righting/role-dependency",
+              effect: "allow",
+              from: { scope: "context", role: "Client" },
+              to: { scope: "shared", role: "Client" },
+            },
+          ]
+        : [],
+      scopeClassification: policy.variations.includes("contextFirewall")
+        ? {
+            multipleMatches: { effect: "error", policyRuleId: "righting/ambiguous-scope" },
+            noMatches: "outside-declared-scopes",
+          }
+        : null,
+      capabilities: capabilitiesFor(policy),
+      evidenceLimits: [
+        "files-outside-coverage",
+        "matched-files-are-inspection-evidence",
+        "runtime-behavior",
+        "maintainer-approval",
+        "adapter-activation",
+      ],
+    },
+  };
 }
 
-function scopeIdentity({ kind, name, path }: Scope): string {
-  return JSON.stringify([kind, name, path]);
+function matchesMarker(filename: string, markers: readonly string[]): boolean {
+  return markers.some((marker) => filename.includes(marker));
 }
 
-function preservesAll<T>(baseline: readonly T[], current: readonly T[], identity: (item: T) => string): boolean {
-  const currentEntries = new Set(current.map(identity));
-  return baseline.every((item) => currentEntries.has(identity(item)));
+function matchesSegment(segments: readonly string[], conventions: readonly string[]): boolean {
+  return conventions.some((convention) => segments.includes(convention));
 }
 
-// A migration can add enforcement, but cannot use a policy edit to loosen or replace it.
+export function classifyScope(contract: NormalizedContract, sourcePath: string): ScopeClassification {
+  if (contract.effective.scopeClassification === null) {
+    return { kind: "not-applicable" };
+  }
+  const path = sourcePath.replaceAll("\\", "/").replace(/^\.\//, "");
+  const matches = contract.configured.scopes.filter((scope) => isMatch(path, scope.path));
+  if (matches.length === 0) {
+    return { kind: contract.effective.scopeClassification.noMatches };
+  }
+  if (matches.length > 1) {
+    return {
+      kind: "violation",
+      ruleId: contract.effective.scopeClassification.multipleMatches.policyRuleId,
+      scopes: matches.map((scope) => scope.name ?? scope.kind),
+    };
+  }
+  const scope = matches[0]!;
+  return scope.kind === "context" ? { kind: scope.kind, name: scope.name! } : { kind: scope.kind };
+}
+
+export function classifySource(contract: NormalizedContract, sourcePath: string): SourceClassification {
+  const path = sourcePath.replaceAll("\\", "/").replace(/^\.\//, "");
+  if (!isMatch(path, contract.configured.coverage)) {
+    return { kind: "outside-coverage" };
+  }
+  const parts = path.split("/");
+  const filename = parts.at(-1) ?? path;
+  const directories = parts.slice(0, -1);
+  const test =
+    matchesMarker(filename, contract.effective.conventions.tests.filenameMarkers) ||
+    matchesSegment(directories, contract.effective.conventions.tests.directorySegments);
+  const generated =
+    matchesMarker(filename, contract.effective.conventions.generated.filenameMarkers) ||
+    matchesSegment(directories, contract.effective.conventions.generated.directorySegments);
+  const matches = roles.filter((role) => {
+    const convention = contract.effective.conventions.roles[role];
+    return matchesMarker(filename, convention.filenameSuffixes) || matchesSegment(directories, convention.directorySegments);
+  });
+  if (matches.length > 1) {
+    return { kind: "violation", ruleId: "righting/ambiguous-source", roles: matches };
+  }
+  if (matches.length === 1) {
+    return { kind: "role", role: matches[0]!, test, generated, editable: !generated };
+  }
+  const basename = filename.includes(".") ? filename.slice(0, filename.indexOf(".")) : filename;
+  if (!generated && contract.effective.conventions.compositionRoots.includes(basename)) {
+    return { kind: "composition-root", test, generated: false, editable: true };
+  }
+  if (test && !generated) {
+    return { kind: "test", generated: false, editable: true };
+  }
+  return { kind: "violation", ruleId: "righting/unclassified-source" };
+}
+
+function identity(value: unknown): string {
+  return JSON.stringify(value);
+}
+
+function preservesAll<T>(baseline: readonly T[], current: readonly T[]): boolean {
+  const entries = new Set(current.map(identity));
+  return baseline.every((item) => entries.has(identity(item)));
+}
+
 export function isPolicyExpansion(baseline: Policy, current: Policy): boolean {
-  if (Object.entries(baseline.aliases).some(([alias, role]) => current.aliases[alias] !== role)) {
+  if (
+    !preservesAll(baseline.coverage, current.coverage) ||
+    !preservesAll(baseline.aliases, current.aliases) ||
+    !preservesAll(baseline.protectedDependencies, current.protectedDependencies) ||
+    !preservesAll(baseline.scopes, current.scopes) ||
+    !preservesAll(baseline.overrides, current.overrides) ||
+    !preservesAll(baseline.variations, current.variations)
+  ) {
     return false;
   }
-  if (!preservesAll(baseline.mappings, current.mappings, mappingIdentity)) {
-    return false;
-  }
-  if (!preservesAll(baseline.scopes, current.scopes, scopeIdentity)) {
-    return false;
-  }
-  if (!preservesAll(baseline.overrides, current.overrides, overrideIdentity)) {
-    return false;
-  }
-  if ([...baseline.variations].some((variation) => !current.variations.has(variation))) {
-    return false;
-  }
-
-  const addedVariations = [...current.variations].filter((variation) => !baseline.variations.has(variation));
-  const addedOverrides = current.overrides.filter(
-    (override) => !baseline.overrides.some((baselineOverride) => overrideIdentity(baselineOverride) === overrideIdentity(override)),
-  );
+  const addedVariations = current.variations.filter((variation) => !baseline.variations.includes(variation));
+  const addedOverrides = current.overrides.filter((override) => !baseline.overrides.some((item) => identity(item) === identity(override)));
   if (addedVariations.includes("clientReadsAccess") || addedOverrides.some((override) => override.effect === "allow")) {
     return false;
   }
-
   return (
-    current.mappings.length > baseline.mappings.length ||
+    current.coverage.length > baseline.coverage.length ||
+    current.aliases.length > baseline.aliases.length ||
+    current.protectedDependencies.length > baseline.protectedDependencies.length ||
     current.scopes.length > baseline.scopes.length ||
     addedVariations.length > 0 ||
     addedOverrides.length > 0
@@ -543,7 +776,6 @@ export function readPolicySource(source: string, policyPath: string): Policy {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`righting.json could not be read: ${message}`);
   }
-
   return parsePolicy(parsed, policyPath);
 }
 
@@ -555,6 +787,5 @@ export function readPolicy(policyPath: string): Policy {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`righting.json could not be read: ${message}`);
   }
-
   return readPolicySource(source, policyPath);
 }

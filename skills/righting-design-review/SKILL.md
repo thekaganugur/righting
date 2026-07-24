@@ -11,9 +11,9 @@ Keep the review advisory and confine it to the stated behavior and supplied focu
 
 ## 1. Establish the evidence
 
-Read the root `AGENTS.md`; then read root `CONTEXT.md` or the relevant contexts from `CONTEXT-MAP.md`, plus relevant root or context-scoped `docs/adr/` records, when present. Read the stated behavior or change goal, focused diff or relevant files, `righting.json` when present, and configured `extras.domainVocabulary` and every configured `extras.goldenExamples` reference when present. Treat their local terms and examples as evidence for the stated behavior.
+Read the root `AGENTS.md`; then read root `CONTEXT.md` or the relevant contexts from `CONTEXT-MAP.md`, plus relevant root or context-scoped `docs/adr/` records, when present. Read the stated behavior or change goal, focused diff or relevant files, `righting.json` when present, and configured `guidance.domainVocabulary` and every configured `guidance.goldenExamples` reference when present. Treat their local terms and examples as evidence for the stated behavior.
 
-Use terms defined in the applicable context documentation in questions and the review record. When the policy is complete, run `righting inspect --json` to identify mapped aliases, canonical roles, allowed edges, configured variations, overrides, context scopes, and applicable capability records. Record an explicit absence for a missing policy, focus, or configured reference before asking a question; surface any contradiction with a relevant ADR.
+Use terms defined in the applicable context documentation in questions and the review record. When the policy is complete, run `righting inspect --json` to identify coverage, convention aliases, canonical roles, allowed edges, configured variations, overrides, context scopes, and applicable capability records under `contract`. Record an explicit absence for a missing policy, focus, or configured reference before asking a question; surface any contradiction with a relevant ADR.
 
 Completion: the record contains a concrete behavior, relevant code evidence, applicable policy and ADR evidence, and evidence or an explicit absence for every applicable source above.
 

@@ -9,7 +9,7 @@ import { assertCommandSucceeded, createPackedProject, packRighting, righting, ru
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
 const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/manual-maintainer");
-const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nRead it before changing mapped code.";
+const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nRead it before changing covered code.";
 const approvedPolicyPath = resolve(fixtureDirectory, "righting-approved.json");
 const documentation = ["README.md", "docs/manual-maintainer.md", "docs/policy-language.md", "docs/capabilities.md", "docs/eslint.md", "docs/legacy-debt.md"];
 
@@ -40,17 +40,15 @@ test("a packed Righting artifact proves the manual-maintainer route and JSON con
 
     const incomplete = assertSuccessEnvelope(righting(projectDirectory, "init", "--json"), "init", "incomplete");
     assert.equal((incomplete.policy as Json).created, false);
-    assert.deepEqual((incomplete.policy as Json).required, ["aliases", "mappings", "maintainer-approval"]);
+    assert.deepEqual((incomplete.policy as Json).required, ["coverage", "maintainer-approval"]);
     assert.equal((incomplete.guidance as Json).path, "AGENTS.md");
     assert.equal((incomplete.guidance as Json).updated, false);
     assert.equal(incomplete.nextAction, "obtain-policy-approval");
 
     const incompleteInspection = assertSuccessEnvelope(righting(projectDirectory, "inspect", "--json"), "inspect", "incomplete");
-    assert.deepEqual((incompleteInspection.policy as Json).required, ["aliases", "mappings", "maintainer-approval"]);
+    assert.deepEqual((incompleteInspection.policy as Json).required, ["coverage", "maintainer-approval"]);
     assert.equal(incompleteInspection.nextAction, "obtain-policy-approval");
-    assert.equal("configuration" in incompleteInspection, false);
-    assert.equal("effectivePolicy" in incompleteInspection, false);
-    assert.equal("capabilities" in incompleteInspection, false);
+    assert.equal("contract" in incompleteInspection, false);
 
     writeFileSync(resolve(projectDirectory, "righting.json"), readFileSync(approvedPolicyPath, "utf8"));
     const valid = assertSuccessEnvelope(righting(projectDirectory, "init", "--json"), "init", "valid");
@@ -63,9 +61,10 @@ test("a packed Righting artifact proves the manual-maintainer route and JSON con
     };
     const inspection = assertSuccessEnvelope(righting(projectDirectory, "inspect", "--json"), "inspect", "valid");
     assert.equal((inspection.adapter as Json).status, "unknown");
-    assert.equal((inspection.configuration as Json).preset, "volatility@1");
-    assert.ok(Object.hasOwn(inspection.effectivePolicy as Json, "allowedDependencies"));
-    assert.ok((inspection.capabilities as Json[]).some((capability) => capability.id === "role-dependency"));
+    const contract = inspection.contract as Json;
+    assert.equal(contract.preset, "volatility@1");
+    assert.ok(Object.hasOwn(contract.effective as Json, "allowedDependencies"));
+    assert.ok((((contract.effective as Json).capabilities as Json[]).some((capability) => capability.id === "role-dependency")));
     assert.deepEqual(
       {
         policy: readFileSync(resolve(projectDirectory, "righting.json"), "utf8"),
@@ -75,10 +74,9 @@ test("a packed Righting artifact proves the manual-maintainer route and JSON con
     );
 
     const all = assertSuccessEnvelope(righting(projectDirectory, "inspect", "--all", "--json"), "inspect", "valid");
-    assert.ok(Array.isArray(all.capabilities));
-    assert.ok(Array.isArray(all.availableCapabilities));
-    assert.equal((all.capabilities as Json[]).some((capability) => capability.id === "protected-dependency"), false);
-    assert.ok((all.availableCapabilities as Json[]).some((capability) => capability.id === "protected-dependency"));
+    const capabilities = (((all.contract as Json).effective as Json).capabilities as Json[]);
+    assert.equal(capabilities.find((capability) => capability.id === "protected-dependency")?.applies, false);
+    assert.equal("availableCapabilities" in all, false);
 
     const lintScript = (JSON.parse(readFileSync(resolve(projectDirectory, "package.json"), "utf8")) as { scripts: { lint: string } }).scripts.lint;
     const configPath = resolve(projectDirectory, "eslint.config.mjs");

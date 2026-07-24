@@ -7,6 +7,7 @@
     "righting": "dist/src/cli.js"
   },
   "exports": {
+    "./core": "./dist/src/policy.js",
     "./eslint": "./dist/src/eslint.js"
   },
   "files": [

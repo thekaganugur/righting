@@ -1,11 +1,8 @@
 {
   "preset": "volatility@1",
-  "aliases": {
-    "screen": "Client",
-    "useCase": "Manager"
-  },
-  "mappings": [
-    { "alias": "screen", "path": "src/client/**" },
-    { "alias": "useCase", "path": "src/manager/**" }
+  "coverage": ["src/**/*.js"],
+  "aliases": [
+    { "name": "screen", "role": "Client", "directorySegments": ["client"] },
+    { "name": "useCase", "role": "Manager", "directorySegments": ["manager"] }
   ]
 }

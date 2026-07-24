@@ -10,6 +10,7 @@ const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
 const packagedResources = [
   "dist/src/cli.js",
+  "dist/src/policy.js",
   "dist/src/capabilities.js",
   "dist/src/suppressions.js",
   "skills/righting-design-review/SKILL.md",
@@ -66,6 +67,10 @@ test("the packed package publishes every onboarding reference without the retire
     assert.equal(extracted.status, 0, extracted.stderr);
     for (const resource of packagedResources) {
       assert.doesNotMatch(readFileSync(resolve(packageDirectory, "package", resource), "utf8"), /righting docs/);
+    }
+    for (const resource of ["dist/src/policy.js", "dist/src/policy.d.ts", "docs/policy-language.md", "docs/capabilities.md"]) {
+      const contents = readFileSync(resolve(packageDirectory, "package", resource), "utf8");
+      assert.doesNotMatch(contents, /eslint|suppression-file/i, `${resource} leaks adapter mechanics into the core contract`);
     }
   } finally {
     rmSync(packageDirectory, { recursive: true, force: true });

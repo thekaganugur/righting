@@ -9,7 +9,7 @@ import { incompletePolicyRequirements, isExactIncompleteStarterFile, readPolicy 
 
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
-const manualPolicyNext = 'define and approve aliases and mappings in righting.json, then remove "status": "incomplete"';
+const manualPolicyNext = 'define and approve coverage and any project conventions in righting.json, then remove "status": "incomplete"';
 const agentPolicyNext = "ask your coding agent to use the righting-integrate skill to propose a policy for your approval";
 const initUsage = "Usage: righting init [--skills] [--json]";
 const inspectUsage = "Usage: righting inspect [--all] [--json]";
@@ -92,7 +92,7 @@ const starterPolicy = `${JSON.stringify(
 
 const managedGuidance = `${managedStart}
 This project has a Righting architecture policy in \`righting.json\`.
-Read it before changing mapped code.
+Read it before changing covered code.
 ${managedEnd}`;
 
 function replaceManagedGuidance(existing: string | undefined, guidance = managedGuidance): string {

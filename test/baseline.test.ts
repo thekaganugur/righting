@@ -56,8 +56,8 @@ function writePolicy(projectDirectory: string): void {
     `${JSON.stringify(
       {
         preset: "volatility@1",
-        aliases: { screen: "Client" },
-        mappings: [{ alias: "screen", path: "src/client/**" }],
+        coverage: ["src/**/*.js"],
+        aliases: [{ name: "screen", role: "Client", directorySegments: ["client"] }],
       },
       null,
       2,
@@ -228,10 +228,10 @@ test("righting baseline ratchets legacy Righting debt and permits policy expansi
       `${JSON.stringify(
         {
           preset: "volatility@1",
-          aliases: { screen: "Client", useCase: "Manager" },
-          mappings: [
-            { alias: "screen", path: "src/client/**" },
-            { alias: "useCase", path: "src/manager/**" },
+          coverage: ["src/**/*.js"],
+          aliases: [
+            { name: "screen", role: "Client", directorySegments: ["client"] },
+            { name: "useCase", role: "Manager", directorySegments: ["manager"] },
           ],
         },
         null,
@@ -266,10 +266,10 @@ test("righting baseline ratchets legacy Righting debt and permits policy expansi
       `${JSON.stringify(
         {
           preset: "volatility@1",
-          aliases: { screen: "Client", useCase: "Manager" },
-          mappings: [
-            { path: "src/client/**", alias: "screen" },
-            { path: "src/manager/**", alias: "useCase" },
+          coverage: ["src/**/*.js"],
+          aliases: [
+            { name: "screen", role: "Client", directorySegments: ["client"] },
+            { name: "useCase", role: "Manager", directorySegments: ["manager"] },
           ],
         },
         null,
@@ -280,7 +280,7 @@ test("righting baseline ratchets legacy Righting debt and permits policy expansi
       "--base",
       "HEAD",
       "--migration-reason",
-      "The Manager mapping exposes existing legacy debt.",
+      "The Manager convention exposes existing legacy debt.",
       "--json",
     ]);
     assert.equal(expanded.status, 0, expanded.stderr);

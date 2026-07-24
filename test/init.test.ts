@@ -11,7 +11,7 @@ const repositoryDirectory = resolve(testDirectory, "../..");
 const cliPath = resolve(testDirectory, "../src/cli.js");
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
-const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nRead it before changing mapped code.";
+const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nRead it before changing covered code.";
 const skills = ["righting-design-review", "righting-eslint", "righting-integrate"];
 
 function createProject(): string {
@@ -58,10 +58,10 @@ function assertFailureEnvelope(result: ReturnType<typeof run>, code: string, pat
 const validPolicy = `${JSON.stringify(
   {
     preset: "volatility@1",
-    aliases: { page: "Client", useCase: "Manager" },
-    mappings: [
-      { alias: "page", path: "src/page/**" },
-      { alias: "useCase", path: "src/use-case/**" },
+    coverage: ["src/**/*.ts"],
+    aliases: [
+      { name: "page", role: "Client", directorySegments: ["pages"] },
+      { name: "useCase", role: "Manager", filenameSuffixes: [".use-case."] },
     ],
   },
   null,
@@ -79,7 +79,7 @@ test("righting init creates only the exact starter and minimal policy pointer", 
       path: "righting.json",
       created: true,
       status: "incomplete",
-      required: ["aliases", "mappings", "maintainer-approval"],
+      required: ["coverage", "maintainer-approval"],
     });
     assert.equal(output.nextAction, "obtain-policy-approval");
     assert.deepEqual(JSON.parse(readFileSync(resolve(projectDirectory, "righting.json"), "utf8")), {
@@ -90,14 +90,14 @@ test("righting init creates only the exact starter and minimal policy pointer", 
     const guidance = readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8");
     assert.match(guidance, /Keep this project-owned instruction\./);
     assert.match(guidance, new RegExp(`${managedStart}\n${policyPointer}\n${managedEnd}`));
-    assert.doesNotMatch(guidance, /Righting setup|righting init --skills|aliases|mappings/i);
+    assert.doesNotMatch(guidance, /Righting setup|righting init --skills|coverage|aliases/i);
 
     const repeat = assertSuccessEnvelope(run(projectDirectory, "init", "--json"));
     assert.deepEqual(repeat.policy, {
       path: "righting.json",
       created: false,
       status: "incomplete",
-      required: ["aliases", "mappings", "maintainer-approval"],
+      required: ["coverage", "maintainer-approval"],
     });
     assert.equal(repeat.nextAction, "obtain-policy-approval");
     assert.deepEqual(repeat.guidance, { path: "AGENTS.md", updated: false });
@@ -106,7 +106,7 @@ test("righting init creates only the exact starter and minimal policy pointer", 
     const humanReadable = run(projectDirectory, "init");
     assert.equal(humanReadable.status, 0, humanReadable.stderr);
     assert.match(humanReadable.stdout, /Kept Righting-managed guidance/);
-    assert.match(humanReadable.stdout, /define and approve aliases and mappings in righting\.json/i);
+    assert.match(humanReadable.stdout, /define and approve coverage and any project conventions in righting\.json/i);
     assert.doesNotMatch(humanReadable.stdout, /node_modules/);
     assert.match(humanReadable.stdout, /righting init --skills/);
   } finally {

@@ -1,10 +1,10 @@
 # Righting capability catalog
 
-This reference is generated from Righting's package-owned capability records. Inspection reports only records applicable to the configured policy by default; use `righting inspect --all` to see every record.
+This reference is generated from Righting's package-owned, adapter-neutral capability records. Inspection reports applicable records by default; use `righting inspect --all` to see every record.
 
 ## `role-dependency`
 
-Coverage: `lint-enforced`
+Coverage: `statically-enforceable`
 
 ### Establishes
 
@@ -13,16 +13,20 @@ Coverage: `lint-enforced`
 
 ### Does not establish
 
-- `files-outside-declared-paths`
+- `files-outside-coverage`
 - `runtime-dependency-behavior`
 
-### Adapter diagnostics
+### Policy rules
 
 - `righting/role-dependency`
+- `righting/unresolved-local-import`
+- `righting/unclassified-source`
+- `righting/ambiguous-source`
+- `righting/test-dependency`
 
 ## `manager-interaction`
 
-Coverage: `partially-checked`
+Coverage: `partially-checkable`
 
 ### Establishes
 
@@ -32,13 +36,13 @@ Coverage: `partially-checked`
 
 - `queued-interaction-semantics`
 
-### Adapter diagnostics
+### Policy rules
 
 - `righting/role-dependency`
 
 ## `protected-dependency`
 
-Coverage: `lint-enforced`
+Coverage: `statically-enforceable`
 
 ### Establishes
 
@@ -49,13 +53,13 @@ Coverage: `lint-enforced`
 - `external-service-runtime-behavior`
 - `utility-package-access-restriction`
 
-### Adapter diagnostics
+### Policy rules
 
 - `righting/role-dependency`
 
 ## `context-firewall`
 
-Coverage: `lint-enforced`
+Coverage: `statically-enforceable`
 
 ### Establishes
 
@@ -66,11 +70,11 @@ Coverage: `lint-enforced`
 
 - `cross-context-runtime-behavior`
 
-### Adapter diagnostics
+### Policy rules
 
-- `righting/role-dependency`
 - `righting/cross-context-dependency`
 - `righting/shared-to-context-dependency`
+- `righting/ambiguous-scope`
 
 ## `design-judgment`
 
@@ -88,6 +92,6 @@ Coverage: `guidance-only`
 - `runtime-behavior`
 - `use-case-validity`
 
-### Adapter diagnostics
+### Policy rules
 
 - None

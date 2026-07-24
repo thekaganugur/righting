@@ -1,0 +1,134 @@
+{
+  "contractVersion": 1,
+  "preset": "volatility@1",
+  "roles": ["Client", "Manager", "Engine", "ResourceAccess", "Resource", "Utility"],
+  "configured": {
+    "coverage": ["src/**/*.ts"],
+    "aliases": [
+      {
+        "name": "screen",
+        "role": "Client",
+        "filenameSuffixes": [".screen."],
+        "directorySegments": []
+      }
+    ],
+    "protectedDependencies": [{ "package": "@example/database", "role": "Resource" }],
+    "variations": [],
+    "overrides": [],
+    "scopes": [],
+    "compositionRoots": [],
+    "guidance": {}
+  },
+  "effective": {
+    "allowedDependencies": {
+      "Client": ["Manager", "Utility"],
+      "Manager": ["Engine", "ResourceAccess", "Utility"],
+      "Engine": ["ResourceAccess", "Utility"],
+      "ResourceAccess": ["Resource", "Utility"],
+      "Resource": ["Utility"],
+      "Utility": ["Utility"]
+    },
+    "conventions": {
+      "roles": {
+        "Client": { "filenameSuffixes": [".client.", ".screen."], "directorySegments": ["clients"] },
+        "Manager": { "filenameSuffixes": [".manager."], "directorySegments": ["managers"] },
+        "Engine": { "filenameSuffixes": [".engine."], "directorySegments": ["engines"] },
+        "ResourceAccess": { "filenameSuffixes": [".access."], "directorySegments": ["access"] },
+        "Resource": { "filenameSuffixes": [".resource."], "directorySegments": ["resources"] },
+        "Utility": { "filenameSuffixes": [".utility."], "directorySegments": ["utilities"] }
+      },
+      "tests": {
+        "filenameMarkers": [".test.", ".spec."],
+        "directorySegments": ["test", "tests", "__tests__"]
+      },
+      "generated": { "filenameMarkers": [".generated."], "directorySegments": ["generated"] },
+      "compositionRoots": ["composition-root"]
+    },
+    "policyRuleIds": [
+      "righting/role-dependency",
+      "righting/unresolved-local-import",
+      "righting/unclassified-source",
+      "righting/ambiguous-source",
+      "righting/test-dependency",
+      "righting/cross-context-dependency",
+      "righting/shared-to-context-dependency",
+      "righting/ambiguous-scope"
+    ],
+    "protectedDependencyRules": [
+      {
+        "package": "@example/database",
+        "role": "Resource",
+        "allowedFrom": ["ResourceAccess"],
+        "forbiddenFrom": ["Client", "Manager", "Engine", "Resource", "Utility"],
+        "policyRuleId": "righting/role-dependency"
+      }
+    ],
+    "scopeRules": [],
+    "scopeClassification": null,
+    "capabilities": [
+      {
+        "id": "role-dependency",
+        "applies": true,
+        "coverage": "statically-enforceable",
+        "policyRuleIds": [
+          "righting/role-dependency",
+          "righting/unresolved-local-import",
+          "righting/unclassified-source",
+          "righting/ambiguous-source",
+          "righting/test-dependency"
+        ],
+        "establishes": ["configured-role-dependency-boundaries", "unresolved-local-import-is-forbidden"],
+        "doesNotEstablish": ["files-outside-coverage", "runtime-dependency-behavior"]
+      },
+      {
+        "id": "manager-interaction",
+        "applies": true,
+        "coverage": "partially-checkable",
+        "policyRuleIds": ["righting/role-dependency"],
+        "establishes": ["direct-manager-import-is-forbidden"],
+        "doesNotEstablish": ["queued-interaction-semantics"]
+      },
+      {
+        "id": "protected-dependency",
+        "applies": true,
+        "coverage": "statically-enforceable",
+        "policyRuleIds": ["righting/role-dependency"],
+        "establishes": ["configured-resource-and-utility-package-classification"],
+        "doesNotEstablish": ["external-service-runtime-behavior", "utility-package-access-restriction"]
+      },
+      {
+        "id": "context-firewall",
+        "applies": false,
+        "coverage": "statically-enforceable",
+        "policyRuleIds": [
+          "righting/cross-context-dependency",
+          "righting/shared-to-context-dependency",
+          "righting/ambiguous-scope"
+        ],
+        "establishes": ["cross-context-source-import-is-forbidden", "shared-to-context-source-import-is-forbidden"],
+        "doesNotEstablish": ["cross-context-runtime-behavior"]
+      },
+      {
+        "id": "design-judgment",
+        "applies": true,
+        "coverage": "guidance-only",
+        "policyRuleIds": [],
+        "establishes": [],
+        "doesNotEstablish": [
+          "role-responsibility",
+          "real-volatility",
+          "contract-quality",
+          "runtime-behavior",
+          "use-case-validity"
+        ]
+      }
+    ],
+    "evidenceLimits": [
+      "files-outside-coverage",
+      "matched-files-are-inspection-evidence",
+      "runtime-behavior",
+      "maintainer-approval",
+      "adapter-activation"
+    ]
+  }
+}

@@ -6,7 +6,7 @@ compatibility: Requires an existing ESLint flat config, a resolvable righting/es
 
 # Preserve the lint loop
 
-Righting adds one ESLint config entry to an established flat-config loop. Preserve the loop and make its existing behavior observable before and after the addition. Use `npx righting inspect --json` capability records for static evidence and limits; do not duplicate policy guidance in project instructions.
+Righting adds one ESLint config entry to an established flat-config loop. Preserve the loop and make its existing behavior observable before and after the addition. Use the normalized `contract` from `npx righting inspect --json` for conventions and capability limits; do not duplicate policy guidance in project instructions.
 
 ## 1. Inspect the established setup
 
@@ -42,7 +42,7 @@ Apply the approved additive patch. Run the project's established lint command ex
 Report:
 
 - the flat-config path and that existing settings were preserved;
-- the resolver used and whether mapped local imports resolved;
+- the resolver used and whether covered local imports resolved;
 - whether typed lint was present, and the unchanged lint command's before/after pass or failure outcomes;
 - the Righting diagnostics, if any, by their stable `righting/...` policy-rule key; and
 - any resolver or configuration limitation that prevents verification.

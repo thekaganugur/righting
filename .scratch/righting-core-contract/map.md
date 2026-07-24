@@ -19,9 +19,10 @@ Deliver a small, versioned, opinionated Righting contract and minimal core helpe
 
 ### Rolling delivery
 
-Current waypoint: [Deliver the adapter-neutral contract core](issues/04-deliver-adapter-neutral-contract-core.md)
+Current waypoint: [Deliver the ESLint adapter boundary](issues/07-deliver-eslint-adapter-boundary.md)
 
 Delivered:
+- [Deliver the adapter-neutral contract core](issues/04-deliver-adapter-neutral-contract-core.md) — A versioned convention-led contract, deterministic core helpers, and matching coding-agent/adapter semantics now ship through `righting/core`.
 
 ## Decisions so far
 
@@ -33,9 +34,7 @@ Delivered:
 
 ## Not yet specified
 
-- The adapter-authoring and conformance surface after the normalized contract exists.
-- How adapter-native suppression limitations and guardrail status are presented uniformly without core owning their formats.
-- The agent-facing guidance and `righting-integrate` lifecycle after conventions replace exhaustive mappings.
+<!-- The current delivery frontier and live decision tickets own all presently specifiable concerns. -->
 
 ## Out of scope
 

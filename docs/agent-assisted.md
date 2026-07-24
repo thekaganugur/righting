@@ -25,10 +25,10 @@ After the approved policy is in place, run:
 npx righting inspect --json
 ```
 
-It reports normalized configuration, effective role relationships, applicable [capabilities](capabilities.md), and unknown adapter status. It does not verify approval or active enforcement.
+It reports the normalized contract once under `contract`, including configured provenance, effective role relationships, applicable [capabilities](capabilities.md), and evidence limits. Adapter status remains separate and unknown; inspection does not verify approval or active enforcement.
 
 ## 4. Optionally hand off adapter work
 
 Only after separately approving adapter work, hand it to [`righting-eslint`](../skills/righting-eslint/SKILL.md). It preserves an existing supported ESLint flat-config loop; it does not install, migrate, or restructure lint tooling.
 
-The policy reference remains the source for policy semantics, and the linked skills remain the source for their procedures. The short `AGENTS.md` block only points agents to `righting.json` before mapped-code changes.
+The policy reference remains the source for policy semantics, and the linked skills remain the source for their procedures. The short `AGENTS.md` block only points agents to `righting.json` before covered-code changes.

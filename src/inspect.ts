@@ -1,13 +1,18 @@
-import { dirname } from "node:path";
-import { capabilitiesFor, type Capability } from "./capabilities.js";
+import { readdirSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, relative, sep } from "node:path";
 import {
-  allowedDependencies,
   incompletePolicyRequirements,
   isExactIncompleteStarterFile,
+  normalizePolicy,
   readPolicy,
-  unmatchedPolicyPaths,
-  type Policy,
+  type ContractCapability,
+  type NormalizedContract,
 } from "./policy.js";
+
+const { isMatch } = createRequire(import.meta.url)("micromatch") as {
+  isMatch(path: string, patterns: string | readonly string[]): boolean;
+};
 
 type IncompleteInspection = {
   schemaVersion: 1;
@@ -23,9 +28,7 @@ type IncompleteInspection = {
 };
 
 type InspectionWarning = {
-  code: "unmatched-policy-path";
-  kind: "mapping" | "scope";
-  name: string;
+  code: "unmatched-coverage";
   path: string;
 };
 
@@ -35,56 +38,30 @@ type ValidInspection = {
   ok: true;
   policy: { path: "righting.json"; status: "valid" };
   adapter: { status: "unknown" };
-  enforcementCoverage: {
-    mode: "declared-paths-only";
-    paths: string[];
-    unchecked: ["files-outside-declared-paths"];
-  };
-  configuration: ReturnType<typeof configurationFor>;
-  effectivePolicy: { allowedDependencies: ReturnType<typeof allowedDependencies> };
-  capabilities: Capability[];
-  availableCapabilities?: Capability[];
+  contract: NormalizedContract;
   warnings?: InspectionWarning[];
 };
 
 export type Inspection = IncompleteInspection | ValidInspection;
 
-function mappingForOutput(mapping: Policy["mappings"][number]) {
-  return {
-    alias: mapping.alias,
-    ...(mapping.path === undefined ? {} : { path: mapping.path }),
-    ...(mapping.package === undefined ? {} : { package: mapping.package }),
-  };
-}
-
-function scopeForOutput(scope: Policy["scopes"][number]) {
-  return {
-    kind: scope.kind,
-    ...(scope.name === undefined ? {} : { name: scope.name }),
-    path: scope.path,
-  };
-}
-
-function configurationFor(policy: Policy) {
-  return {
-    preset: policy.preset,
-    aliases: policy.aliases,
-    mappings: policy.mappings.map(mappingForOutput),
-    variations: [...policy.variations],
-    overrides: policy.overrides,
-    scopes: policy.scopes.map(scopeForOutput),
-    protectedDependencies: policy.mappings.flatMap((mapping) => {
-      const packageName = mapping.package;
-      if (packageName === undefined) {
-        return [];
+function projectFiles(projectDirectory: string): string[] {
+  const files: string[] = [];
+  const ignored = new Set([".git", "node_modules"]);
+  function visit(directory: string): void {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      const path = `${directory}/${entry.name}`;
+      if (entry.isDirectory() && !ignored.has(entry.name)) {
+        visit(path);
+      } else if (entry.isFile()) {
+        files.push(relative(projectDirectory, path).split(sep).join("/"));
       }
-      return [{ alias: mapping.alias, role: policy.aliases[mapping.alias], package: packageName }];
-    }),
-    ...(policy.extras === undefined ? {} : { extras: policy.extras }),
-  };
+    }
+  }
+  visit(projectDirectory);
+  return files;
 }
 
-export function inspectPolicy(policyPath: string, includeAll = false): Inspection {
+export function inspectPolicy(policyPath: string, _includeAll = false): Inspection {
   if (isExactIncompleteStarterFile(policyPath)) {
     return {
       schemaVersion: 1,
@@ -96,32 +73,18 @@ export function inspectPolicy(policyPath: string, includeAll = false): Inspectio
     };
   }
 
-  const policy = readPolicy(policyPath);
-  const allCapabilities = capabilitiesFor(policy);
-  const capabilities = allCapabilities.filter((capability) => capability.applies);
-  const availableCapabilities = allCapabilities.filter((capability) => !capability.applies);
-  const warnings = unmatchedPolicyPaths(policy, dirname(policyPath)).map((warning) => ({
-    code: "unmatched-policy-path" as const,
-    ...warning,
-  }));
+  const contract = normalizePolicy(readPolicy(policyPath));
+  const files = projectFiles(dirname(policyPath));
+  const warnings = contract.configured.coverage.flatMap((path) =>
+    files.some((file) => isMatch(file, path)) ? [] : [{ code: "unmatched-coverage" as const, path }],
+  );
   return {
     schemaVersion: 1,
     command: "inspect",
     ok: true,
     policy: { path: "righting.json", status: "valid" },
     adapter: { status: "unknown" },
-    enforcementCoverage: {
-      mode: "declared-paths-only",
-      paths: [
-        ...policy.mappings.flatMap((mapping) => (mapping.path === undefined ? [] : [mapping.path])),
-        ...policy.scopes.map((scope) => scope.path),
-      ],
-      unchecked: ["files-outside-declared-paths"],
-    },
-    configuration: configurationFor(policy),
-    effectivePolicy: { allowedDependencies: allowedDependencies(policy) },
-    capabilities,
-    ...(includeAll ? { availableCapabilities } : {}),
+    contract,
     ...(warnings.length === 0 ? {} : { warnings }),
   };
 }
@@ -130,16 +93,12 @@ function list(items: readonly string[]): string {
   return items.length === 0 ? "None" : items.join(", ");
 }
 
-function renderWarning(warning: InspectionWarning): string {
-  return `- ${warning.kind === "mapping" ? "Mapping" : "Scope"} "${warning.name}" matches no current project file: ${warning.path}`;
-}
-
-function renderCapability(capability: Capability): string {
+function renderCapability(capability: ContractCapability): string {
   return [
     `- ${capability.id} (${capability.coverage})`,
+    `  Policy rules: ${list(capability.policyRuleIds)}`,
     `  Establishes: ${list(capability.establishes)}`,
     `  Does not establish: ${list(capability.doesNotEstablish)}`,
-    `  Adapter diagnostics: ${list(capability.adapterRules)}`,
   ].join("\n");
 }
 
@@ -150,57 +109,61 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
       ...header,
       `Requires: ${inspection.policy.required.join(", ")}`,
       `Next action: ${inspection.nextAction}`,
-      'Next: define and approve aliases and mappings in righting.json, then remove "status": "incomplete".',
+      'Next: define and approve coverage and any project conventions in righting.json, then remove "status": "incomplete".',
       "With linked skills: ask your coding agent to use righting-integrate.",
       "Adapter activation: unknown (not checked)",
     ].join("\n");
   }
 
-  const configuration = inspection.configuration;
-  const aliases = Object.entries(configuration.aliases).map(([alias, role]) => `- ${alias}: ${role}`);
-  const mappings = configuration.mappings.map((mapping) =>
-    `- ${mapping.alias}: ${[mapping.path, mapping.package].filter((value): value is string => value !== undefined).join(", ")}`,
+  const { contract } = inspection;
+  const applicable = contract.effective.capabilities.filter((capability) => capability.applies);
+  const available = contract.effective.capabilities.filter((capability) => !capability.applies);
+  const aliases = contract.configured.aliases.map(
+    (alias) =>
+      `- ${alias.name}: ${alias.role}; suffixes ${list(alias.filenameSuffixes)}; directories ${list(alias.directorySegments)}`,
   );
-  const scopes = configuration.scopes.map((scope) => `- ${scope.kind}${"name" in scope ? `: ${scope.name}` : ""}: ${scope.path}`);
-  const overrides = configuration.overrides.map(
+  const scopes = contract.configured.scopes.map(
+    (scope) => `- ${scope.kind}${scope.name === undefined ? "" : `: ${scope.name}`}: ${scope.path}`,
+  );
+  const overrides = contract.configured.overrides.map(
     (override) => `- ${override.name}: ${override.effect} ${override.from} -> ${override.to} (${override.reason})`,
   );
-  const protectedDependencies = configuration.protectedDependencies.map(
-    (dependency) => `- ${dependency.alias} (${dependency.role}): ${dependency.package}`,
+  const protectedDependencies = contract.configured.protectedDependencies.map(
+    (dependency) => `- ${dependency.package}: ${dependency.role}`,
   );
-  const extras = "extras" in configuration ? configuration.extras : undefined;
-  const goldenExamples = Object.entries(extras?.goldenExamples ?? {}).map(([name, path]) => `- ${name}: ${path}`);
-  const relationships = Object.entries(inspection.effectivePolicy.allowedDependencies).map(
+  const relationships = Object.entries(contract.effective.allowedDependencies).map(
     ([role, allowed]) => `- ${role} -> ${allowed.join(", ")}`,
   );
-  const applicable = inspection.capabilities;
-  const available = inspection.availableCapabilities ?? [];
+  const goldenExamples = Object.entries(contract.configured.guidance.goldenExamples ?? {}).map(
+    ([name, path]) => `- ${name}: ${path}`,
+  );
 
   return [
     ...header,
-    "Policy syntax is valid; maintainer approval and active lint enforcement are not checked.",
-    "Source coverage is limited to declared mapping and scope paths; all other files are unchecked.",
+    `Contract version: ${contract.contractVersion}`,
+    "Policy syntax is valid; maintainer approval and adapter activation are not checked.",
+    "Source coverage is limited to declared coverage patterns; all other files are unchecked.",
     ...(inspection.warnings === undefined
       ? [""]
-      : ["", "Warnings", ...inspection.warnings.map(renderWarning), ""]),
-    "Configuration",
-    `Preset: ${configuration.preset}`,
+      : ["", "Warnings", ...inspection.warnings.map((warning) => `- Coverage matches no current project file: ${warning.path}`), ""]),
+    "Configured decisions",
+    `Preset: ${contract.preset}`,
+    `Coverage: ${list(contract.configured.coverage)}`,
     "Aliases",
-    ...aliases,
-    "Mappings",
-    ...mappings,
-    `Variations: ${list(configuration.variations)}`,
+    ...(aliases.length === 0 ? ["- None"] : aliases),
+    `Composition roots: ${list(contract.configured.compositionRoots)}`,
+    `Variations: ${list(contract.configured.variations)}`,
     "Scopes",
     ...(scopes.length === 0 ? ["- None"] : scopes),
     "Overrides",
     ...(overrides.length === 0 ? ["- None"] : overrides),
     "Protected dependencies",
     ...(protectedDependencies.length === 0 ? ["- None"] : protectedDependencies),
-    ...(extras === undefined
+    ...(Object.keys(contract.configured.guidance).length === 0
       ? []
       : [
-          "Guidance extras",
-          `Domain vocabulary: ${extras.domainVocabulary ?? "None"}`,
+          "Guidance",
+          `Domain vocabulary: ${contract.configured.guidance.domainVocabulary ?? "None"}`,
           "Golden examples",
           ...(goldenExamples.length === 0 ? ["- None"] : goldenExamples),
         ]),

@@ -33,7 +33,7 @@ The agent should consume the JSON codes and next actions, not human-oriented com
 
 ### 2. Configure and approve
 
-Both routes require a maintainer to choose and explicitly approve aliases, mappings, and any applicable optional decisions. Replace — never extend — the incomplete starter with that approved policy. The [policy language](docs/policy-language.md) defines the decisions and shows the minimal complete shape.
+Both routes require a maintainer to choose and explicitly approve broad source coverage plus any project aliases and optional decisions. Replace — never extend — the incomplete starter with that approved policy. The [policy language](docs/policy-language.md) defines the convention-led contract and its minimal complete shape.
 
 ### 3. Use the policy
 
@@ -41,7 +41,7 @@ Both routes require a maintainer to choose and explicitly approve aliases, mappi
 npx righting inspect
 ```
 
-This validates and explains declared policy only. It does **not** check source imports, approval provenance, or adapter activation. To check imports, separately approve the [additive ESLint integration](docs/eslint.md) and run the project’s lint command.
+This validates and explains the declared adapter-neutral contract only. It does **not** check source imports, approval provenance, or adapter activation. Coding agents and independent consumers can use the same helpers through `righting/core`; to enforce imports, separately approve an adapter such as the [additive ESLint integration](docs/eslint.md).
 
 ## References
 

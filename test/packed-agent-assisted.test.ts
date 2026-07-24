@@ -4,13 +4,13 @@ import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { assertFailureEnvelope, assertSuccessEnvelope, type Json } from "./json-contract.js";
-import { createPackedProject, packRighting, righting } from "./packed-artifact.js";
+import { createPackedProject, packRighting, righting, runCommand } from "./packed-artifact.js";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
 const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/manual-maintainer");
 const approvedPolicyPath = resolve(fixtureDirectory, "righting-approved.json");
-const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nRead it before changing mapped code.";
+const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nRead it before changing covered code.";
 const skills = ["righting-design-review", "righting-eslint", "righting-integrate"];
 
 test("a packed Righting artifact proves the agent-assisted JSON journey", () => {
@@ -21,7 +21,7 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
   try {
     const initialized = assertSuccessEnvelope(righting(projectDirectory, "init", "--skills", "--json"), "init", "incomplete");
     assert.equal((initialized.policy as Json).created, true);
-    assert.deepEqual((initialized.policy as Json).required, ["aliases", "mappings", "maintainer-approval"]);
+    assert.deepEqual((initialized.policy as Json).required, ["coverage", "maintainer-approval"]);
     assert.equal(initialized.nextAction, "obtain-policy-approval");
     assert.deepEqual(initialized.skills, { path: ".agents/skills", linked: skills });
     assert.deepEqual(JSON.parse(readFileSync(resolve(projectDirectory, "righting.json"), "utf8")), {
@@ -42,7 +42,7 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
     }
 
     const incompleteInspection = assertSuccessEnvelope(righting(projectDirectory, "inspect", "--json"), "inspect", "incomplete");
-    assert.deepEqual((incompleteInspection.policy as Json).required, ["aliases", "mappings", "maintainer-approval"]);
+    assert.deepEqual((incompleteInspection.policy as Json).required, ["coverage", "maintainer-approval"]);
     assert.equal(incompleteInspection.nextAction, "obtain-policy-approval");
 
     writeFileSync(resolve(projectDirectory, "righting.json"), readFileSync(approvedPolicyPath, "utf8"));
@@ -52,8 +52,20 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
 
     const inspection = assertSuccessEnvelope(righting(projectDirectory, "inspect", "--json"), "inspect", "valid");
     assert.equal((inspection.adapter as Json).status, "unknown");
-    assert.equal((inspection.configuration as Json).preset, "volatility@1");
-    assert.ok((inspection.capabilities as Json[]).some((capability) => capability.id === "role-dependency"));
+    const contract = inspection.contract as Json;
+    assert.equal(contract.preset, "volatility@1");
+    assert.ok(((contract.effective as Json).capabilities as Json[]).some((capability) => capability.id === "role-dependency"));
+    for (const retired of ["configuration", "effectivePolicy", "capabilities", "enforcementCoverage"]) {
+      assert.equal(retired in inspection, false);
+    }
+
+    const consumer = runCommand(projectDirectory, process.execPath, [
+      "--input-type=module",
+      "--eval",
+      'import { normalizePolicy, readPolicy } from "righting/core"; console.log(JSON.stringify(normalizePolicy(readPolicy("righting.json"))));',
+    ]);
+    assert.equal(consumer.status, 0, consumer.stderr);
+    assert.deepEqual(JSON.parse(consumer.stdout), inspection.contract);
 
     const collisionGuidance = readFileSync(resolve(collisionProjectDirectory, "AGENTS.md"), "utf8");
     const collision = resolve(collisionProjectDirectory, ".agents/skills/righting-eslint");

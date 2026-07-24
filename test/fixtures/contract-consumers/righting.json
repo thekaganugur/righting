@@ -1,0 +1,14 @@
+{
+  "preset": "volatility@1",
+  "coverage": ["src/**/*.ts"],
+  "aliases": [
+    {
+      "name": "screen",
+      "role": "Client",
+      "filenameSuffixes": [".screen."]
+    }
+  ],
+  "protectedDependencies": [
+    { "package": "@example/database", "role": "Resource" }
+  ]
+}

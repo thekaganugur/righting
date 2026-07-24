@@ -1,6 +1,6 @@
 # Manual maintainer route
 
-Use this route when no compatible coding agent will consume the packaged skills. Righting records only the policy you approve; it does not choose roles, mappings, or adapter work for you.
+Use this route when no compatible coding agent will consume the packaged skills. Righting records only the policy you approve; it does not choose coverage, conventions, roles, or adapter work for you.
 
 ## 1. Set up
 
@@ -12,11 +12,11 @@ npx righting init
 npx righting inspect
 ```
 
-`init` writes the exact incomplete starter and a short managed pointer in `AGENTS.md`. `inspect` should report that the starter is incomplete and name aliases, mappings, and maintainer approval as the next requirements. The starter is intentionally not enforceable.
+`init` writes the exact incomplete starter and a short managed pointer in `AGENTS.md`. `inspect` should report that the starter is incomplete and name coverage and maintainer approval as the next requirements. The starter produces no normalized contract.
 
 ## 2. Configure
 
-Use the [policy language reference](policy-language.md) to choose local aliases, mappings, and only the variations, scopes, overrides, and protected dependencies that apply. Its [minimal complete shape](policy-language.md#minimal-complete-shape) shows the JSON structure; it does not recommend roles, names, or folders.
+Use the [policy language reference](policy-language.md) to choose broad source coverage, any local convention aliases, and only the composition-root tokens, variations, scopes, overrides, protected dependencies, and guidance references that apply. Its [minimal complete policy](policy-language.md#minimal-complete-policy) shows the smallest JSON shape; it does not recommend roles, names, or folders.
 
 ## 3. Approve and replace the starter
 
