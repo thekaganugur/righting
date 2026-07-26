@@ -264,7 +264,7 @@ test("righting help makes setup, configuration, and inspection discoverable with
 
     const inspect = run(projectDirectory, "inspect", "--json", "-h");
     assert.equal(inspect.status, 0, inspect.stderr);
-    assert.match(inspect.stdout, /does not check approval, ESLint activation, or lint results/i);
+    assert.match(inspect.stdout, /does not check approval, guardrail-adapter activation, or lint results/i);
 
     const retiredBaseline = run(projectDirectory, "baseline", "--base", "HEAD");
     assert.notEqual(retiredBaseline.status, 0);

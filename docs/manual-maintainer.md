@@ -35,10 +35,11 @@ Inspection reports normalized policy semantics and applicable [capability limits
 Available guardrail adapters:
 
 - [ESLint](eslint.md) — recommended only when the project already has a supported ESLint flat config.
+- [Oxlint](oxlint.md) — recommended only for the exact pinned Oxlint tuple and its documented policy and resolver limits.
 
-ESLint is optional, not universal. Separately choose and approve whether to invoke it after policy approval.
+Adapters are optional, not universal. Separately choose and approve whether to invoke one after policy approval.
 
-A verified adapter diagnostic is an **adapter finding**. Only maintainer-approved native suppression becomes **adapter-native legacy debt**; follow the separate [legacy-debt lifecycle](legacy-debt.md). Only a successful run of the project's normal lint command establishes active ESLint guardrails.
+A verified adapter diagnostic is an **adapter finding**. Only maintainer-approved native suppression becomes **adapter-native legacy debt**; follow the chosen adapter's native lifecycle. Only a successful run of the project's normal lint command establishes active guardrails.
 
 ## If setup stops at managed guidance
 

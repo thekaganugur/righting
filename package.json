@@ -8,7 +8,8 @@
   },
   "exports": {
     "./core": "./dist/src/policy.js",
-    "./eslint": "./dist/src/eslint.js"
+    "./eslint": "./dist/src/eslint.js",
+    "./oxlint": "./dist/src/oxlint.js"
   },
   "files": [
     "dist/src/",
@@ -34,20 +35,25 @@
     "@types/node": "^26.1.1",
     "eslint": "^9.39.5",
     "eslint-plugin-boundaries": "^7.1.0",
+    "oxlint": "1.75.0",
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "micromatch": "^4.0.8"
+    "micromatch": "4.0.8"
   },
   "peerDependencies": {
     "eslint": ">=9.0.0",
-    "eslint-plugin-boundaries": ">=7.1.0 <8"
+    "eslint-plugin-boundaries": ">=7.1.0 <8",
+    "oxlint": "1.75.0"
   },
   "peerDependenciesMeta": {
     "eslint": {
       "optional": true
     },
     "eslint-plugin-boundaries": {
+      "optional": true
+    },
+    "oxlint": {
       "optional": true
     }
   }

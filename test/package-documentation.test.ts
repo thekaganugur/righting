@@ -12,6 +12,7 @@ const packagedResources = [
   "dist/src/cli.js",
   "dist/src/policy.js",
   "dist/src/capabilities.js",
+  "dist/src/oxlint.js",
   "skills/righting-design-review/SKILL.md",
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
@@ -23,6 +24,7 @@ const packagedResources = [
   "docs/policy-language.md",
   "docs/capabilities.md",
   "docs/eslint.md",
+  "docs/oxlint.md",
   "docs/legacy-debt.md",
   "docs/dogfood.md",
 ];
@@ -99,6 +101,7 @@ test("the packed package publishes every onboarding reference without the retire
     assert.equal(initialized.status, 0, initialized.stderr);
     assert.equal(existsSync(resolve(consumerDirectory, "node_modules/eslint")), false);
     assert.equal(existsSync(resolve(consumerDirectory, "node_modules/eslint-plugin-boundaries")), false);
+    assert.equal(existsSync(resolve(consumerDirectory, "node_modules/oxlint")), false);
 
     const extracted = run("tar", ["-xzf", tarball, "-C", packageDirectory]);
     assert.equal(extracted.status, 0, extracted.stderr);
@@ -111,6 +114,10 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(eslintReference, /normalized contract[\s\S]*does not establish[\s\S]*adapter/i);
     assert.match(eslintReference, /--suppress-rule righting\/role-dependency/);
     assert.match(eslintReference, /--prune-suppressions/);
+    const oxlintReference = readFileSync(resolve(packageDirectory, "package/docs/oxlint.md"), "utf8");
+    assert.match(oxlintReference, /righting\/oxlint/);
+    assert.match(oxlintReference, /Oxlint exactly `1\.75\.0`/);
+    assert.match(oxlintReference, /unsupported capabilities:[\s\S]*protected-dependency[\s\S]*context-firewall/i);
     const eslintSkill = readFileSync(resolve(packageDirectory, "package/skills/righting-eslint/SKILL.md"), "utf8");
     assert.match(eslintSkill, /ask the maintainer[\s\S]*before running[\s\S]*--suppress-rule/i);
     assert.match(eslintSkill, /new findings[\s\S]*unchanged lint command/i);

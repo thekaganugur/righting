@@ -14,7 +14,7 @@ const initUsage = "Usage: righting init [--skills] [--json]";
 const inspectUsage = "Usage: righting inspect [--all] [--json]";
 const rootUsage = "Usage: righting init [--skills] [--json] | righting inspect [--all] [--json]";
 const rootHelp = [
-  "Righting validates declared architecture policy; it does not infer architecture, approve decisions, or activate ESLint.",
+  "Righting validates declared architecture policy; it does not infer architecture, approve decisions, or activate a guardrail adapter.",
   "",
   rootUsage,
   "",
@@ -39,7 +39,7 @@ const initHelp = [
 ].join("\n");
 const inspectHelp = [
   "Validate and explain the declared policy without changing the project.",
-  "It does not check approval, ESLint activation, or lint results.",
+  "It does not check approval, guardrail-adapter activation, or lint results.",
   "",
   inspectUsage,
   "",
