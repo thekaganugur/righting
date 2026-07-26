@@ -2,9 +2,18 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { test } from "node:test";
+import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { allowedRoleEdges, dependencyForms, roleDirectories, roles, type Role, type RoleEdge } from "./conformance-cases.js";
+import {
+  allowedRoleEdges,
+  conformanceScenarioFamilyIds,
+  dependencyForms,
+  roleDirectories,
+  roles,
+  type ConformanceScenarioFamilyId,
+  type Role,
+  type RoleEdge,
+} from "./conformance-cases.js";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
@@ -12,6 +21,21 @@ const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/dependency-
 const fixturePackageDirectory = resolve(fixtureDirectory, "node_modules");
 const fixtureRightingPackage = resolve(fixturePackageDirectory, "righting");
 const fixturePolicyPath = resolve(fixtureDirectory, "righting.json");
+const executableScenarioFamilyIds = new Set<ConformanceScenarioFamilyId>();
+
+function conformanceTest(id: ConformanceScenarioFamilyId, name: string, run: () => void) {
+  assert.equal(executableScenarioFamilyIds.has(id), false, `duplicate executable scenario family: ${id}`);
+  executableScenarioFamilyIds.add(id);
+  test(`${id}: ${name}`, run);
+}
+
+after(() => {
+  assert.deepEqual(
+    [...executableScenarioFamilyIds].sort(),
+    [...Object.values(conformanceScenarioFamilyIds)].sort(),
+    "every registered scenario family must have one executable family test",
+  );
+});
 
 const aliases = [
   { name: "client", role: "Client", directorySegments: ["client"] },
@@ -88,7 +112,7 @@ function runRoleDependencies(dependencies: readonly RoleDependency[]) {
   return { result, targets: Object.keys(files) };
 }
 
-test("the packaged adapter enforces every default contract edge", () => {
+conformanceTest(conformanceScenarioFamilyIds.defaultRoleEdges, "the packaged adapter enforces every default contract edge", () => {
   const allowed: RoleDependency[] = [];
   const forbidden: RoleDependency[] = [];
   for (const from of roles) {
@@ -100,33 +124,54 @@ test("the packaged adapter enforces every default contract edge", () => {
   assert.equal(allowedResult.status, 0, output(allowedResult));
   const forbiddenResult = runRoleDependencies(forbidden);
   assert.equal(forbiddenResult.result.status, 1, output(forbiddenResult.result));
+  assert.match(output(forbiddenResult.result), /righting\/role-dependency/);
   for (const target of forbiddenResult.targets) assert.ok(output(forbiddenResult.result).includes(target), target);
 });
 
-test("the adapter covers every configured static dependency form", () => {
+conformanceTest(conformanceScenarioFamilyIds.staticDependencyForms, "the adapter covers every configured static dependency form", () => {
   const allowed = runLint(dependencyForms.map(({ allowed }) => allowed));
   assert.equal(allowed.status, 0, output(allowed));
   const forbidden = runLint(dependencyForms.map(({ forbidden }) => forbidden));
   assert.equal(forbidden.status, 1, output(forbidden));
   assert.match(output(forbidden), /righting\/role-dependency/);
+  for (const { forbidden: target } of dependencyForms) assert.ok(output(forbidden).includes(target), target);
+  const unresolved = runLint("src/client/unresolved.js");
+  assert.equal(unresolved.status, 1, output(unresolved));
+  assert.match(output(unresolved), /righting\/unresolved-local-import/);
 });
 
-test("canonical and alias conventions classify the same Client semantics", () => {
+conformanceTest(conformanceScenarioFamilyIds.canonicalAndAliasClassification, "canonical and alias conventions classify the same Client semantics", () => {
   withFiles(
     {
       "src/page.client.js": 'import { value } from "./work.manager.js";\nexport { value };\n',
       "src/work.manager.js": 'export const value = "manager";\n',
       "src/page.screen.js": 'import { value } from "./work.manager.js";\nexport { value };\n',
+      "src/clients/page.js": 'import { value } from "../work.manager.js";\nexport { value };\n',
+      "src/screens/page.js": 'import { value } from "../work.manager.js";\nexport { value };\n',
+      "src/screens/page.client.js": 'import { value } from "../work.manager.js";\nexport { value };\n',
     },
     () => {
       withPolicy(
         {
           preset: "volatility@1",
-          coverage: ["src/*.js"],
-          aliases: [{ name: "screen", role: "Client", filenameSuffixes: [".screen."] }],
+          coverage: ["src/**/*.js"],
+          aliases: [
+            {
+              name: "screen",
+              role: "Client",
+              filenameSuffixes: [".screen."],
+              directorySegments: ["screens"],
+            },
+          ],
         },
         () => {
-          const result = runLint(["src/page.client.js", "src/page.screen.js"]);
+          const result = runLint([
+            "src/page.client.js",
+            "src/page.screen.js",
+            "src/clients/page.js",
+            "src/screens/page.js",
+            "src/screens/page.client.js",
+          ]);
           assert.equal(result.status, 0, output(result));
         },
       );
@@ -134,19 +179,23 @@ test("canonical and alias conventions classify the same Client semantics", () =>
   );
 });
 
-test("variations, overrides, and protected dependencies translate from the contract", () => {
+conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDependencies, "variations, overrides, and protected dependencies translate from the contract", () => {
   withFiles(
     {
       "src/client/read-access.js": 'import { value } from "../resource-access/value.js";\nexport { value };\n',
       "src/client/read-resource.js": 'import { value } from "../resource/value.js";\nexport { value };\n',
+      "src/engine/read-access.js": 'import { value } from "../resource-access/value.js";\nexport { value };\n',
       "src/manager/protected.js": 'import "protected-resource";\n',
       "src/resource-access/protected.js": 'import "protected-resource";\n',
     },
     () => {
-      withPolicy(policy(), () => assert.equal(runLint("src/client/read-access.js").status, 1));
+      withPolicy(policy(), () => {
+        assert.equal(runLint("src/client/read-access.js").status, 1);
+        assert.equal(runLint("src/engine/read-access.js").status, 0);
+      });
       withPolicy(
         policy({
-          variations: ["clientReadsAccess"],
+          variations: ["clientReadsAccess", "pureEngines"],
           overrides: [
             {
               name: "client-reads-resource",
@@ -160,8 +209,12 @@ test("variations, overrides, and protected dependencies translate from the contr
         }),
         () => {
           assert.equal(runLint(["src/client/read-access.js", "src/client/read-resource.js"]).status, 0);
+          const engine = runLint("src/engine/read-access.js");
+          assert.equal(engine.status, 1, output(engine));
+          assert.match(output(engine), /righting\/role-dependency/);
           const manager = runLint("src/manager/protected.js");
           assert.equal(manager.status, 1, output(manager));
+          assert.match(output(manager), /righting\/role-dependency/);
           const access = runLint("src/resource-access/protected.js");
           assert.equal(access.status, 0, output(access));
         },
@@ -170,7 +223,7 @@ test("variations, overrides, and protected dependencies translate from the contr
   );
 });
 
-test("source outside declared coverage remains unchecked", () => {
+conformanceTest(conformanceScenarioFamilyIds.declaredCoverage, "source outside declared coverage remains unchecked", () => {
   withFiles(
     {
       "outside/value.js": 'export const value = "outside";\n',
@@ -183,7 +236,7 @@ test("source outside declared coverage remains unchecked", () => {
   );
 });
 
-test("classification reports ambiguity and unclassified covered source", () => {
+conformanceTest(conformanceScenarioFamilyIds.sourceClassificationViolations, "classification reports ambiguity and unclassified covered source", () => {
   withFiles(
     {
       "src/plain.js": "export {};\n",
@@ -200,47 +253,56 @@ test("classification reports ambiguity and unclassified covered source", () => {
   );
 });
 
-test("tests are visible but exempt only on outgoing role dependencies", () => {
+conformanceTest(conformanceScenarioFamilyIds.testSourceTreatment, "tests are visible but exempt only on outgoing role dependencies", () => {
   withFiles(
     {
       "src/manager/forbidden.test.js": 'import { value } from "../client/value.js";\nexport { value };\n',
       "src/manager/target.test.js": 'export const value = "test";\n',
       "src/client/import-test.js": 'import { value } from "../manager/target.test.js";\nexport { value };\n',
+      "src/tests/manager/forbidden.js": 'import { value } from "../../client/value.js";\nexport { value };\n',
+      "src/tests/manager/target.js": 'export const value = "test directory";\n',
+      "src/client/import-test-directory.js": 'import { value } from "../tests/manager/target.js";\nexport { value };\n',
     },
     () => {
-      const outgoing = runLint("src/manager/forbidden.test.js");
+      const outgoing = runLint(["src/manager/forbidden.test.js", "src/tests/manager/forbidden.js"]);
       assert.equal(outgoing.status, 0, output(outgoing));
-      const production = runLint("src/client/import-test.js");
+      const production = runLint(["src/client/import-test.js", "src/client/import-test-directory.js"]);
       assert.equal(production.status, 1, output(production));
       assert.match(output(production), /righting\/test-dependency/);
+      assert.ok(output(production).includes("src/client/import-test.js"));
+      assert.ok(output(production).includes("src/client/import-test-directory.js"));
     },
   );
 });
 
-test("generated source remains role-governed and composition roots remain non-role wiring", () => {
+conformanceTest(conformanceScenarioFamilyIds.generatedSourceAndCompositionRoots, "generated source remains role-governed and composition roots remain non-role wiring", () => {
   withFiles(
     {
       "src/manager/forbidden.generated.js": 'import { value } from "../client/value.js";\nexport { value };\n',
+      "src/generated/manager/forbidden.js": 'import { value } from "../../client/value.js";\nexport { value };\n',
       "src/composition-root.js": 'import "./client/value.js";\nimport "./manager/value.js";\n',
       "src/client/import-root.js": 'import "../composition-root.js";\n',
-      "src/manager/domain.js": 'import { value } from "../client/value.js";\nexport { value };\n',
+      "src/manager/not-composition-root.js": 'import { value } from "../client/value.js";\nexport { value };\n',
     },
     () => {
-      const generated = runLint("src/manager/forbidden.generated.js");
+      const generated = runLint(["src/manager/forbidden.generated.js", "src/generated/manager/forbidden.js"]);
       assert.equal(generated.status, 1, output(generated));
       assert.match(output(generated), /righting\/role-dependency/);
+      assert.ok(output(generated).includes("src/manager/forbidden.generated.js"));
+      assert.ok(output(generated).includes("src/generated/manager/forbidden.js"));
       const root = runLint("src/composition-root.js");
       assert.equal(root.status, 0, output(root));
       const production = runLint("src/client/import-root.js");
       assert.equal(production.status, 1, output(production));
-      const suffixCollision = runLint("src/manager/domain.js");
+      assert.match(output(production), /righting\/role-dependency/);
+      const suffixCollision = runLint("src/manager/not-composition-root.js");
       assert.equal(suffixCollision.status, 1, output(suffixCollision));
       assert.match(output(suffixCollision), /Manager cannot depend on Client/);
     },
   );
 });
 
-test("context scopes preserve cross-context and shared boundaries", () => {
+conformanceTest(conformanceScenarioFamilyIds.contextFirewall, "context scopes preserve cross-context and shared boundaries", () => {
   const contextPolicy = policy({
     variations: ["contextFirewall"],
     scopes: [
@@ -256,9 +318,19 @@ test("context scopes preserve cross-context and shared boundaries", () => {
       "src/billing/manager/value.js": 'export const value = "billing";\n',
       "src/shared/client/cross-context.js": 'import { value } from "../../orders/client/value.js";\nexport { value };\n',
       "src/orders/client/value.js": 'export const value = "orders";\n',
+      "src/orders/client/compose-same.js": 'import { value } from "./value.js";\nexport { value };\n',
+      "src/shared/client/value.js": 'export const value = "shared";\n',
+      "src/orders/client/use-shared.js": 'import { value } from "../../shared/client/value.js";\nexport { value };\n',
+      "src/application/client/wire.js": 'import { value } from "../../orders/client/value.js";\nexport { value };\n',
     },
     () => {
       withPolicy(contextPolicy, () => {
+        const allowed = runLint([
+          "src/orders/client/compose-same.js",
+          "src/orders/client/use-shared.js",
+          "src/application/client/wire.js",
+        ]);
+        assert.equal(allowed.status, 0, output(allowed));
         const cross = runLint("src/orders/client/cross-context.js");
         assert.equal(cross.status, 1, output(cross));
         assert.match(output(cross), /righting\/cross-context-dependency/);

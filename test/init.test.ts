@@ -12,7 +12,7 @@ const cliPath = resolve(testDirectory, "../src/cli.js");
 const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
 const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nBefore changing covered code, run `npx righting inspect --json` and use its normalized `contract`.\nAdapter activation remains unknown until separately verified.";
-const skills = ["righting-design-review", "righting-eslint", "righting-integrate"];
+const skills = ["righting-design-review", "righting-eslint", "righting-integrate", "write-righting-adapter"];
 
 function createProject(): string {
   return mkdtempSync(resolve(tmpdir(), "righting-init-"));

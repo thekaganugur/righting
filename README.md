@@ -46,5 +46,7 @@ This validates and explains the declared adapter-neutral contract. `inspect --js
 ## References
 
 - [Capability catalog](docs/capabilities.md) — static evidence and its limits, generated from the records used by `inspect`.
+- [Guardrail adapter conformance](docs/adapter-conformance.md) — the adapter-neutral scenario families and support gate.
+- [`write-righting-adapter`](skills/write-righting-adapter/SKILL.md) — the generic, conformance-led authoring path for compatible agents.
 - [Legacy ESLint debt](docs/legacy-debt.md) — approved native suppression, growth detection, and pruning.
 - [Orders/Returns dogfood record](docs/dogfood.md) — a worked record, not onboarding guidance.

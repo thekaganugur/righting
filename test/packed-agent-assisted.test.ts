@@ -11,7 +11,7 @@ const repositoryDirectory = resolve(testDirectory, "../..");
 const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/manual-maintainer");
 const approvedPolicyPath = resolve(fixtureDirectory, "righting-approved.json");
 const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nBefore changing covered code, run `npx righting inspect --json` and use its normalized `contract`.\nAdapter activation remains unknown until separately verified.";
-const skills = ["righting-design-review", "righting-eslint", "righting-integrate"];
+const skills = ["righting-design-review", "righting-eslint", "righting-integrate", "write-righting-adapter"];
 
 test("a packed Righting artifact proves the agent-assisted JSON journey", () => {
   const packed = packRighting(repositoryDirectory, "righting-packed-agent-assisted-");
@@ -40,6 +40,13 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
       assert.equal(isAbsolute(readlinkSync(link)), false);
       assert.equal(resolve(dirname(link), readlinkSync(link)), source);
     }
+    const adapterAuthoringSkill = readFileSync(
+      resolve(projectDirectory, ".agents/skills/write-righting-adapter/SKILL.md"),
+      "utf8",
+    );
+    assert.match(adapterAuthoringSkill, /node_modules\/righting\/docs\/adapter-conformance\.md/);
+    assert.ok(existsSync(resolve(projectDirectory, "node_modules/righting/docs/adapter-conformance.md")));
+
     const integrationSkill = readFileSync(resolve(projectDirectory, ".agents/skills/righting-integrate/SKILL.md"), "utf8");
     assert.match(integrationSkill, /dependency ledger[\s\S]*observed inconsistencies/i);
     assert.match(integrationSkill, /list the available guardrail adapters[\s\S]*recommend[\s\S]*maintainer explicitly chooses/i);

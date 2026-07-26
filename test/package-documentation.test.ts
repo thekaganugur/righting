@@ -15,9 +15,11 @@ const packagedResources = [
   "skills/righting-design-review/SKILL.md",
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
+  "skills/write-righting-adapter/SKILL.md",
   "README.md",
   "docs/manual-maintainer.md",
   "docs/agent-assisted.md",
+  "docs/adapter-conformance.md",
   "docs/policy-language.md",
   "docs/capabilities.md",
   "docs/eslint.md",
@@ -112,6 +114,14 @@ test("the packed package publishes every onboarding reference without the retire
     const eslintSkill = readFileSync(resolve(packageDirectory, "package/skills/righting-eslint/SKILL.md"), "utf8");
     assert.match(eslintSkill, /ask the maintainer[\s\S]*before running[\s\S]*--suppress-rule/i);
     assert.match(eslintSkill, /new findings[\s\S]*unchanged lint command/i);
+    const adapterSkill = readFileSync(
+      resolve(packageDirectory, "package/skills/write-righting-adapter/SKILL.md"),
+      "utf8",
+    );
+    assert.match(adapterSkill, /righting inspect --json/);
+    assert.match(adapterSkill, /docs\/adapter-conformance\.md/);
+    assert.match(adapterSkill, /stable[\s\S]*righting\/\*/i);
+    assert.match(adapterSkill, /compose[\s\S]*(native|established)/i);
     for (const resource of ["dist/src/policy.js", "dist/src/policy.d.ts", "docs/policy-language.md", "docs/capabilities.md"]) {
       const contents = readFileSync(resolve(packageDirectory, "package", resource), "utf8");
       assert.doesNotMatch(contents, /eslint|suppression-file/i, `${resource} leaks adapter mechanics into the core contract`);
