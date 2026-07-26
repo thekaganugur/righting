@@ -86,6 +86,6 @@ Work the **frontier**: any ticket whose blockers are all done. For a purely line
 
 **Blocked by:** Prove the packed manual-maintainer journey; Prove the packed agent-assisted journey; Preserve Orders/Returns post-approval repair evidence.
 
-- [ ] Each completed record identifies the artifact/version, starting fixture, commands and outcomes, changed files, explicit approval evidence, adapter/lint/baseline/CI outcomes, static-analysis limits, and observed friction.
-- [ ] The records capture the separate policy-approval and adapter-approval checkpoints and do not claim architecture inference, automatic approval, adapter activation proof, runtime proof, or queued-interaction proof.
-- [ ] Release readiness is assessed only after the contract suite, both clean journeys, the post-approval repair fixture, and both human walkthrough records succeed.
+- [x] Each completed record identifies the artifact/version, starting fixture, commands and outcomes, changed files, explicit approval evidence, adapter/lint/baseline/CI outcomes, static-analysis limits, and observed friction.
+- [x] The records capture the separate policy-approval and adapter-approval checkpoints and do not claim architecture inference, automatic approval, adapter activation proof, runtime proof, or queued-interaction proof.
+- [x] Release readiness is assessed only after the contract suite, both clean journeys, the post-approval repair fixture, and both human walkthrough records succeed.
