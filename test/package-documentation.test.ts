@@ -129,6 +129,24 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(adapterSkill, /docs\/adapter-conformance\.md/);
     assert.match(adapterSkill, /stable[\s\S]*righting\/\*/i);
     assert.match(adapterSkill, /compose[\s\S]*(native|established)/i);
+    const resolverGuidance = adapterSkill.slice(
+      adapterSkill.indexOf("## 3. Choose the compose/own seam"),
+      adapterSkill.indexOf("## 4. Implement through the native entry point"),
+    );
+    assert.match(resolverGuidance, /local-like[\s\S]*remain local[\s\S]*fail closed/i);
+    assert.match(resolverGuidance, /overlapping[\s\S]*host precedence[\s\S]*unsupported[\s\S]*broader/i);
+    const conformanceGuidance = adapterSkill.slice(
+      adapterSkill.indexOf("## 5. Run black-box conformance"),
+      adapterSkill.indexOf("## 6. Leave an honest support record"),
+    );
+    assert.match(conformanceGuidance, /allowed and forbidden/);
+    assert.match(conformanceGuidance, /every canonical role[\s\S]*filename and directory conventions[\s\S]*every configured alias/i);
+    assert.match(conformanceGuidance, /both directions[\s\S]*coverage boundary/i);
+    const supportGuidance = adapterSkill.slice(adapterSkill.indexOf("## 6. Leave an honest support record"));
+    assert.match(supportGuidance, /exact host[\s\S]*runtime version/i);
+    assert.match(supportGuidance, /establishes[\s\S]*doesNotEstablish[\s\S]*policyRuleIds/i);
+    assert.match(supportGuidance, /scenario family[\s\S]*fixture[\s\S]*native command[\s\S]*exit status/i);
+    assert.match(supportGuidance, /clean[\s\S]*(packed|released)[\s\S]*public package specifier/i);
     for (const resource of ["dist/src/policy.js", "dist/src/policy.d.ts", "docs/policy-language.md", "docs/capabilities.md"]) {
       const contents = readFileSync(resolve(packageDirectory, "package", resource), "utf8");
       assert.doesNotMatch(contents, /eslint|suppression-file/i, `${resource} leaks adapter mechanics into the core contract`);

@@ -37,7 +37,7 @@ Own only the thin Righting layer:
 - fail-closed unresolved-local behavior; and
 - capability claims and their conformance record.
 
-Use the host's resolver configuration for every local alias the project claims, and test those aliases. Add custom traversal or resolution only when the native ecosystem lacks a conforming path. Filename-case plugins enforce casing, not Righting's semantic roles; compose one only for a separately declared case requirement.
+Use the host's resolver configuration for every local alias the project claims, and test those aliases. Define which native specifier forms are local-like before resolving them: unmatched or unsupported local-like specifiers remain local and fail closed as unresolved rather than becoming external. For overlapping exact or wildcard mappings, preserve host precedence; when the most-specific match is unsupported, do not fall through to a broader supported mapping. Test exact matches, overlapping patterns, unmatched local-like specifiers, and unsupported mappings wherever the host exposes them. Add custom traversal or resolution only when the native ecosystem lacks a conforming path. Filename-case plugins enforce casing, not Righting's semantic roles; compose one only for a separately declared case requirement.
 
 **Completion:** the implementation plan names each composed mechanic, each thin-layer responsibility, pinned versions, and every unresolved compatibility risk.
 
@@ -53,13 +53,15 @@ Emit native diagnostics at actionable source locations. When the native rule ID 
 
 Read every family in `node_modules/righting/docs/adapter-conformance.md`. Supply native fixtures and commands for all families required by `role-dependency` and each additional claim. Execute them through the public native lint command against the exact captured contract; helper-level policy tests do not satisfy conformance.
 
-Record allowed and forbidden outcomes, exact stable identities, commands, and version tuple. Diagnostics are mandatory. If native suppression exists, separately test a dependency diagnostic, a file-level classification diagnostic, and unused suppression detection; suppression support is declared evidence rather than a prerequisite for adapter support.
+Record allowed and forbidden outcomes, exact stable identities, commands, and version tuple. For classification and dependency matrices, exercise every canonical role through its filename and directory conventions plus every configured alias. Test both directions across the declared coverage boundary: a covered importer may reach outside coverage without expanding it, and source outside coverage remains unchecked. Do not mark a broad family complete from one representative case when the family names multiple forms or treatments. Diagnostics are mandatory. If native suppression exists, separately test a dependency diagnostic, a file-level classification diagnostic, and unused suppression detection; suppression support is declared evidence rather than a prerequisite for adapter support.
 
 **Completion:** every required family has a recorded passing native execution, with no undocumented skip or capability claim.
 
 ## 6. Leave an honest support record
 
-Run the adapter's focused tests, the package's full tests, typecheck, build, normal lint command, and `git diff --check`. Record the exact tested Righting, adapter, guardrail, plugin, and resolver versions; claimed and unsupported capabilities; commands; native suppression and legacy-debt limits; and known resolver or host-API gaps.
+Run the adapter's focused tests, the package's full tests, typecheck, build, normal lint command, and `git diff --check`. Pin the exact host, plugin, and resolver versions in the test installation; when the host exposes its actual runtime version, verify it instead of trusting installation metadata alone. Record the exact tested Righting, adapter, guardrail, plugin, and resolver versions; claimed and unsupported capabilities; commands; native suppression and legacy-debt limits; and known resolver or host-API gaps.
+
+The support record must include each capability's `establishes`, `doesNotEstablish`, and `policyRuleIds`; each scenario family's fixture, native command, allowed and forbidden exit status, and stable diagnostics; and every validation command with its observed outcome. When the adapter is published, use a clean consumer to install its packed or released artifact and load it through its public package specifier.
 
 A passing tuple is one support record, not a compatibility matrix. Keep adapter runtime code in its chosen native package or project; this skill introduces no public SDK, manifest, generated matrix, or ecosystem-specific skill.
 
