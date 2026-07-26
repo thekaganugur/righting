@@ -1,5 +1,6 @@
 # Centrally supported Oxlint adapter
 
+Status: resolved
 Labels: wayfinder:map
 
 ## Destination
@@ -16,9 +17,10 @@ Deliver and validate a discoverable Righting-owned Oxlint adapter that consumes 
 
 ### Rolling delivery
 
-Current waypoint: [Deliver the pinned Oxlint adapter](issues/01-deliver-pinned-oxlint-adapter.md)
+Current waypoint: none
 
 Delivered:
+- [Deliver the pinned Oxlint adapter](issues/01-deliver-pinned-oxlint-adapter.md) — Righting commit `b6aa8f7` exports the exact-Oxlint-1.75.0 adapter, passes complete claimed-capability conformance plus packed-consumer activation, and publishes its reproducible support record.
 
 ## Decisions so far
 
