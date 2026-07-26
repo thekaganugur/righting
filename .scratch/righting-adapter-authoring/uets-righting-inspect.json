@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "command": "inspect",
+  "ok": true,
+  "policy": {
+    "path": "righting.json",
+    "status": "valid"
+  },
+  "adapter": {
+    "status": "unknown"
+  },
+  "contract": {
+    "contractVersion": 1,
+    "preset": "volatility@1",
+    "roles": [
+      "Client",
+      "Manager",
+      "Engine",
+      "ResourceAccess",
+      "Resource",
+      "Utility"
+    ],
+    "configured": {
+      "coverage": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "aliases": [
+        {
+          "name": "page",
+          "role": "Client",
+          "filenameSuffixes": [
+            ".page."
+          ],
+          "directorySegments": [
+            "routes"
+          ]
+        },
+        {
+          "name": "component",
+          "role": "Client",
+          "filenameSuffixes": [
+            ".component."
+          ],
+          "directorySegments": [
+            "components"
+          ]
+        },
+        {
+          "name": "lib",
+          "role": "Utility",
+          "filenameSuffixes": [],
+          "directorySegments": [
+            "lib"
+          ]
+        }
+      ],
+      "generated": {
+        "filenameMarkers": [
+          ".gen."
+        ],
+        "directorySegments": []
+      },
+      "protectedDependencies": [],
+      "variations": [
+        "pureEngines"
+      ],
+      "overrides": [
+        {
+          "name": "client-composition",
+          "from": "Client",
+          "to": "Client",
+          "effect": "allow",
+          "reason": "Pages and components compose other client-facing components in the approved project structure."
+        }
+      ],
+      "scopes": [],
+      "compositionRoots": [
+        "router",
+        "routeTree",
+        "worker"
+      ],
+      "guidance": {
+        "domainVocabulary": "CONTEXT.md"
+      }
+    },
+    "effective": {
+      "allowedDependencies": {
+        "Client": [
+          "Manager",
+          "Utility",
+          "Client"
+        ],
+        "Manager": [
+          "Engine",
+          "ResourceAccess",
+          "Utility"
+        ],
+        "Engine": [
+          "Utility"
+        ],
+        "ResourceAccess": [
+          "Resource",
+          "Utility"
+        ],
+        "Resource": [
+          "Utility"
+        ],
+        "Utility": [
+          "Utility"
+        ]
+      },
+      "conventions": {
+        "roles": {
+          "Client": {
+            "filenameSuffixes": [
+              ".client.",
+              ".page.",
+              ".component."
+            ],
+            "directorySegments": [
+              "clients",
+              "routes",
+              "components"
+            ]
+          },
+          "Manager": {
+            "filenameSuffixes": [
+              ".manager."
+            ],
+            "directorySegments": [
+              "managers"
+            ]
+          },
+          "Engine": {
+            "filenameSuffixes": [
+              ".engine."
+            ],
+            "directorySegments": [
+              "engines"
+            ]
+          },
+          "ResourceAccess": {
+            "filenameSuffixes": [
+              ".access."
+            ],
+            "directorySegments": [
+              "access"
+            ]
+          },
+          "Resource": {
+            "filenameSuffixes": [
+              ".resource."
+            ],
+            "directorySegments": [
+              "resources"
+            ]
+          },
+          "Utility": {
+            "filenameSuffixes": [
+              ".utility."
+            ],
+            "directorySegments": [
+              "utilities",
+              "lib"
+            ]
+          }
+        },
+        "tests": {
+          "filenameMarkers": [
+            ".test.",
+            ".spec."
+          ],
+          "directorySegments": [
+            "test",
+            "tests",
+            "__tests__"
+          ]
+        },
+        "generated": {
+          "filenameMarkers": [
+            ".generated.",
+            ".gen."
+          ],
+          "directorySegments": [
+            "generated"
+          ]
+        },
+        "compositionRoots": [
+          "composition-root",
+          "router",
+          "routeTree",
+          "worker"
+        ]
+      },
+      "policyRuleIds": [
+        "righting/role-dependency",
+        "righting/unresolved-local-import",
+        "righting/unclassified-source",
+        "righting/ambiguous-source",
+        "righting/test-dependency",
+        "righting/cross-context-dependency",
+        "righting/shared-to-context-dependency",
+        "righting/ambiguous-scope"
+      ],
+      "protectedDependencyRules": [],
+      "scopeRules": [],
+      "scopeClassification": null,
+      "capabilities": [
+        {
+          "id": "role-dependency",
+          "applies": true,
+          "coverage": "statically-enforceable",
+          "policyRuleIds": [
+            "righting/role-dependency",
+            "righting/unresolved-local-import",
+            "righting/unclassified-source",
+            "righting/ambiguous-source",
+            "righting/test-dependency"
+          ],
+          "establishes": [
+            "configured-role-dependency-boundaries",
+            "unresolved-local-import-is-forbidden"
+          ],
+          "doesNotEstablish": [
+            "files-outside-coverage",
+            "runtime-dependency-behavior"
+          ]
+        },
+        {
+          "id": "manager-interaction",
+          "applies": true,
+          "coverage": "partially-checkable",
+          "policyRuleIds": [
+            "righting/role-dependency"
+          ],
+          "establishes": [
+            "direct-manager-import-is-forbidden"
+          ],
+          "doesNotEstablish": [
+            "queued-interaction-semantics"
+          ]
+        },
+        {
+          "id": "protected-dependency",
+          "applies": false,
+          "coverage": "statically-enforceable",
+          "policyRuleIds": [
+            "righting/role-dependency"
+          ],
+          "establishes": [
+            "configured-resource-and-utility-package-classification"
+          ],
+          "doesNotEstablish": [
+            "external-service-runtime-behavior",
+            "utility-package-access-restriction"
+          ]
+        },
+        {
+          "id": "context-firewall",
+          "applies": false,
+          "coverage": "statically-enforceable",
+          "policyRuleIds": [
+            "righting/cross-context-dependency",
+            "righting/shared-to-context-dependency",
+            "righting/ambiguous-scope"
+          ],
+          "establishes": [
+            "cross-context-source-import-is-forbidden",
+            "shared-to-context-source-import-is-forbidden"
+          ],
+          "doesNotEstablish": [
+            "cross-context-runtime-behavior"
+          ]
+        },
+        {
+          "id": "design-judgment",
+          "applies": true,
+          "coverage": "guidance-only",
+          "policyRuleIds": [],
+          "establishes": [],
+          "doesNotEstablish": [
+            "role-responsibility",
+            "real-volatility",
+            "contract-quality",
+            "runtime-behavior",
+            "use-case-validity"
+          ]
+        }
+      ],
+      "evidenceLimits": [
+        "files-outside-coverage",
+        "matched-files-are-inspection-evidence",
+        "runtime-behavior",
+        "maintainer-approval",
+        "adapter-activation"
+      ]
+    }
+  },
+  "evidence": {
+    "sourceSummary": {
+      "covered": 69,
+      "roles": {
+        "Client": 23,
+        "Manager": 9,
+        "Engine": 22,
+        "ResourceAccess": 9,
+        "Resource": 0,
+        "Utility": 1
+      },
+      "tests": 24,
+      "compositionRoots": 4,
+      "unclassified": 0,
+      "ambiguous": 0
+    },
+    "sourceViolations": []
+  }
+}

@@ -20,6 +20,10 @@ _Avoid_: Inspection result, adapter configuration, repository snapshot
 A consumer that translates the normalized contract into a platform's native enforcement while owning that platform's diagnostics, suppression, and legacy-debt mechanics.
 _Avoid_: Core policy, source of truth
 
+**Supported guardrail adapter**:
+A discoverable guardrail adapter whose complete role-dependency behavior and every additional claimed capability pass Righting's black-box conformance scenarios for the declared contract and native-tool versions. Native suppression is recommended when available but is not required for support.
+_Avoid_: Feature-parity adapter, self-certified adapter, unverified integration
+
 **Coverage area**:
 The project-declared source area that Righting must classify as a canonical role or explicit treatment. Source outside it is intentionally unchecked.
 _Avoid_: Source inventory, exhaustive role mapping

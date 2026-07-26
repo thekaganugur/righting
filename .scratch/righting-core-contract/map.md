@@ -46,4 +46,4 @@ Delivered:
 - A universal suppression or legacy-debt format in core.
 - Automatic architecture inference, policy completion, or source refactoring.
 - Runtime-behavior proof or automatic adapter generation.
-- Adapter-authoring support, including a possible `write-righting-adapter` skill, pending a separate future investigation and an explicit adapter-authoring contract.
+- [Investigate agent-assisted Righting adapter authoring](../righting-adapter-authoring/issues/01-investigate-agent-assisted-adapter-authoring.md) — A possible `write-righting-adapter` skill is parked for a separate future Wayfinder pending an explicit adapter-authoring contract.
