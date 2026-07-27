@@ -16,7 +16,7 @@ const skills = [
   "righting-design-review",
   "righting-eslint",
   "righting-integrate",
-  "write-righting-adapter",
+  "righting-adapter-authoring",
 ];
 
 test("a packed Righting artifact proves the agent-assisted JSON journey", () => {
@@ -47,7 +47,7 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
       assert.equal(resolve(dirname(link), readlinkSync(link)), source);
     }
     const adapterAuthoringSkill = readFileSync(
-      resolve(projectDirectory, ".agents/skills/write-righting-adapter/SKILL.md"),
+      resolve(projectDirectory, ".agents/skills/righting-adapter-authoring/SKILL.md"),
       "utf8",
     );
     assert.match(adapterAuthoringSkill, /node_modules\/righting\/docs\/adapter-conformance\.md/);

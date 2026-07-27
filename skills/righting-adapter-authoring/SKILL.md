@@ -1,6 +1,6 @@
 ---
-name: write-righting-adapter
-description: Author or extend a Righting guardrail adapter from the normalized JSON contract and prove its capability claims through adapter-neutral conformance. Use when a maintainer wants a new guardrail integration or needs to expand an existing adapter's supported behavior.
+name: righting-adapter-authoring
+description: Author, assess, or extend a Righting guardrail adapter from the normalized JSON contract and prove its claims through adapter-neutral conformance. Use when a maintainer wants a guardrail integration, an approval-ready adapter change, or expanded support.
 compatibility: Requires the local righting CLI and an established native guardrail command.
 ---
 
@@ -14,7 +14,7 @@ Run `npx righting inspect --json` from the target project before designing adapt
 
 Consume the JSON `contract` through the CLI boundary. Keep normalization in Righting: the adapter must not parse or normalize `righting.json`, import `righting/core`, infer roles from the repository, or treat inspection's unknown adapter status as activation evidence.
 
-**Completion:** the implementation record names the inspected contract versions, project policy path, exact inspect command, and fail-closed behavior for invalid or unsupported responses.
+**Completion:** retain the exact inspection JSON inline or at a named path with its SHA-256, target revision, CLI artifact identity, inspected contract versions, policy path, exact command, and fail-closed behavior. Every later fixture and claim references this capture or a named isolated-fixture capture.
 
 ## 2. Bound the capability claim
 
@@ -25,6 +25,8 @@ When the adapter intends to claim a capability that is not applicable to the tar
 **Completion:** every applicable capability has one explicit disposition and every claim points to its required scenario families.
 
 ## 3. Choose the compose/own seam
+
+Inspect the immutable installed artifact and approved candidate artifacts for an adapter that already supports the target host and tuple. Prefer activation or upgrade; propose owned runtime only after a public-native test records the gap that prevents reuse.
 
 Compose the host's native plugin lifecycle, dependency-node traversal, resolver ecosystem, policy matcher, diagnostics, and suppression where established components provide them. On ESLint and version-pinned ESLint-compatible hosts, prefer `eslint-plugin-boundaries` for traversal, resolution, and matching only after the complete Righting suite passes against that exact tuple. Keep a direct native implementation when composition cannot meet the contract or conformance gate with less owned surface.
 
@@ -39,7 +41,15 @@ Own only the thin Righting layer:
 
 Use the host's resolver configuration for every local alias the project claims, and test those aliases. Define which native specifier forms are local-like before resolving them: unmatched or unsupported local-like specifiers remain local and fail closed as unresolved rather than becoming external. For overlapping exact or wildcard mappings, preserve host precedence; when the most-specific match is unsupported, do not fall through to a broader supported mapping. Test exact matches, overlapping patterns, unmatched local-like specifiers, and unsupported mappings wherever the host exposes them. Add custom traversal or resolution only when the native ecosystem lacks a conforming path. Filename-case plugins enforce casing, not Righting's semantic roles; compose one only for a separately declared case requirement.
 
-**Completion:** the implementation plan names each composed mechanic, each thin-layer responsibility, pinned versions, and every unresolved compatibility risk.
+**Completion:** the implementation plan names the reusable adapters evaluated and their black-box disposition, each composed mechanic, each thin-layer responsibility, pinned versions, and every unresolved compatibility risk. Every proposed owned behavior maps to a reproduced defect, an applicable conformance mismatch in current code, or an explicitly requested support claim.
+
+### Approval branch
+
+When the maintainer asks for a proposal, approval packet, or read-only assessment, gather non-mutating evidence and stop at one exact approval request. Name one immutable adapter artifact and version tuple; separate current state from the proposed add/change/delete scope; include the retained inspection capture; and keep separate package-conformance and target-activation ledgers. For every applicable scenario family, a `passed` row names the executed artifact, fixture, public command, observed exit, and stable diagnostic; a `required` row names the planned fixture and command, records expected results, and says `observed: pending`. Planned fixtures are not evidence, and isolated capability policies are package evidence rather than target activation. Either incomplete evidence class blocks a support claim.
+
+Make the proposed scope and acceptance gate executable together. Every required command block names its working directory, creates its prerequisites, uses literal paths and expected values rather than placeholders or multi-artifact globs, and is copy-paste runnable after the listed adds, deletes, and renames; map every retired proof to a named surviving or replacement test. Use one artifact identity: either a release locator plus integrity, or a source revision packed twice from two fresh materializations after identical literal build steps, with both digests equal to the approved digest. Record how the public entry point, shipped support record, peer tuple, and lock resolution will be verified. Present alternatives as separate approval options.
+
+**Completion:** one exact implementation decision, artifact, evidence ledger, final-tree command sequence, and support boundary are ready for approval. Commands assert promised identities and stable diagnostics; isolated consumers materialize the proposed final tree or a named final revision. The request separately states what is approved now and which support claim waits on required rows. Stop until explicit approval; an implementation request that already names the scope is approval to continue.
 
 ## 4. Implement through the native entry point
 
@@ -61,8 +71,8 @@ Record allowed and forbidden outcomes, exact stable identities, commands, and ve
 
 Run the adapter's focused tests, the package's full tests, typecheck, build, normal lint command, and `git diff --check`. Pin the exact host, plugin, and resolver versions in the test installation; when the host exposes its actual runtime version, verify it instead of trusting installation metadata alone. Record the exact tested Righting, adapter, guardrail, plugin, and resolver versions; claimed and unsupported capabilities; commands; native suppression and legacy-debt limits; and known resolver or host-API gaps.
 
-The support record must include each capability's `establishes`, `doesNotEstablish`, and `policyRuleIds`; each scenario family's fixture, native command, allowed and forbidden exit status, and stable diagnostics; and every validation command with its observed outcome. When the adapter is published, use a clean consumer to install its packed or released artifact and load it through its public package specifier.
+The support record must include each capability's `establishes`, `doesNotEstablish`, and `policyRuleIds`; each scenario family's fixture, native command, allowed and forbidden exit status, and stable diagnostics; and every validation command with its observed outcome. Recheck that commands address the final file tree and that retired proofs have named replacements. When the adapter is published, use a clean consumer to install the one approved immutable packed or released artifact, verify its integrity, peer tuple, lock resolution, and shipped support record, and load it through its public package specifier.
 
 A passing tuple is one support record, not a compatibility matrix. Keep adapter runtime code in its chosen native package or project; this skill introduces no public SDK, manifest, generated matrix, or ecosystem-specific skill.
 
-**Completion:** all checks pass and the record contains enough native fixtures, commands, versions, and limits for another agent to reproduce the claim.
+**Completion:** all final-tree checks and required scenario rows pass, and another agent can reproduce the exact artifact, contract input, native finding, and support boundary.

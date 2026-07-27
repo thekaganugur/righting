@@ -52,7 +52,7 @@ const rightingSkillNames = [
   "righting-design-review",
   "righting-eslint",
   "righting-integrate",
-  "write-righting-adapter",
+  "righting-adapter-authoring",
 ];
 const packagedSkillsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../../skills");
 

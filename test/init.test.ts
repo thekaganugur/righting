@@ -17,7 +17,7 @@ const skills = [
   "righting-design-review",
   "righting-eslint",
   "righting-integrate",
-  "write-righting-adapter",
+  "righting-adapter-authoring",
 ];
 
 function createProject(): string {

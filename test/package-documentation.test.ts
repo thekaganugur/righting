@@ -18,7 +18,7 @@ const packagedResources = [
   "skills/righting-design-review/SKILL.md",
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
-  "skills/write-righting-adapter/SKILL.md",
+  "skills/righting-adapter-authoring/SKILL.md",
   "README.md",
   "docs/manual-maintainer.md",
   "docs/agent-assisted.md",
@@ -125,13 +125,18 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(eslintSkill, /ask the maintainer[\s\S]*before running[\s\S]*--suppress-rule/i);
     assert.match(eslintSkill, /new findings[\s\S]*unchanged lint command/i);
     const adapterSkill = readFileSync(
-      resolve(packageDirectory, "package/skills/write-righting-adapter/SKILL.md"),
+      resolve(packageDirectory, "package/skills/righting-adapter-authoring/SKILL.md"),
       "utf8",
     );
     assert.match(adapterSkill, /righting inspect --json/);
     assert.match(adapterSkill, /docs\/adapter-conformance\.md/);
     assert.match(adapterSkill, /stable[\s\S]*righting\/\*/i);
     assert.match(adapterSkill, /compose[\s\S]*(native|established)/i);
+    assert.match(adapterSkill, /approved candidate artifacts[\s\S]*activation or upgrade/i);
+    assert.match(adapterSkill, /package-conformance and target-activation ledgers/i);
+    assert.match(adapterSkill, /passed[\s\S]*observed exit[\s\S]*required[\s\S]*observed: pending/i);
+    assert.match(adapterSkill, /fresh materializations[\s\S]*both digests/i);
+    assert.match(adapterSkill, /isolated consumers[\s\S]*proposed final tree/i);
     const resolverGuidance = adapterSkill.slice(
       adapterSkill.indexOf("## 3. Choose the compose/own seam"),
       adapterSkill.indexOf("## 4. Implement through the native entry point"),

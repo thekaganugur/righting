@@ -9,7 +9,7 @@ Deliver and validate a discoverable Righting-owned Oxlint adapter that consumes 
 
 ## Notes
 
-- Consult `CONTEXT.md`, `docs/adapter-conformance.md`, `docs/capabilities.md`, `skills/write-righting-adapter/SKILL.md`, and the validated `uets-to-task` Oxlint dogfood record.
+- Consult `CONTEXT.md`, `docs/adapter-conformance.md`, `docs/capabilities.md`, `skills/righting-adapter-authoring/SKILL.md`, and the validated `uets-to-task` Oxlint dogfood record.
 - Preserve the guardrail-adapter boundary: consume `righting inspect --json`; do not import Righting core or normalize `righting.json` in the adapter.
 - Support means complete `role-dependency` behavior plus every additional claimed capability passing Righting's black-box scenario families for the declared contract and native-tool versions.
 - Pin and support one Oxlint tuple only; do not imply a compatibility range or matrix.
