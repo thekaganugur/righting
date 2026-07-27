@@ -2,12 +2,14 @@
 
 Righting is a local, static architecture-policy tool. It validates the policy you declare; it never infers an architecture, approves decisions, activates an adapter, or proves runtime behavior.
 
+> **Alpha:** APIs and policy formats may change before the first stable release.
+
 ## First run
 
 Requires Node.js 20 or later. Install it in the project:
 
 ```sh
-npm install --save-dev righting
+npm install --save-dev righting@alpha
 ```
 
 ### 1. Set up — choose one route
