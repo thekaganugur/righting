@@ -164,6 +164,8 @@ test("righting init rejects a configured incomplete starter before changing the 
     assert.equal(readFileSync(resolve(projectDirectory, "righting.json"), "utf8"), policy);
     assert.equal(readFileSync(resolve(projectDirectory, "AGENTS.md"), "utf8"), guidance);
     assert.equal(existsSync(resolve(projectDirectory, ".agents")), false);
+    assert.equal(existsSync(resolve(projectDirectory, ".claude")), false);
+    assert.equal(existsSync(resolve(projectDirectory, "CLAUDE.md")), false);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
   }
@@ -206,21 +208,33 @@ test("righting init --skills creates repeatable relative links and preflights co
   const projectDirectory = createProject();
   const collisionDirectory = createProject();
   const ancestorCollisionDirectory = createProject();
+  const claudeCollisionDirectory = createProject();
   const packagedSkillsDirectory = resolve(repositoryDirectory, "skills");
 
   try {
+    writeFileSync(resolve(projectDirectory, "CLAUDE.md"), "# Claude guidance\n\nKeep this project-owned instruction.\n");
     const output = assertSuccessEnvelope(run(projectDirectory, "init", "--skills", "--json"));
-    assert.deepEqual(output.skills, { path: ".agents/skills", linked: skills });
+    assert.deepEqual(output.skills, { path: ".agents/skills", claudePath: ".claude/skills", linked: skills });
 
-    for (const skill of skills) {
-      const link = resolve(projectDirectory, ".agents/skills", skill);
-      assert.ok(lstatSync(link).isSymbolicLink(), link);
-      assert.equal(isAbsolute(readlinkSync(link)), false);
-      assert.equal(resolve(dirname(link), readlinkSync(link)), resolve(packagedSkillsDirectory, skill));
+    for (const directory of [".agents/skills", ".claude/skills"]) {
+      for (const skill of skills) {
+        const link = resolve(projectDirectory, directory, skill);
+        assert.ok(lstatSync(link).isSymbolicLink(), link);
+        assert.equal(isAbsolute(readlinkSync(link)), false);
+        assert.equal(resolve(dirname(link), readlinkSync(link)), resolve(packagedSkillsDirectory, skill));
+      }
     }
+    assert.equal(
+      readFileSync(resolve(projectDirectory, "CLAUDE.md"), "utf8"),
+      "# Claude guidance\n\nKeep this project-owned instruction.\n\n@AGENTS.md\n",
+    );
 
     const repeat = assertSuccessEnvelope(run(projectDirectory, "init", "--skills", "--json"));
-    assert.deepEqual(repeat.skills, { path: ".agents/skills", linked: skills });
+    assert.deepEqual(repeat.skills, { path: ".agents/skills", claudePath: ".claude/skills", linked: skills });
+    assert.equal(
+      readFileSync(resolve(projectDirectory, "CLAUDE.md"), "utf8"),
+      "# Claude guidance\n\nKeep this project-owned instruction.\n\n@AGENTS.md\n",
+    );
 
     const humanReadable = run(projectDirectory, "init", "--skills");
     assert.equal(humanReadable.status, 0, humanReadable.stderr);
@@ -243,10 +257,21 @@ test("righting init --skills creates repeatable relative links and preflights co
     assert.equal(readFileSync(resolve(ancestorCollisionDirectory, ".agents"), "utf8"), "Project-owned path\n");
     assert.equal(existsSync(resolve(ancestorCollisionDirectory, "righting.json")), false);
     assert.equal(existsSync(resolve(ancestorCollisionDirectory, "AGENTS.md")), false);
+
+    const claudeCollision = resolve(claudeCollisionDirectory, ".claude/skills/righting-integrate");
+    mkdirSync(claudeCollision, { recursive: true });
+    writeFileSync(resolve(claudeCollision, "SKILL.md"), "# Project-owned Claude skill\n");
+    const refusedClaude = run(claudeCollisionDirectory, "init", "--skills", "--json");
+    assertFailureEnvelope(refusedClaude, "skill-collision", ".claude/skills/righting-integrate", "resolve-skill-collision");
+    assert.equal(existsSync(resolve(claudeCollisionDirectory, "righting.json")), false);
+    assert.equal(existsSync(resolve(claudeCollisionDirectory, "AGENTS.md")), false);
+    assert.equal(existsSync(resolve(claudeCollisionDirectory, "CLAUDE.md")), false);
+    assert.equal(existsSync(resolve(claudeCollisionDirectory, ".agents")), false);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
     rmSync(collisionDirectory, { recursive: true, force: true });
     rmSync(ancestorCollisionDirectory, { recursive: true, force: true });
+    rmSync(claudeCollisionDirectory, { recursive: true, force: true });
   }
 });
 

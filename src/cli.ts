@@ -31,7 +31,7 @@ const initHelp = [
   initUsage,
   "",
   "Options:",
-  "  --skills  Link packaged skills under .agents/skills for a compatible agent.",
+  "  --skills  Link packaged skills under .agents/skills and .claude/skills.",
   "  --json    Emit the stable machine-facing response.",
   "",
   `Next without --skills: ${manualPolicyNext}.`,
@@ -79,7 +79,7 @@ type SkillLink = {
 };
 
 type PlannedSkillLinks = {
-  directory: string;
+  directories: string[];
   links: SkillLink[];
 };
 
@@ -139,48 +139,53 @@ function pathExists(path: string): boolean {
 }
 
 function planSkillLinks(projectDirectory: string): PlannedSkillLinks {
-  const agentDirectory = resolve(projectDirectory, ".agents");
-  const directory = resolve(agentDirectory, "skills");
-  for (const path of [agentDirectory, directory]) {
-    if (pathExists(path) && !lstatSync(path).isDirectory()) {
-      failInit(
-        "skill-collision",
-        `righting init --skills cannot use existing path "${relative(projectDirectory, path)}" as a skills directory.`,
-        "resolve-skill-collision",
-        relative(projectDirectory, path),
-      );
-    }
-  }
-  const links = rightingSkillNames.map((name) => {
-    const source = resolve(packagedSkillsDirectory, name);
-    if (!existsSync(resolve(source, "SKILL.md"))) {
-      failInit(
-        "missing-packaged-skill",
-        `Righting package is missing the packaged skill "${name}".`,
-        "reinstall-righting",
-      );
-    }
-
-    const target = resolve(directory, name);
-    if (pathExists(target)) {
-      const expectedLink = lstatSync(target).isSymbolicLink() && resolve(dirname(target), readlinkSync(target)) === source;
-      if (!expectedLink) {
+  const directories = [resolve(projectDirectory, ".agents/skills"), resolve(projectDirectory, ".claude/skills")];
+  for (const directory of directories) {
+    for (const path of [dirname(directory), directory]) {
+      if (pathExists(path) && !lstatSync(path).isDirectory()) {
         failInit(
           "skill-collision",
-          `righting init --skills cannot replace existing skill "${relative(projectDirectory, target)}".`,
+          `righting init --skills cannot use existing path "${relative(projectDirectory, path)}" as a skills directory.`,
           "resolve-skill-collision",
-          relative(projectDirectory, target),
+          relative(projectDirectory, path),
         );
       }
     }
-    return { source, target };
-  });
+  }
+  const links = directories.flatMap((directory) =>
+    rightingSkillNames.map((name) => {
+      const source = resolve(packagedSkillsDirectory, name);
+      if (!existsSync(resolve(source, "SKILL.md"))) {
+        failInit(
+          "missing-packaged-skill",
+          `Righting package is missing the packaged skill "${name}".`,
+          "reinstall-righting",
+        );
+      }
 
-  return { directory, links };
+      const target = resolve(directory, name);
+      if (pathExists(target)) {
+        const expectedLink = lstatSync(target).isSymbolicLink() && resolve(dirname(target), readlinkSync(target)) === source;
+        if (!expectedLink) {
+          failInit(
+            "skill-collision",
+            `righting init --skills cannot replace existing skill "${relative(projectDirectory, target)}".`,
+            "resolve-skill-collision",
+            relative(projectDirectory, target),
+          );
+        }
+      }
+      return { source, target };
+    }),
+  );
+
+  return { directories, links };
 }
 
 function linkSkills(plan: PlannedSkillLinks): void {
-  mkdirSync(plan.directory, { recursive: true });
+  for (const directory of plan.directories) {
+    mkdirSync(directory, { recursive: true });
+  }
   for (const { source, target } of plan.links) {
     if (!pathExists(target)) {
       symlinkSync(relative(dirname(target), source), target, "dir");
@@ -221,15 +226,31 @@ function initPolicyResult(state: PolicyState, created: boolean) {
   };
 }
 
+function addClaudeGuidance(existing: string | undefined): string {
+  if (existing === undefined) {
+    return "@AGENTS.md\n";
+  }
+  if (/(^|\n)[^\S\n]*@AGENTS\.md[^\S\n]*(?=\n|$)/.test(existing)) {
+    return existing;
+  }
+  const separator = existing.endsWith("\n") ? "\n" : "\n\n";
+  return `${existing}${separator}@AGENTS.md\n`;
+}
+
 function initialize(projectDirectory: string, installSkills = false) {
   const policyPath = resolve(projectDirectory, "righting.json");
   const path = guidancePath(projectDirectory);
+  const claudePath = resolve(projectDirectory, "CLAUDE.md");
   const policyCreated = !existsSync(policyPath);
   const state = policyCreated ? { status: "incomplete" as const } : inspectPolicy(policyPath);
   const existingGuidance = existsSync(path) ? readFileSync(path, "utf8") : undefined;
   const guidance = replaceManagedGuidance(existingGuidance);
   const guidanceUpdated = existingGuidance !== guidance;
   const skills = installSkills ? planSkillLinks(projectDirectory) : undefined;
+  const claudeGuidance =
+    installSkills && (!pathExists(claudePath) || !lstatSync(claudePath).isSymbolicLink())
+      ? addClaudeGuidance(existsSync(claudePath) ? readFileSync(claudePath, "utf8") : undefined)
+      : undefined;
 
   if (policyCreated) {
     writeFileSync(policyPath, starterPolicy, { encoding: "utf8", flag: "wx" });
@@ -237,6 +258,9 @@ function initialize(projectDirectory: string, installSkills = false) {
 
   if (guidanceUpdated) {
     writeFileSync(path, guidance, "utf8");
+  }
+  if (claudeGuidance !== undefined) {
+    writeFileSync(claudePath, claudeGuidance, "utf8");
   }
   if (skills !== undefined) {
     linkSkills(skills);
@@ -252,7 +276,9 @@ function initialize(projectDirectory: string, installSkills = false) {
       updated: guidanceUpdated,
     },
     ...(state.status === "incomplete" ? { nextAction: "obtain-policy-approval" } : {}),
-    ...(skills === undefined ? {} : { skills: { path: ".agents/skills", linked: rightingSkillNames } }),
+    ...(skills === undefined
+      ? {}
+      : { skills: { path: ".agents/skills", claudePath: ".claude/skills", linked: rightingSkillNames } }),
   };
 }
 
@@ -326,7 +352,7 @@ function main(arguments_: string[]): void {
 
     const next = result.policy.status === "incomplete" ? ` Next: ${skills ? agentPolicyNext : manualPolicyNext}.` : "";
     const agentSupport = skills
-      ? " Linked Righting skills in .agents/skills."
+      ? " Linked Righting skills in .agents/skills and .claude/skills."
       : " Optional compatible-agent support: run righting init --skills.";
     process.stdout.write(
       `${result.policy.created ? "Created" : "Kept"} righting.json. ${result.guidance.updated ? "Updated" : "Kept"} Righting-managed guidance in AGENTS.md.${agentSupport}${next}\n`,

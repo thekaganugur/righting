@@ -29,7 +29,7 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
     assert.equal((initialized.policy as Json).created, true);
     assert.deepEqual((initialized.policy as Json).required, ["coverage", "maintainer-approval"]);
     assert.equal(initialized.nextAction, "obtain-policy-approval");
-    assert.deepEqual(initialized.skills, { path: ".agents/skills", linked: skills });
+    assert.deepEqual(initialized.skills, { path: ".agents/skills", claudePath: ".claude/skills", linked: skills });
     assert.deepEqual(JSON.parse(readFileSync(resolve(projectDirectory, "righting.json"), "utf8")), {
       preset: "volatility@1",
       status: "incomplete",
@@ -39,12 +39,15 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
       `# Project guidance\n\nKeep this project-owned instruction.\n\n<!-- righting:managed:start -->\n${policyPointer}\n<!-- righting:managed:end -->\n`,
     );
 
-    for (const skill of skills) {
-      const link = resolve(projectDirectory, ".agents/skills", skill);
-      const source = resolve(projectDirectory, "node_modules/righting/skills", skill);
-      assert.ok(lstatSync(link).isSymbolicLink(), link);
-      assert.equal(isAbsolute(readlinkSync(link)), false);
-      assert.equal(resolve(dirname(link), readlinkSync(link)), source);
+    assert.equal(readFileSync(resolve(projectDirectory, "CLAUDE.md"), "utf8"), "@AGENTS.md\n");
+    for (const directory of [".agents/skills", ".claude/skills"]) {
+      for (const skill of skills) {
+        const link = resolve(projectDirectory, directory, skill);
+        const source = resolve(projectDirectory, "node_modules/righting/skills", skill);
+        assert.ok(lstatSync(link).isSymbolicLink(), link);
+        assert.equal(isAbsolute(readlinkSync(link)), false);
+        assert.equal(resolve(dirname(link), readlinkSync(link)), source);
+      }
     }
     const adapterAuthoringSkill = readFileSync(
       resolve(projectDirectory, ".agents/skills/righting-adapter-authoring/SKILL.md"),

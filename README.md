@@ -25,7 +25,7 @@ npx righting inspect
 
 **Maintainer with a compatible agent**
 
-Use this route when the agent supports project-skill discovery. `init --skills` creates `.agents/skills` for it to discover; otherwise use the manual route.
+Use this route when the agent supports project-skill discovery. `init --skills` creates links under `.agents/skills` and Claude Code's `.claude/skills`, and makes `CLAUDE.md` import the managed `AGENTS.md` guidance; otherwise use the manual route.
 
 ```sh
 npx righting init --skills --json

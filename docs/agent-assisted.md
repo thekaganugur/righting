@@ -1,6 +1,6 @@
 # Compatible-agent handoff
 
-Use this route when the coding agent supports project-skill discovery; `init --skills` creates `.agents/skills` for it to discover. Otherwise, use the [manual maintainer route](manual-maintainer.md). This route adds discoverability; it does not automate maintainer decisions.
+Use this route when the coding agent supports project-skill discovery; `init --skills` creates links under `.agents/skills` and Claude Code's `.claude/skills`. Otherwise, use the [manual maintainer route](manual-maintainer.md). This route adds discoverability; it does not automate maintainer decisions.
 
 ## 1. Set up skill discovery
 
@@ -11,7 +11,7 @@ npm install --save-dev righting
 npx righting init --skills --json
 ```
 
-The command creates repeatable relative links under `.agents/skills` and refuses project-owned name collisions. The JSON response is the stable machine-facing contract: agents use its codes and next actions instead of parsing human output.
+The command creates repeatable relative links under `.agents/skills` and `.claude/skills` and refuses project-owned name collisions. For Claude Code, it also creates `CLAUDE.md` with `@AGENTS.md`, or appends that import while preserving existing content; existing `CLAUDE.md` symlinks are left untouched. The JSON response is the stable machine-facing contract: agents use its codes and next actions instead of parsing human output.
 
 ## 2. Configure and obtain approval
 
