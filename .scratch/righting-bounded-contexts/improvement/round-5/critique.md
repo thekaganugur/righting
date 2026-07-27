@@ -1,0 +1,8 @@
+## Review
+**PASS** — no reusable skill defect remains.
+
+- Correct: Approval is not inferred. The replay returns `unresolved`, labels both designs as proposals, asks one option-based question, emits no domain documents or firewall candidate, and leaves policy unchanged (`replay.md:1-2, 21-25, 63-70, 75-76`). This follows the approval gate in `SKILL.md:60-71`.
+- Correct: Evidence remains faithful and appropriately bounded. It distinguishes design from realization evidence, cites the connector request/acknowledgement path, retains the one-context countercase, and reports unknown change authority rather than deriving it from the operator (`replay.md:5-19, 45-50`). The reported local executable provenance and inspection summary match the current project-local CLI.
+- Correct: Vocabulary and relationships are disciplined. Project terms are verbatim or the sole new context name is explicitly marked proposed; the connector/attention relationship states producer, consumer, request, return, influence, and translation (`replay.md:29-58`). External parties and their return flows are kept separate.
+- Correct: The skill has the reusable controls needed for this result: exact-or-proposed language, one-party relationship records, return-flow tracing, approval-only branch disclosure, and read-only/temporary-mirror hygiene (`SKILL.md:15, 44-56, 68-71`; `references/approved-design-and-firewall.md:17-41`).
+- Note: The result is necessarily detailed because it is an approval packet, but it does not add reusable sediment or duplicate instructions. No replay-only error requiring a skill change was found.

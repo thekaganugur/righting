@@ -67,7 +67,20 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
     );
     assert.match(boundedContextsSkill, /Outcome[\s\S]*candidate[\s\S]*omit-for-now[\s\S]*unresolved/);
     assert.match(boundedContextsSkill, /explicit approval[\s\S]*complete strategic design/i);
-    assert.match(boundedContextsSkill, /temporary mirror[\s\S]*righting inspect --json/i);
+    assert.match(boundedContextsSkill, /two bounded passes[\s\S]*highest-impact uncertainty/i);
+    assert.match(boundedContextsSkill, /node_modules\/\.bin\/righting[\s\S]*PATH\/global executable is not project-local/i);
+    assert.match(boundedContextsSkill, /referenced path is absent[\s\S]*not inspected/i);
+    assert.match(boundedContextsSkill, /representative documented contract or producer\/consumer path/i);
+    assert.match(boundedContextsSkill, /external actors\/services separately[\s\S]*not a reverse context exchange/i);
+    assert.match(boundedContextsSkill, /verbatim project language[\s\S]*no grouped label[\s\S]*producer[\s\S]*return/i);
+    assert.match(boundedContextsSkill, /approved-design-and-firewall\.md[\s\S]*completely/i);
+    const boundedContextsApprovalBranch = readFileSync(
+      resolve(projectDirectory, ".agents/skills/righting-bounded-contexts/references/approved-design-and-firewall.md"),
+      "utf8",
+    );
+    assert.match(boundedContextsApprovalBranch, /classification universe[\s\S]*every version-controlled file/i);
+    assert.match(boundedContextsApprovalBranch, /absolute project-local Righting executable/i);
+    assert.match(boundedContextsApprovalBranch, /temporary mirror[\s\S]*inspect --json/i);
 
     const incompleteInspection = assertSuccessEnvelope(righting(projectDirectory, "inspect", "--json"), "inspect", "incomplete");
     assert.deepEqual((incompleteInspection.policy as Json).required, ["coverage", "maintainer-approval"]);

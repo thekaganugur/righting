@@ -14,6 +14,7 @@ const packagedResources = [
   "dist/src/capabilities.js",
   "dist/src/oxlint.js",
   "skills/righting-bounded-contexts/SKILL.md",
+  "skills/righting-bounded-contexts/references/approved-design-and-firewall.md",
   "skills/righting-design-review/SKILL.md",
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",

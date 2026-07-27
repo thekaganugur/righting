@@ -6,89 +6,71 @@ compatibility: Requires the local righting CLI for candidate validation.
 
 # Evidence-led bounded-context design
 
-Use this specialist when a maintainer wants to discover or reassess bounded contexts. A valid result may preserve one context, preserve an existing approved map, or omit `contextFirewall`. Do not invent boundaries to fill Righting scopes.
-
-This skill may be called directly or by another skill. When called by `righting-integrate`, return the final result to it so integration can resume. Never edit `righting.json`.
+Use this specialist when a maintainer wants to discover or reassess bounded contexts. Remaining one context, preserving an approved map, and omitting `contextFirewall` are valid outcomes. This skill may be called directly or by `righting-integrate`; return the final result to the caller so integration can resume.
 
 ## Guardrails
 
-- Work at strategic design only: purpose, model and language, responsibilities, ownership, relationships, permitted sharing or translation, and code-to-boundary migration concerns.
-- Do not design aggregates, entities, repositories, commands, events, or detailed interfaces. Do not refactor application code.
-- Repository topology is realization evidence, never domain policy. Folders, imports, schemas, tests, and history may support or contradict a proposal but cannot approve it.
-- Existing project-owned context documents and explicit maintainer decisions outrank inferred evidence. Surface contradictions; do not silently replace an approved semantic boundary with a folder-derived one.
-- Ask one short, option-based maintainer question at a time. Include brief help, an example when useful, an `other/uncertain` option, and your recommendation.
-- Require explicit approval of the complete strategic design. Silence, a directory name, prior policy approval, or approval of a firewall fragment is not bounded-context approval.
+- Work at strategic design: purpose, model and language, responsibilities, change authority, relationships, permitted sharing/translation, and migration concerns. Leave tactical DDD and application refactoring to later work.
+- Treat repository topology as realization evidence, never domain approval. Project-owned context documents and explicit maintainer decisions outrank inference; surface contradictions.
+- Keep analysis read-only until approved domain documents are recorded. Temporary work and candidate validation live outside the target worktree. Use existing tools without installing, initializing, relinking, or updating project dependencies or skills.
+- Ask one short, option-based maintainer question per turn, with brief help, concrete options, `other/uncertain`, and an evidence-backed recommendation.
+- Require explicit approval of the complete strategic design. Silence, path names, prior policy approval, and firewall-fragment approval are insufficient.
+- Preserve `righting.json` unchanged.
 
-## 1. Inspect and separate the evidence
+## 1. Build the decision evidence
 
-Read the repository's instructions, `CONTEXT-MAP.md` or `CONTEXT.md`, relevant ADRs, product and use-case documentation, ownership records, schemas, tests, source, and useful version-control history. Read the installed Righting `docs/policy-language.md` and `docs/capabilities.md`. State exactly what you inspected and what material evidence was unavailable.
+Read repository instructions; `CONTEXT-MAP.md` or `CONTEXT.md`; relevant ADRs; product, use-case, ownership, schema, and test records; representative source paths; useful history; and the installed Righting `docs/policy-language.md` and `docs/capabilities.md`. State what was inspected and what material evidence was unavailable.
 
-Maintain two separate evidence views:
+Resolve the target project's existing `node_modules/.bin/righting` to an absolute executable path without invoking a package manager. A PATH/global executable is not project-local; if the target-local bin is absent or unusable, record the CLI as unavailable. When available, run its `inspect --json` command from the target project and record normalized coverage, source summary, violations, and warnings. Inspection is mechanical realization evidence, not design approval.
 
-1. **Design evidence:** business purpose and outcomes; users and jobs; workflows; responsibilities and decisions; concept definitions and overloaded terms; independently applicable models; ownership and change authority; external systems; integration constraints; and observed axes of change.
-2. **Repository realization evidence:** paths and packages; imports; schemas and stores; build or deployment units; ownership/history; tests; generated source; composition roots; and files that mix candidate concepts.
+Use two bounded passes:
 
-For material observations, cite project paths, distinguish direct evidence from inference, and say which proposal they support or weaken. Missing documentation is unknown evidence, not proof of a single context. A singular user role, maintainer role, operator role, or Git author does not establish that one person owns or operates the whole model; keep owner/change authority `unknown` unless a direct project record or maintainer answer establishes it.
+1. Before approval, read authoritative records and enough representative execution paths/history to identify the coarse models, strongest counterevidence, and highest-impact uncertainty. Stop when more repository narration would not change the first question.
+2. After approval—or for an authoritative known-context replay—close the full firewall classification universe as described in the approval branch.
 
-Describe current terrain before proposing change: one coherent model, established contexts, candidate models intermingled, unknown, or a muddy legacy region. Distinguish current facts from desired design.
+Keep two evidence views:
 
-## 2. Make an educated recommendation
+- **Design evidence:** purpose/outcomes, users/jobs, workflows, responsibilities, language, independently applicable models, ownership/change authority, external systems, integration constraints, and observed axes of change.
+- **Realization evidence:** paths/imports, schemas/stores, build/deployment units, ownership/history, tests, generated source, composition roots, and mixed files.
 
-Recommend one coarse design and one conservative alternative, including remaining single-context where credible. Prefer the fewest boundaries that explain meaningful differences in purpose, model, language, responsibility, or ownership. Never split by technical layer.
+Cite paths for material observations, label inference, and say what each fact supports or weakens. Verify a referenced path is absent before calling its evidence unavailable; accessible material left outside the bounded pass is `not inspected`. Missing documentation is unknown, not evidence for one context. A singular user/maintainer/operator or Git author does not establish change authority; use `unknown` absent a direct record or maintainer answer. Describe current terrain as coherent, established, intermingled candidates, unknown, or legacy before proposing change.
 
-For every proposed context in both the recommendation and the conservative alternative, present a compact card containing:
+**Completion criterion:** the recommendation, conservative alternative, strongest counterevidence, confidence, and one boundary-changing uncertainty are all supported without an exhaustive pre-approval source inventory.
 
-- name and one-sentence purpose;
-- users/jobs and responsibilities;
-- owned model and key language, especially terms with different meanings elsewhere;
-- owner/change authority, or `unknown`;
-- relationships and exchanged capability or information;
+## 2. Build the recommendation
+
+Recommend one coarse design and one conservative alternative, including one context when credible. Prefer the fewest boundaries explained by meaningful differences in purpose, model, language, responsibility, or ownership; technical layers are not contexts.
+
+Give each proposed context in both designs a compact card with:
+
+- name, purpose, users/jobs, and responsibilities;
+- owned model and exact project language, especially overloaded terms;
+- owner/change authority or `unknown`;
+- decision-relevant relationships and exchanged capability/information;
 - design evidence and counterevidence with paths;
-- confidence: `high`, `medium`, or `low`, with a reason; and
-- current code fit: inside, outside, mixed, or uncertain, explicitly labeled as realization evidence.
+- `high`, `medium`, or `low` confidence with reason; and
+- current code fit as `inside`, `outside`, `mixed`, or `uncertain`, explicitly labeled realization evidence.
 
-For each relationship—including external systems—record these fields separately: **direction**, **influence** (who shapes whose rules, or `unknown`), **exchange in each direction** (write `none` when one-way), and **model treatment** (`share`, `translate`, or `isolate`). Do not collapse distinct external parties with different return flows into one relationship. Use a named DDD relationship only when the evidence fits. Do not call reused utilities a Shared Kernel, and do not create a `shared` scope merely because code is reused.
+A relationship is decision-relevant when another model's rules or exchanged information crosses a proposed boundary or materially constrains it. For each one, separately record **direction**, **influence**, **exchange in each direction** (`none` when genuinely one-way), and **model treatment** (`share`, `translate`, or `isolate`). Trace a representative documented contract or producer/consumer path to verify request and return flow. Name external actors/services separately when they supply distinct rules or a return flow. A user/browser action following delivered navigation is an external-party flow, not a reverse context exchange, unless the receiving context consumes response data from the sender. Use named DDD relationships only when evidenced; reused utilities alone are neither a Shared Kernel nor a reason for a `shared` scope.
+
+**Completion criterion:** every card has every field; each owned term is verbatim project language or explicitly labeled proposed; each relationship entry names one actor/service (no grouped label) and has an evidence-checked producer, consumer, request, and return; and both designs explain the same evidence without presenting either as approved.
 
 ## 3. Shape and approve
 
-Resolve uncertainties with the maintainer, one question per turn. Start with the uncertainty most capable of changing the proposed boundary. Offer concrete options and recommend one from the evidence. Revise the cards after each answer.
+Before the first question, present a concise decision packet: current terrain, recommendation, conservative alternative, distinguishing evidence/counterevidence, confidence, and the highest-impact uncertainty. Ask that one question and revise only affected cards after each answer.
 
-Do not reopen settled project facts without contradictory evidence. On a known-context replay, validate the documented semantic boundaries and their current realization; do not substitute folder inference or demand redundant approval of already explicit maintainer-owned decisions. If a material contradiction exists, ask whether to preserve, revise, or defer the affected decision.
+Preserve settled project facts unless contradictory evidence appears. On a known-context replay, validate authoritative semantic boundaries and current realization rather than demanding redundant approval. When material evidence contradicts an approved decision, ask whether to preserve, revise, or defer it.
 
-Before writing domain documents, show the complete proposed strategic design and ask for explicit approval or a specific revision. If the authorized maintainer cannot resolve a semantic, ownership, or relationship question, coarsen the design or return `unresolved`; never answer for them.
+Before writing domain documents, show the complete strategic design and ask for explicit approval or revision. If the maintainer cannot resolve a material semantic, authority, or relationship decision, coarsen the design or return `unresolved`.
 
-## 4. Record only the approved design
+**Completion criterion:** either the complete design has explicit/authoritative approval, or the unresolved decision is named and no design is labeled approved.
 
-After approval, follow the repository's own domain-document instructions and conventions. In their absence:
+## 4. Finish the applicable branch
 
-- keep one context as a root `CONTEXT.md` glossary;
-- for multiple contexts, use a root `CONTEXT-MAP.md` that names each context, its purpose, owner, document location, relationships, permitted sharing/translation, confidence, and open questions; and
-- use one `CONTEXT.md` per context for its implementation-free owned language and definitions.
+- For `unresolved`, write no domain documents and present no firewall candidate. Return the fixed result below with the pending single question.
+- After explicit approval, or for a non-contradicted authoritative map, read [`references/approved-design-and-firewall.md`](references/approved-design-and-firewall.md) completely before writing domain documents, classifying firewall paths, or choosing `candidate` versus `omit-for-now`.
 
-Preserve useful existing content and vocabulary. Do not write implementation details into a `CONTEXT.md`. Do not overwrite an ADR conflict silently. When the outcome is `unresolved`, write no domain documents.
-
-Give non-executed migration advice that identifies mixed or uncertain files, likely moves or splits, dependency seams, current cross-boundary coupling, translation or deliberately shared-model concerns, ownership/release/data risks, safe sequencing, and validation. Do not change application code.
-
-## 5. Apply the independent firewall honesty gate
-
-A sound context design does not imply that current code is ready for `contextFirewall`. Produce a candidate only when all gates pass:
-
-1. the strategic context identities and relationships are explicitly approved or already explicit in authoritative project records;
-2. current source paths map those identities with exact, non-overlapping globs;
-3. every relevant current source file is classified as a named `context`, genuinely context-independent `shared`, intentional `unscoped` wiring/integration, ambiguous, or unmatched;
-4. `shared` source does not import a context, and direct context-to-context static imports are intended to be forbidden now;
-5. legitimate integration is represented without hiding incompatible imports; and
-6. the exact candidate validates with the project's installed CLI.
-
-`shared` means deliberately context-independent source, not “used more than once.” `unscoped` means intentional non-contextual wiring or integration, not uncertain domain code.
-
-For a candidate, create a temporary mirror of the project tree, write only the temporary `righting.json`, and run `npx righting inspect --json` there. Keep the project's existing policy fields and add only the candidate fragment for validation. Report the temporary policy, command and status, authoritative inspection evidence, every current-file scope classification, every ambiguous or unmatched path, and any observed violation. Delete the mirror afterward. Do not edit the real `righting.json`.
-
-If any gate fails, choose `omit-for-now`, list each failed gate and the evidence, and state the migration or decision that would justify reconsideration. If strategic approval is incomplete, choose `unresolved` instead.
-
-## 6. Return the fixed result
-
-Return one standalone Markdown result directly to the caller with exactly these headings:
+Return one standalone Markdown result with exactly these headings:
 
 ```markdown
 ## Outcome
@@ -98,27 +80,25 @@ candidate | omit-for-now | unresolved
 <inspected scope, design evidence, realization evidence, counterevidence, confidence>
 
 ## Approval
-<what was explicitly approved, existing authoritative approval, or unresolved decision>
+<explicit or authoritative approval, or unresolved decision>
 
 ## Approved design
-<contexts, purposes, owned language, responsibilities, ownership, relationships>
+<approved cards; for unresolved, clearly labeled proposals only>
 
 ## Domain documents
-<files written or changed; none when unresolved>
+<files changed; none when unresolved>
 
 ## Migration advice
-<refactoring concerns, sequencing, risks, validation; no application-code changes>
+<concerns, sequencing, risks, validation; no application-code changes>
 
 ## Context firewall
-<exact fragment and focused temporary-mirror validation, file classifications, ambiguity, unmatched paths, and violations; or failed gates and reconsideration conditions>
+<validated fragment and evidence, failed gates, or unresolved status>
 
 ## Capability limits
-<what static import checks establish and do not establish>
+<static-import guarantees and limits>
 
 ## Next step
-<caller-neutral continuation; optionally tell righting-integrate to resume from this result>
+<one caller-neutral continuation or pending question>
 ```
 
-`candidate` means an approved design has a mechanically validated candidate fragment. `omit-for-now` means the design is approved but current code cannot support a credible fragment. `unresolved` means strategic approval is incomplete, so no domain document or candidate is presented as approved.
-
-State the capability limit precisely: `contextFirewall` can establish configured static cross-context and shared-to-context source-import restrictions. It does not establish runtime behavior, data or deployment isolation, organizational ownership, migration completion, or the quality of the context design. A later policy-adoption workflow must revalidate and obtain approval for the complete `righting.json`.
+`candidate` requires approved design and a mechanically validated fragment. `omit-for-now` requires approved design but at least one failed firewall gate. `unresolved` means strategic approval is incomplete. `contextFirewall` checks configured static cross-context and shared-to-context source imports; it does not prove runtime behavior, isolation, ownership, migration completion, or design quality. Complete-policy adoption always requires later revalidation and approval.
