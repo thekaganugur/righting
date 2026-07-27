@@ -13,6 +13,7 @@ const packagedResources = [
   "dist/src/policy.js",
   "dist/src/capabilities.js",
   "dist/src/oxlint.js",
+  "skills/righting-bounded-contexts/SKILL.md",
   "skills/righting-design-review/SKILL.md",
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
@@ -65,6 +66,7 @@ test("the integration skill keeps contextFirewall optional and context design se
   assert.match(guidance, /for each result[\s\S]*recommendation[\s\S]*pros and cons/i);
   assert.match(guidance, /one question at a time/i);
   assert.match(guidance, /do not[\s\S]*(infer|derive)[\s\S]*context policy[\s\S]*domain vocabulary alone/i);
+  assert.match(guidance, /righting-bounded-contexts[\s\S]*pros and cons[\s\S]*ask permission[\s\S]*resume/i);
 });
 
 test("the packed package publishes every onboarding reference without the retired docs command", () => {

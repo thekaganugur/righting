@@ -47,7 +47,13 @@ const inspectHelp = [
   "  --all   Include available but unconfigured capabilities.",
   "  --json  Emit the machine-facing policy interpretation.",
 ].join("\n");
-const rightingSkillNames = ["righting-design-review", "righting-eslint", "righting-integrate", "write-righting-adapter"];
+const rightingSkillNames = [
+  "righting-bounded-contexts",
+  "righting-design-review",
+  "righting-eslint",
+  "righting-integrate",
+  "write-righting-adapter",
+];
 const packagedSkillsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../../skills");
 
 type InitErrorCode = "invalid-managed-guidance" | "invalid-options" | "invalid-policy" | "missing-packaged-skill" | "skill-collision";
