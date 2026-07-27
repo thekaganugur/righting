@@ -1,11 +1,11 @@
 {
   "name": "righting",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Local architecture-policy tooling",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thekaganugur/righting-software-tooling.git"
+    "url": "git+https://github.com/thekaganugur/righting.git"
   },
   "type": "module",
   "bin": {
