@@ -8,7 +8,7 @@ const { isMatch } = createRequire(import.meta.url)("micromatch") as {
 
 export const roles = ["Client", "Manager", "Engine", "ResourceAccess", "Resource", "Utility"] as const;
 export type Role = (typeof roles)[number];
-export type Variation = "clientReadsAccess" | "pureEngines" | "contextFirewall";
+export type Variation = "clientReadsAccess" | "pureEngines";
 export type OverrideEffect = "allow" | "disallow";
 
 export type AliasConvention = {
@@ -36,12 +36,6 @@ export type RoleEdgeOverride = {
   reason: string;
 };
 
-export type Scope = {
-  kind: "context" | "shared" | "unscoped";
-  name?: string;
-  path: string;
-};
-
 export type Guidance = {
   domainVocabulary?: string;
   goldenExamples?: Record<string, string>;
@@ -55,7 +49,6 @@ export type Policy = {
   protectedDependencies: ProtectedDependency[];
   variations: Variation[];
   overrides: RoleEdgeOverride[];
-  scopes: Scope[];
   compositionRoots: string[];
   guidance: Guidance;
 };
@@ -72,7 +65,7 @@ export type ContractCapability = {
 };
 
 export type NormalizedContract = {
-  contractVersion: 1;
+  contractVersion: 2;
   preset: "volatility@1";
   roles: Role[];
   configured: {
@@ -82,7 +75,6 @@ export type NormalizedContract = {
     protectedDependencies: ProtectedDependency[];
     variations: Variation[];
     overrides: RoleEdgeOverride[];
-    scopes: Scope[];
     compositionRoots: string[];
     guidance: Guidance;
   };
@@ -102,27 +94,10 @@ export type NormalizedContract = {
       forbiddenFrom: Role[];
       policyRuleId: "righting/role-dependency";
     }>;
-    scopeRules: Array<{
-      policyRuleId: "righting/role-dependency" | "righting/cross-context-dependency" | "righting/shared-to-context-dependency";
-      effect: "allow" | "disallow";
-      from: { scope: "context" | "shared" | "unscoped"; role?: "Client" };
-      to: { scope: "context" | "shared"; relation?: "same" | "different"; role?: "Client" };
-    }>;
-    scopeClassification: null | {
-      multipleMatches: { effect: "error"; policyRuleId: "righting/ambiguous-scope" };
-      noMatches: "outside-declared-scopes";
-    };
     capabilities: ContractCapability[];
     evidenceLimits: string[];
   };
 };
-
-export type ScopeClassification =
-  | { kind: "not-applicable" }
-  | { kind: "outside-declared-scopes" }
-  | { kind: "context"; name: string }
-  | { kind: "shared" | "unscoped" }
-  | { kind: "violation"; ruleId: "righting/ambiguous-scope"; scopes: string[] };
 
 export type SourceClassification =
   | { kind: "outside-coverage" }
@@ -154,7 +129,7 @@ const defaultAllowedDependencies: Record<Role, Role[]> = {
   Resource: ["Utility"],
   Utility: ["Utility"],
 };
-const supportedVariations = new Set<Variation>(["clientReadsAccess", "pureEngines", "contextFirewall"]);
+const supportedVariations = new Set<Variation>(["clientReadsAccess", "pureEngines"]);
 const policyKeys = new Set([
   "preset",
   "coverage",
@@ -163,7 +138,6 @@ const policyKeys = new Set([
   "protectedDependencies",
   "variations",
   "overrides",
-  "scopes",
   "compositionRoots",
   "guidance",
 ]);
@@ -171,7 +145,6 @@ const aliasKeys = new Set(["name", "role", "filenameSuffixes", "directorySegment
 const generatedKeys = new Set(["filenameMarkers", "directorySegments"]);
 const protectedDependencyKeys = new Set(["package", "role"]);
 const overrideKeys = new Set(["name", "from", "to", "effect", "reason"]);
-const scopeKeys = new Set(["kind", "name", "path"]);
 const guidanceKeys = new Set(["domainVocabulary", "goldenExamples"]);
 
 type JsonRecord = Record<string, unknown>;
@@ -390,37 +363,6 @@ function parseOverrides(value: unknown): RoleEdgeOverride[] {
   });
 }
 
-function parseScopes(value: unknown): Scope[] {
-  if (value === undefined) {
-    return [];
-  }
-  if (!Array.isArray(value) || value.length === 0) {
-    fail("scopes must be a non-empty array.");
-  }
-  const contextNames = new Set<string>();
-  return value.map((candidate, index) => {
-    const scope = record(candidate, `scope ${index}`);
-    rejectUnknownKeys(scope, scopeKeys, `scope ${index}`);
-    const path = nonEmptyString(scope.path, `scope ${index} path`);
-    validatePath(path, `scope ${index} path`);
-    if (scope.kind === "context") {
-      const name = nonEmptyString(scope.name, `scope ${index} name`);
-      if (contextNames.has(name)) {
-        fail(`scopes repeat context "${name}".`);
-      }
-      contextNames.add(name);
-      return { kind: scope.kind, name, path };
-    }
-    if (scope.kind === "shared" || scope.kind === "unscoped") {
-      if (scope.name !== undefined) {
-        fail(`${scope.kind} scope ${index} cannot have a name.`);
-      }
-      return { kind: scope.kind, path };
-    }
-    fail(`scope ${index} kind must be "context", "shared", or "unscoped".`);
-  });
-}
-
 function parseCompositionRoots(value: unknown): string[] {
   const tokens = strings(value, "compositionRoots");
   for (const token of tokens) {
@@ -515,20 +457,9 @@ function parsePolicy(source: unknown, policyPath: string): Policy {
     protectedDependencies: parseProtectedDependencies(policy.protectedDependencies),
     variations: parseVariations(policy.variations),
     overrides: parseOverrides(policy.overrides),
-    scopes: parseScopes(policy.scopes),
     compositionRoots: parseCompositionRoots(policy.compositionRoots),
     guidance: parseGuidance(policy.guidance, projectDirectory),
   };
-  if (result.scopes.length > 0 && !result.variations.includes("contextFirewall")) {
-    fail("scopes require the contextFirewall variation.");
-  }
-  if (result.variations.includes("contextFirewall")) {
-    for (const kind of ["context", "shared", "unscoped"] as const) {
-      if (!result.scopes.some((scope) => scope.kind === kind)) {
-        fail(`contextFirewall requires at least one ${kind} scope.`);
-      }
-    }
-  }
   allowedDependencies(result);
   return result;
 }
@@ -567,18 +498,6 @@ function capabilitiesFor(policy: Policy): ContractCapability[] {
       doesNotEstablish: ["external-service-runtime-behavior", "utility-package-access-restriction"],
     },
     {
-      id: "context-firewall",
-      applies: policy.variations.includes("contextFirewall"),
-      coverage: "statically-enforceable" as const,
-      policyRuleIds: [
-        "righting/cross-context-dependency",
-        "righting/shared-to-context-dependency",
-        "righting/ambiguous-scope",
-      ],
-      establishes: ["cross-context-source-import-is-forbidden", "shared-to-context-source-import-is-forbidden"],
-      doesNotEstablish: ["cross-context-runtime-behavior"],
-    },
-    {
       id: "design-judgment",
       applies: true,
       coverage: "guidance-only" as const,
@@ -607,7 +526,7 @@ export function normalizePolicy(policy: Policy): NormalizedContract {
     }),
   ) as NormalizedContract["effective"]["conventions"]["roles"];
   return {
-    contractVersion: 1,
+    contractVersion: 2,
     preset: policy.preset,
     roles: [...roles],
     configured: {
@@ -620,7 +539,6 @@ export function normalizePolicy(policy: Policy): NormalizedContract {
       protectedDependencies: policy.protectedDependencies.map((dependency) => ({ ...dependency })),
       variations: [...policy.variations],
       overrides: policy.overrides.map((override) => ({ ...override })),
-      scopes: policy.scopes.map((scope) => ({ ...scope })),
       compositionRoots: [...policy.compositionRoots],
       guidance: {
         ...policy.guidance,
@@ -644,9 +562,6 @@ export function normalizePolicy(policy: Policy): NormalizedContract {
         "righting/unclassified-source",
         "righting/ambiguous-source",
         "righting/test-dependency",
-        "righting/cross-context-dependency",
-        "righting/shared-to-context-dependency",
-        "righting/ambiguous-scope",
       ],
       protectedDependencyRules: policy.protectedDependencies.map((dependency) => {
         const allowed = allowedDependencies(policy);
@@ -657,46 +572,6 @@ export function normalizePolicy(policy: Policy): NormalizedContract {
           policyRuleId: "righting/role-dependency" as const,
         };
       }),
-      scopeRules: policy.variations.includes("contextFirewall")
-        ? [
-            {
-              policyRuleId: "righting/cross-context-dependency",
-              effect: "disallow",
-              from: { scope: "context" },
-              to: { scope: "context", relation: "different" },
-            },
-            {
-              policyRuleId: "righting/shared-to-context-dependency",
-              effect: "disallow",
-              from: { scope: "shared" },
-              to: { scope: "context" },
-            },
-            {
-              policyRuleId: "righting/role-dependency",
-              effect: "allow",
-              from: { scope: "unscoped" },
-              to: { scope: "context" },
-            },
-            {
-              policyRuleId: "righting/role-dependency",
-              effect: "allow",
-              from: { scope: "context", role: "Client" },
-              to: { scope: "context", relation: "same", role: "Client" },
-            },
-            {
-              policyRuleId: "righting/role-dependency",
-              effect: "allow",
-              from: { scope: "context", role: "Client" },
-              to: { scope: "shared", role: "Client" },
-            },
-          ]
-        : [],
-      scopeClassification: policy.variations.includes("contextFirewall")
-        ? {
-            multipleMatches: { effect: "error", policyRuleId: "righting/ambiguous-scope" },
-            noMatches: "outside-declared-scopes",
-          }
-        : null,
       capabilities: capabilitiesFor(policy),
       evidenceLimits: [
         "files-outside-coverage",
@@ -715,26 +590,6 @@ function matchesMarker(filename: string, markers: readonly string[]): boolean {
 
 function matchesSegment(segments: readonly string[], conventions: readonly string[]): boolean {
   return conventions.some((convention) => segments.includes(convention));
-}
-
-export function classifyScope(contract: NormalizedContract, sourcePath: string): ScopeClassification {
-  if (contract.effective.scopeClassification === null) {
-    return { kind: "not-applicable" };
-  }
-  const path = sourcePath.replaceAll("\\", "/").replace(/^\.\//, "");
-  const matches = contract.configured.scopes.filter((scope) => isMatch(path, scope.path));
-  if (matches.length === 0) {
-    return { kind: contract.effective.scopeClassification.noMatches };
-  }
-  if (matches.length > 1) {
-    return {
-      kind: "violation",
-      ruleId: contract.effective.scopeClassification.multipleMatches.policyRuleId,
-      scopes: matches.map((scope) => scope.name ?? scope.kind),
-    };
-  }
-  const scope = matches[0]!;
-  return scope.kind === "context" ? { kind: scope.kind, name: scope.name! } : { kind: scope.kind };
 }
 
 export function classifySource(contract: NormalizedContract, sourcePath: string): SourceClassification {

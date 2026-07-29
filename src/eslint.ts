@@ -1,14 +1,6 @@
 import { relative, resolve, sep } from "node:path";
 import boundaries from "eslint-plugin-boundaries";
-import {
-  classifyScope,
-  classifySource,
-  normalizePolicy,
-  readPolicy,
-  roles,
-  type NormalizedContract,
-  type Role,
-} from "./policy.js";
+import { classifySource, normalizePolicy, readPolicy, roles, type NormalizedContract, type Role } from "./policy.js";
 const externalOrigins = ["external", "core"];
 const testElementType = "righting-treatment-test";
 const generatedElementType = "righting-treatment-generated";
@@ -22,10 +14,6 @@ function emptyRoleMap(): Record<Role, string[]> {
 
 function roleElementType(role: Role): string {
   return `righting-role-${role}`;
-}
-
-function scopeElementType(index: number): string {
-  return `righting-scope-${index}`;
 }
 
 function filenameDescriptor(type: string, marker: string) {
@@ -63,16 +51,6 @@ function classificationRule(contract: NormalizedContract, projectDirectory: stri
               data: { message: `${classification.ruleId}: This covered source${detail}` },
             });
           }
-          const scope = classifyScope(contract, path);
-          if (scope.kind === "violation") {
-            context.report({
-              node,
-              messageId: "violation",
-              data: {
-                message: `${scope.ruleId}: This covered source matches multiple scopes: ${scope.scopes.join(", ")}.`,
-              },
-            });
-          }
         },
       };
     },
@@ -89,25 +67,6 @@ export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json"
   const allowed = contract.effective.allowedDependencies;
   const protectedPackages = (role: Role) =>
     roles.filter((target) => !allowed[role].includes(target)).flatMap((target) => packagesByRole[target]);
-  const contexts = contract.configured.scopes.flatMap((scope, index) =>
-    scope.kind === "context" ? [{ index, name: scope.name }] : [],
-  );
-  const sharedScopeIndexes = contract.configured.scopes.flatMap((scope, index) => (scope.kind === "shared" ? [index] : []));
-  const unscopedScopeIndexes = contract.configured.scopes.flatMap((scope, index) => (scope.kind === "unscoped" ? [index] : []));
-  const scopeRule = (from: string, to: string, relation?: string, role?: string) =>
-    contract.effective.scopeRules.find(
-      (rule) =>
-        rule.from.scope === from &&
-        rule.to.scope === to &&
-        rule.to.relation === relation &&
-        rule.from.role === role &&
-        rule.to.role === role,
-    );
-  const crossContextRule = scopeRule("context", "context", "different");
-  const sharedContextRule = scopeRule("shared", "context");
-  const unscopedContextRule = scopeRule("unscoped", "context");
-  const sameContextClientRule = scopeRule("context", "context", "same", "Client");
-  const sharedClientRule = scopeRule("context", "shared", undefined, "Client");
   const productionRole = (role: Role) => ({ allOf: [roleElementType(role)], noneOf: [testElementType] });
 
   return {
@@ -140,11 +99,6 @@ export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json"
         ...contract.effective.conventions.compositionRoots.map((token) =>
           exactFilenameDescriptor(compositionRootElementType, token),
         ),
-        ...contract.configured.scopes.map((scope, index) => ({
-          type: scopeElementType(index),
-          pattern: scope.path,
-          partialMatch: false,
-        })),
       ],
       "boundaries/elements-single-match": false,
       "boundaries/dependency-nodes": ["import", "export", "require", "dynamic-import"],
@@ -202,58 +156,6 @@ export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json"
                 },
               };
             }),
-            ...(crossContextRule === undefined
-              ? []
-              : contexts.flatMap((from) =>
-                  contexts
-                    .filter((to) => to.index !== from.index)
-                    .map((to) => ({
-                      from: { element: { types: { allOf: [scopeElementType(from.index)] } } },
-                      disallow: { to: { element: { types: { allOf: [scopeElementType(to.index)] } } } },
-                      message: `${crossContextRule.policyRuleId}: Context "${from.name}" cannot depend on context "${to.name}".`,
-                    })),
-                )),
-            ...(sharedContextRule === undefined
-              ? []
-              : sharedScopeIndexes.map((index) => ({
-                  from: { element: { types: { allOf: [scopeElementType(index)] } } },
-                  disallow: {
-                    to: { element: { types: { anyOf: contexts.map((context) => scopeElementType(context.index)) } } },
-                  },
-                  message: `${sharedContextRule.policyRuleId}: Shared code cannot depend on contextual code.`,
-                }))),
-            ...(unscopedContextRule === undefined
-              ? []
-              : unscopedScopeIndexes.map((index) => ({
-                  from: { element: { types: { allOf: [scopeElementType(index)] } } },
-                  allow: {
-                    to: { element: { types: { anyOf: contexts.map((context) => scopeElementType(context.index)) } } },
-                  },
-                }))),
-            ...(sameContextClientRule === undefined
-              ? []
-              : contexts.map((context) => ({
-                  from: {
-                    element: { types: { allOf: [roleElementType("Client"), scopeElementType(context.index)] } },
-                  },
-                  allow: {
-                    to: {
-                      element: { types: { allOf: [roleElementType("Client"), scopeElementType(context.index)] } },
-                    },
-                  },
-                }))),
-            ...(sharedClientRule === undefined
-              ? []
-              : contexts.flatMap((context) =>
-                  sharedScopeIndexes.map((index) => ({
-                    from: {
-                      element: { types: { allOf: [roleElementType("Client"), scopeElementType(context.index)] } },
-                    },
-                    allow: {
-                      to: { element: { types: { allOf: [roleElementType("Client"), scopeElementType(index)] } } },
-                    },
-                  })),
-                )),
             ...roles.map((from) => ({
               from: { element: { types: productionRole(from) } },
               disallow: { to: { element: { isUnknown: true }, module: { origin: "local" } } },

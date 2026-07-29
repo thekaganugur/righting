@@ -90,11 +90,11 @@ function inspectContract(): Contract {
   if (response.command !== "inspect" || response.policy?.status !== "valid" || response.contract === undefined) {
     fail("righting inspect --json must return a valid normalized contract.");
   }
-  if (response.contract.contractVersion !== 1) {
-    fail(`unsupported contractVersion ${String(response.contract.contractVersion)}; expected 1.`);
+  if (response.contract.contractVersion !== 2) {
+    fail(`unsupported contractVersion ${String(response.contract.contractVersion)}; expected 2.`);
   }
   const unsupported = response.contract.effective.capabilities.filter(
-    (capability) => capability.applies && ["protected-dependency", "context-firewall"].includes(capability.id),
+    (capability) => capability.applies && capability.id === "protected-dependency",
   );
   if (unsupported.length > 0) {
     fail(`contract requires unsupported capabilities: ${unsupported.map(({ id }) => id).join(", ")}.`);

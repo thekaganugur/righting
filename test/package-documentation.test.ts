@@ -13,8 +13,6 @@ const packagedResources = [
   "dist/src/policy.js",
   "dist/src/capabilities.js",
   "dist/src/oxlint.js",
-  "skills/righting-bounded-contexts/SKILL.md",
-  "skills/righting-bounded-contexts/references/approved-design-and-firewall.md",
   "skills/righting-design-review/SKILL.md",
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
@@ -61,22 +59,6 @@ test("the integration skill keeps unsupported source treatments visible", () => 
     "source/catalog.client.ts",
   );
   assert.match(skill, /decision brief[\s\S]*exact candidate `righting\.json`[\s\S]*totals[\s\S]*material/i);
-});
-
-test("the integration skill keeps contextFirewall optional and context design separate", () => {
-  const skill = readFileSync(resolve(repositoryDirectory, "skills/righting-integrate/SKILL.md"), "utf8");
-  const start = skill.indexOf("### `contextFirewall`");
-  const end = skill.indexOf("\nValidate the exact candidate", start);
-  assert.ok(start >= 0 && end > start);
-  const guidance = skill.slice(start, end);
-
-  assert.match(guidance, /policy readiness[\s\S]*design suggestion/i);
-  assert.match(guidance, /single-context[\s\S]*does not[\s\S]*(good|sound)/i);
-  assert.match(guidance, /bounded-context specialist[\s\S]*optional[\s\S]*do not invoke/i);
-  assert.match(guidance, /decision brief[\s\S]*policy readiness[\s\S]*material next step/i);
-  assert.match(guidance, /one short question at a time/i);
-  assert.match(guidance, /do not[\s\S]*(infer|derive)[\s\S]*context policy[\s\S]*domain vocabulary alone/i);
-  assert.match(guidance, /righting-bounded-contexts[\s\S]*reason[\s\S]*trade-off[\s\S]*ask permission[\s\S]*resume/i);
 });
 
 test("the packed package publishes every onboarding reference without the retired docs command", () => {
@@ -129,7 +111,8 @@ test("the packed package publishes every onboarding reference without the retire
     const oxlintReference = readFileSync(resolve(packageDirectory, "package/docs/oxlint.md"), "utf8");
     assert.match(oxlintReference, /righting\/oxlint/);
     assert.match(oxlintReference, /Oxlint exactly `1\.75\.0`/);
-    assert.match(oxlintReference, /unsupported capabilities:[\s\S]*protected-dependency[\s\S]*context-firewall/i);
+    assert.match(oxlintReference, /inspection schema 1[\s\S]*normalized contract version 2/i);
+    assert.match(oxlintReference, /unsupported capabilities:[\s\S]*protected-dependency/i);
     const eslintSkill = readFileSync(resolve(packageDirectory, "package/skills/righting-eslint/SKILL.md"), "utf8");
     assert.match(eslintSkill, /ask the maintainer[\s\S]*before running[\s\S]*--suppress-rule/i);
     assert.match(eslintSkill, /new findings[\s\S]*unchanged lint command/i);

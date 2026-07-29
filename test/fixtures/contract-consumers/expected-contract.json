@@ -1,5 +1,5 @@
 {
-  "contractVersion": 1,
+  "contractVersion": 2,
   "preset": "volatility@1",
   "roles": ["Client", "Manager", "Engine", "ResourceAccess", "Resource", "Utility"],
   "configured": {
@@ -16,7 +16,6 @@
     "protectedDependencies": [{ "package": "@example/database", "role": "Resource" }],
     "variations": [],
     "overrides": [],
-    "scopes": [],
     "compositionRoots": [],
     "guidance": {}
   },
@@ -50,10 +49,7 @@
       "righting/unresolved-local-import",
       "righting/unclassified-source",
       "righting/ambiguous-source",
-      "righting/test-dependency",
-      "righting/cross-context-dependency",
-      "righting/shared-to-context-dependency",
-      "righting/ambiguous-scope"
+      "righting/test-dependency"
     ],
     "protectedDependencyRules": [
       {
@@ -64,8 +60,6 @@
         "policyRuleId": "righting/role-dependency"
       }
     ],
-    "scopeRules": [],
-    "scopeClassification": null,
     "capabilities": [
       {
         "id": "role-dependency",
@@ -96,18 +90,6 @@
         "policyRuleIds": ["righting/role-dependency"],
         "establishes": ["configured-resource-and-utility-package-classification"],
         "doesNotEstablish": ["external-service-runtime-behavior", "utility-package-access-restriction"]
-      },
-      {
-        "id": "context-firewall",
-        "applies": false,
-        "coverage": "statically-enforceable",
-        "policyRuleIds": [
-          "righting/cross-context-dependency",
-          "righting/shared-to-context-dependency",
-          "righting/ambiguous-scope"
-        ],
-        "establishes": ["cross-context-source-import-is-forbidden", "shared-to-context-source-import-is-forbidden"],
-        "doesNotEstablish": ["cross-context-runtime-behavior"]
       },
       {
         "id": "design-judgment",

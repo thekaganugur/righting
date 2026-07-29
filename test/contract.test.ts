@@ -5,14 +5,7 @@ import { dirname, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { inspectPolicy } from "../src/inspect.js";
-import {
-  classifyScope,
-  classifySource,
-  normalizePolicy,
-  readPolicySource,
-  roles,
-  type NormalizedContract,
-} from "../src/policy.js";
+import { classifySource, normalizePolicy, readPolicySource, roles, type NormalizedContract } from "../src/policy.js";
 
 function policy(source: object, projectDirectory: string) {
   return readPolicySource(JSON.stringify(source), resolve(projectDirectory, "righting.json"));
@@ -67,7 +60,7 @@ test("the minimal complete policy normalizes to the standalone adapter-neutral c
   try {
     const contract = normalizePolicy(policy({ preset: "volatility@1", coverage: ["src/**/*.ts"] }, directory));
 
-    assert.equal(contract.contractVersion, 1);
+    assert.equal(contract.contractVersion, 2);
     assert.equal(contract.preset, "volatility@1");
     assert.deepEqual(contract.roles, roles);
     assert.deepEqual(contract.configured, {
@@ -77,7 +70,6 @@ test("the minimal complete policy normalizes to the standalone adapter-neutral c
       protectedDependencies: [],
       variations: [],
       overrides: [],
-      scopes: [],
       compositionRoots: [],
       guidance: {},
     });
@@ -98,7 +90,7 @@ test("the minimal complete policy normalizes to the standalone adapter-neutral c
     assert.ok(contract.effective.policyRuleIds.includes("righting/unclassified-source"));
     assert.ok(contract.effective.capabilities.every((capability) => !("adapterRules" in capability)));
     assert.ok(contract.effective.evidenceLimits.includes("files-outside-coverage"));
-    assert.equal(JSON.parse(JSON.stringify(contract)).contractVersion, 1);
+    assert.equal(JSON.parse(JSON.stringify(contract)).contractVersion, 2);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -122,7 +114,7 @@ test("normalization retains configured provenance and derives deterministic effe
             },
           ],
           protectedDependencies: [{ package: "@example/db", role: "Resource" }],
-          variations: ["clientReadsAccess", "pureEngines", "contextFirewall"],
+          variations: ["clientReadsAccess", "pureEngines"],
           overrides: [
             {
               name: "client-reads-resource",
@@ -131,11 +123,6 @@ test("normalization retains configured provenance and derives deterministic effe
               effect: "allow",
               reason: "Approved read model.",
             },
-          ],
-          scopes: [
-            { kind: "context", name: "orders", path: "src/orders/**" },
-            { kind: "shared", path: "src/shared/**" },
-            { kind: "unscoped", path: "src/application/**" },
           ],
           compositionRoots: ["main", "bootstrap"],
           guidance: { domainVocabulary: "CONTEXT.md", goldenExamples: {} },
@@ -169,65 +156,6 @@ test("normalization retains configured provenance and derives deterministic effe
       directorySegments: ["clients", "screens"],
     });
     assert.deepEqual(contract.effective.conventions.compositionRoots, ["composition-root", "main", "bootstrap"]);
-    assert.deepEqual(contract.effective.scopeClassification, {
-      multipleMatches: { effect: "error", policyRuleId: "righting/ambiguous-scope" },
-      noMatches: "outside-declared-scopes",
-    });
-    assert.deepEqual(contract.effective.scopeRules, [
-      {
-        policyRuleId: "righting/cross-context-dependency",
-        effect: "disallow",
-        from: { scope: "context" },
-        to: { scope: "context", relation: "different" },
-      },
-      {
-        policyRuleId: "righting/shared-to-context-dependency",
-        effect: "disallow",
-        from: { scope: "shared" },
-        to: { scope: "context" },
-      },
-      {
-        policyRuleId: "righting/role-dependency",
-        effect: "allow",
-        from: { scope: "unscoped" },
-        to: { scope: "context" },
-      },
-      {
-        policyRuleId: "righting/role-dependency",
-        effect: "allow",
-        from: { scope: "context", role: "Client" },
-        to: { scope: "context", relation: "same", role: "Client" },
-      },
-      {
-        policyRuleId: "righting/role-dependency",
-        effect: "allow",
-        from: { scope: "context", role: "Client" },
-        to: { scope: "shared", role: "Client" },
-      },
-    ]);
-    assert.deepEqual(classifyScope(contract, "src/orders/create.manager.ts"), { kind: "context", name: "orders" });
-    assert.deepEqual(classifyScope(contract, "src/other/create.manager.ts"), { kind: "outside-declared-scopes" });
-    const ambiguousScopeContract = normalizePolicy({
-      ...policy(
-        {
-          preset: "volatility@1",
-          coverage: ["src/**/*.ts"],
-          variations: ["contextFirewall"],
-          scopes: [
-            { kind: "context", name: "orders", path: "src/orders/**" },
-            { kind: "shared", path: "src/**" },
-            { kind: "unscoped", path: "application/**" },
-          ],
-        },
-        directory,
-      ),
-    });
-    assert.deepEqual(classifyScope(ambiguousScopeContract, "src/orders/create.manager.ts"), {
-      kind: "violation",
-      ruleId: "righting/ambiguous-scope",
-      scopes: ["orders", "shared"],
-    });
-    assert.equal(contract.effective.capabilities.find(({ id }) => id === "context-firewall")?.applies, true);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -348,7 +276,7 @@ test("project generated conventions preserve generated composition-root treatmen
   }
 });
 
-test("the removed mapping policy has no compatibility parser", () => {
+test("removed policy syntax has no compatibility parser", () => {
   const directory = project();
   try {
     assert.throws(
@@ -362,6 +290,18 @@ test("the removed mapping policy has no compatibility parser", () => {
           directory,
         ),
       /unsupported property "mappings"/,
+    );
+    assert.throws(
+      () => policy({ preset: "volatility@1", coverage: ["src/**"], scopes: [] }, directory),
+      /unsupported property "scopes"/,
+    );
+    assert.throws(
+      () =>
+        policy(
+          { preset: "volatility@1", coverage: ["src/**"], variations: ["contextFirewall"] },
+          directory,
+        ),
+      /unsupported opt-in "contextFirewall"/,
     );
   } finally {
     rmSync(directory, { recursive: true, force: true });

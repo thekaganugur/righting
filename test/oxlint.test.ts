@@ -343,21 +343,6 @@ test("Oxlint consumes normalized variations and overrides and rejects unsupporte
     assert.equal(result.status, 1, output(result));
     assert.match(output(result), /unsupported capabilities: protected-dependency/);
   });
-  withPolicy(
-    policy({
-      variations: ["contextFirewall"],
-      scopes: [
-        { kind: "context", name: "orders", path: "src/orders/**" },
-        { kind: "shared", path: "src/shared/**" },
-        { kind: "unscoped", path: "src/application/**" },
-      ],
-    }),
-    () => {
-      const result = runLint("src/client/client.js");
-      assert.equal(result.status, 1, output(result));
-      assert.match(output(result), /unsupported capabilities: context-firewall/);
-    },
-  );
 });
 
 test("Oxlint fails closed when inspection is incomplete or invalid", () => {

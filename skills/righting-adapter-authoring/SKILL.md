@@ -33,8 +33,8 @@ Compose the host's native plugin lifecycle, dependency-node traversal, resolver 
 Own only the thin Righting layer:
 
 - contract and version validation;
-- exact source and scope classification from normalized conventions;
-- translation of effective role, protected-dependency, and scope rules;
+- exact source classification from normalized conventions;
+- translation of effective role and protected-dependency rules;
 - stable `righting/*` identities in observable findings;
 - fail-closed unresolved-local behavior; and
 - capability claims and their conformance record.
@@ -53,7 +53,7 @@ Make the proposed scope and acceptance gate executable together. Every required 
 
 ## 4. Implement through the native entry point
 
-Translate `contract.effective.allowedDependencies`, conventions, protected-dependency rules, scope rules, and stable policy-rule IDs into the host's native configuration or visitor/report API. Preserve static imports, re-exports, literal `require`, dynamic imports, and type-only imports when the host can observe them. Make unresolved would-be local dependencies diagnostic rather than external-by-default bypasses.
+Translate `contract.effective.allowedDependencies`, conventions, protected-dependency rules, and stable policy-rule IDs into the host's native configuration or visitor/report API. Preserve static imports, re-exports, literal `require`, dynamic imports, and type-only imports when the host can observe them. Make unresolved would-be local dependencies diagnostic rather than external-by-default bypasses.
 
 Emit native diagnostics at actionable source locations. When the native rule ID cannot equal a stable Righting identity, include the exact `righting/*` identity in structured diagnostic data or the message and prove that mapping black-box.
 

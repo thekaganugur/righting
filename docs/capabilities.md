@@ -57,25 +57,6 @@ Coverage: `statically-enforceable`
 
 - `righting/role-dependency`
 
-## `context-firewall`
-
-Coverage: `statically-enforceable`
-
-### Establishes
-
-- `cross-context-source-import-is-forbidden`
-- `shared-to-context-source-import-is-forbidden`
-
-### Does not establish
-
-- `cross-context-runtime-behavior`
-
-### Policy rules
-
-- `righting/cross-context-dependency`
-- `righting/shared-to-context-dependency`
-- `righting/ambiguous-scope`
-
 ## `design-judgment`
 
 Coverage: `guidance-only`

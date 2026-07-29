@@ -89,14 +89,13 @@ Protected packages follow the same effective role graph as source roles.
 
 Keep optional fields absent unless approved and applicable:
 
-- `variations`: `clientReadsAccess`, `pureEngines`, and `contextFirewall`. The firewall continuously checks approved static import boundaries, but premature scopes can encode accidental structure and force harmful constraints. Use it only for maintainer-identified context identities and relationships, with exact scopes explicitly approved; source folders, imports, and vocabulary differences are evidence to investigate, not context policy by themselves. Without approved contexts, omit it and `scopes`—the policy remains complete. A single-context declaration does not establish that the current boundary is well designed; reassessing that boundary belongs to an optional bounded-context specialist.
+- `variations`: `clientReadsAccess` and `pureEngines`. Each named opt-in changes the effective role graph.
 - `overrides`: named, reason-required global `allow` or `disallow` changes to one canonical role edge. An override must change the effective edge.
-- `scopes`: required with `contextFirewall`; include at least one named `context`, one `shared`, and one `unscoped` path rule.
 - `guidance`: project-relative `domainVocabulary` and named `goldenExamples` references for coding-agent guidance.
 
 ```json
 {
-  "variations": ["pureEngines", "contextFirewall"],
+  "variations": ["pureEngines"],
   "overrides": [
     {
       "name": "client-reads-resource",
@@ -106,11 +105,6 @@ Keep optional fields absent unless approved and applicable:
       "reason": "Approved project-wide read model."
     }
   ],
-  "scopes": [
-    { "kind": "context", "name": "orders", "path": "src/orders/**" },
-    { "kind": "shared", "path": "src/shared/**" },
-    { "kind": "unscoped", "path": "src/application/**" }
-  ],
   "guidance": {
     "domainVocabulary": "CONTEXT.md",
     "goldenExamples": { "create-order": "docs/examples/create-order.md" }
@@ -118,11 +112,9 @@ Keep optional fields absent unless approved and applicable:
 }
 ```
 
-`contextFirewall` forbids context-to-context and shared-to-context dependencies. Contextual source may use shared source when the role graph permits it; unscoped source may wire context entry points. A source matching multiple scope patterns produces `righting/ambiguous-scope`; no scope pattern takes precedence.
-
 ## Normalized contract
 
-`righting inspect --json` places approved semantics once under `contract`. `contractVersion` versions this adapter-neutral interface independently from `volatility@1`. The contract retains configured provenance and exposes effective conventions, the closed role graph, protected-dependency and scope rules, stable `righting/...` policy-rule IDs, adapter-neutral capabilities, and evidence limits. Repository file snapshots and adapter mechanics are not contract data.
+`righting inspect --json` places approved semantics once under `contract`. `contractVersion` versions this adapter-neutral interface independently from `volatility@1`. The contract retains configured provenance and exposes effective conventions, the closed role graph, protected-dependency rules, stable `righting/...` policy-rule IDs, adapter-neutral capabilities, and evidence limits. Repository file snapshots and adapter mechanics are not contract data.
 
 Core consumers can import the same helpers from `righting/core`:
 

@@ -106,7 +106,7 @@ test("dogfood project preserves the approved Righting repair workflow", () => {
     );
     const boundaryFailure = npm(projectDirectory, "run", "lint");
     assert.equal(boundaryFailure.status, 1, `${boundaryFailure.stdout}\n${boundaryFailure.stderr}`);
-    assert.match(`${boundaryFailure.stdout}\n${boundaryFailure.stderr}`, /righting\/cross-context-dependency/);
+    assert.match(`${boundaryFailure.stdout}\n${boundaryFailure.stderr}`, /righting\/role-dependency/);
 
     writeFileSync(refundPath, repairedRefundWorkflow);
 

@@ -180,9 +180,6 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
     (alias) =>
       `- ${alias.name}: ${alias.role}; suffixes ${list(alias.filenameSuffixes)}; directories ${list(alias.directorySegments)}`,
   );
-  const scopes = contract.configured.scopes.map(
-    (scope) => `- ${scope.kind}${scope.name === undefined ? "" : `: ${scope.name}`}: ${scope.path}`,
-  );
   const overrides = contract.configured.overrides.map(
     (override) => `- ${override.name}: ${override.effect} ${override.from} -> ${override.to} (${override.reason})`,
   );
@@ -213,8 +210,6 @@ export function renderInspection(inspection: Inspection, includeAll = false): st
     `Generated directories: ${list(contract.configured.generated.directorySegments)}`,
     `Composition roots: ${list(contract.configured.compositionRoots)}`,
     `Variations: ${list(contract.configured.variations)}`,
-    "Scopes",
-    ...(scopes.length === 0 ? ["- None"] : scopes),
     "Overrides",
     ...(overrides.length === 0 ? ["- None"] : overrides),
     "Protected dependencies",

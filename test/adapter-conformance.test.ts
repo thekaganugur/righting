@@ -13,7 +13,7 @@ test("documented and executable adapter-conformance scenario families have two-w
   const documented = [...documentation.matchAll(/^### `([^`]+)`$/gm)].map((match) => match[1]!);
   const registered = Object.values(conformanceScenarioFamilyIds);
 
-  assert.equal(registered.length, 9);
+  assert.equal(registered.length, 8);
   assert.equal(new Set(registered).size, registered.length, "registered scenario-family IDs must be unique");
   assert.equal(new Set(documented).size, documented.length, "documented scenario-family IDs must be unique");
   assert.deepEqual([...documented].sort(), [...registered].sort());

@@ -48,7 +48,6 @@ const inspectHelp = [
   "  --json  Emit the machine-facing policy interpretation.",
 ].join("\n");
 const rightingSkillNames = [
-  "righting-bounded-contexts",
   "righting-design-review",
   "righting-eslint",
   "righting-integrate",

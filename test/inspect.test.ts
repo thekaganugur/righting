@@ -57,7 +57,7 @@ const completePolicy = {
     },
   ],
   protectedDependencies: [{ package: "@example/db", role: "Resource" }],
-  variations: ["clientReadsAccess", "pureEngines", "contextFirewall"],
+  variations: ["clientReadsAccess", "pureEngines"],
   overrides: [
     {
       name: "screen-reads-resource",
@@ -66,11 +66,6 @@ const completePolicy = {
       effect: "allow",
       reason: "The screen renders an approved read model.",
     },
-  ],
-  scopes: [
-    { kind: "context", name: "catalog", path: "src/catalog/**" },
-    { kind: "shared", path: "src/shared/**" },
-    { kind: "unscoped", path: "src/application/**" },
   ],
   compositionRoots: ["main"],
 } as const;
@@ -113,7 +108,7 @@ test("righting inspect exposes normalized semantics exactly once under contract"
 
     const human = run(directory, "inspect", "--all");
     assert.equal(human.status, 0, human.stderr);
-    assert.match(human.stdout, /Contract version: 1/);
+    assert.match(human.stdout, /Contract version: 2/);
     assert.match(human.stdout, /Source coverage is limited to declared coverage patterns/);
     assert.match(human.stdout, /Applicable capabilities/);
     assert.match(human.stdout, /Adapter activation: unknown/);

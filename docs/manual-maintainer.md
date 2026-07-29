@@ -16,7 +16,7 @@ npx righting inspect
 
 ## 2. Configure
 
-Use the [policy language reference](policy-language.md) to choose broad source coverage, any local convention aliases, and only the composition-root tokens, variations, scopes, overrides, protected dependencies, and guidance references that apply. Its [minimal complete policy](policy-language.md#minimal-complete-policy) shows the smallest JSON shape; it does not recommend roles, names, or folders.
+Use the [policy language reference](policy-language.md) to choose broad source coverage, any local convention aliases, and only the composition-root tokens, variations, overrides, protected dependencies, and guidance references that apply. Its [minimal complete policy](policy-language.md#minimal-complete-policy) shows the smallest JSON shape; it does not recommend roles, names, or folders.
 
 ## 3. Approve and replace the starter
 

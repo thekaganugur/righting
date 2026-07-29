@@ -50,12 +50,8 @@ Test source remains visible. Its outgoing role dependencies are exempt, while go
 
 Generated role source remains governed by its canonical role. A composition root may wire role entry points, while governed role source cannot depend on a composition root and receives `righting/role-dependency`. Exact composition-root filename tokens must not classify unrelated suffix matches.
 
-### `context-firewall`
-
-Required only when `context-firewall` is claimed and applicable. Exercise same-context Client composition, contextual Client use of shared Client source, unscoped wiring into contexts, forbidden cross-context imports, forbidden shared-to-context imports, and `righting/ambiguous-scope` for multiple scope matches. Forbidden scope edges map to `righting/cross-context-dependency` or `righting/shared-to-context-dependency` as specified by `effective.scopeRules`.
-
 ## Capability and support record
 
-`role-dependency` is the minimum support claim; all of its applicable cases above must pass. Claim `protected-dependency` or `context-firewall` only after its applicable cases pass against the exact declared contract and version tuple. Copy the contract's `establishes` and `doesNotEstablish` limits into the support record, and list unsupported capabilities explicitly.
+`role-dependency` is the minimum support claim; all of its applicable cases above must pass. Claim `protected-dependency` only after its applicable cases pass against the exact declared contract and version tuple. Copy the contract's `establishes` and `doesNotEstablish` limits into the support record, and list unsupported capabilities explicitly.
 
 Record one tested tuple of Righting contract version, adapter version, native guardrail version, and any composed plugin/resolver versions. A passing tuple does not imply a compatibility matrix. Native diagnostics are mandatory. Native suppression and legacy-debt behavior are recommended when the host provides them, but declare and test them separately from the support gate.

@@ -11,9 +11,9 @@ Keep the review advisory and confine it to the stated behavior and supplied focu
 
 ## 1. Establish the evidence
 
-Read the root `AGENTS.md`; then read root `CONTEXT.md` or the relevant contexts from `CONTEXT-MAP.md`, plus relevant root or context-scoped `docs/adr/` records, when present. Read the stated behavior or change goal, focused diff or relevant files, `righting.json` when present, and configured `guidance.domainVocabulary` and every configured `guidance.goldenExamples` reference when present. Treat their local terms and examples as evidence for the stated behavior.
+Read the root `AGENTS.md`, `CONTEXT.md`, and relevant `docs/adr/` records when present. Read the stated behavior or change goal, focused diff or relevant files, `righting.json` when present, and configured `guidance.domainVocabulary` and every configured `guidance.goldenExamples` reference when present. Treat their local terms and examples as evidence for the stated behavior.
 
-Use terms defined in the applicable context documentation in questions and the review record. When the policy is complete, run `righting inspect --json` to identify coverage, convention aliases, canonical roles, allowed edges, configured variations, overrides, context scopes, and applicable capability records under `contract`. Record an explicit absence for a missing policy, focus, or configured reference before asking a question; surface any contradiction with a relevant ADR.
+Use terms defined in the applicable domain documentation in questions and the review record. When the policy is complete, run `righting inspect --json` to identify coverage, convention aliases, canonical roles, allowed edges, configured variations, overrides, and applicable capability records under `contract`. Record an explicit absence for a missing policy, focus, or configured reference before asking a question; surface any contradiction with a relevant ADR.
 
 Completion: the record contains a concrete behavior, relevant code evidence, applicable policy and ADR evidence, and evidence or an explicit absence for every applicable source above.
 
@@ -28,9 +28,8 @@ Walk the following original Righting-inspired checklist in the order that the av
 5. If a Manager coordinates another Manager, what interaction boundary makes the coordination deliberate rather than a direct source dependency?
 6. After this change, how many Managers exist, and does the Engine count stay small relative to them rather than growing one Engine per activity?
 7. Does this change have a Client, Engine, ResourceAccess, or Resource publishing events, or an Engine, ResourceAccess, or Resource subscribing to them?
-8. When contexts apply, which context owns the behavior, and does any dependency cross into another context or from shared code into contextual code?
-9. Which contracts or inputs make the responsibility understandable without exposing another role's details?
-10. What evidence would distinguish an intentional policy-wide variation from a local exception?
+8. Which contracts or inputs make the responsibility understandable without exposing another role's details?
+9. What evidence would distinguish an intentional policy-wide variation from a local exception?
 
 Evaluate default-policy fit first, then clarification or extraction, then a tightening. Only when those options cannot express a justified design, suggest a named variation or reason-required global override.
 
@@ -41,7 +40,7 @@ Completion: for every applicable checklist item, record an answer, supporting ev
 Use these headings:
 
 - **Evidence** — policy, code, vocabulary, and golden-example facts observed.
-- **Risks** — boundary, responsibility, or context concerns tied to the evidence.
+- **Risks** — boundary or responsibility concerns tied to the evidence.
 - **Open questions** — unanswered design decisions, including evidence gaps.
 - **Adapter limitations** — the applicable capability records' established and unproven claims from `righting inspect --json`, plus inspection's unknown adapter-activation status.
 - **Conservative policy considerations** — only justified policy-wide variations or overrides, with the design alternative considered first.

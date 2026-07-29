@@ -18,13 +18,8 @@ export function renderCapabilityCatalogReference(): string {
     aliases: [],
     generated: { filenameMarkers: [], directorySegments: [] },
     protectedDependencies: [{ package: "example-resource", role: "Resource" }],
-    variations: ["contextFirewall"],
+    variations: [],
     overrides: [],
-    scopes: [
-      { kind: "context", name: "example", path: "example/**" },
-      { kind: "shared", path: "shared/**" },
-      { kind: "unscoped", path: "application/**" },
-    ],
     compositionRoots: [],
     guidance: {},
   };

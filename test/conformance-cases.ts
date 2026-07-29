@@ -8,7 +8,6 @@ export const conformanceScenarioFamilyIds = {
   sourceClassificationViolations: "source-classification-violations",
   testSourceTreatment: "test-source-treatment",
   generatedSourceAndCompositionRoots: "generated-source-and-composition-roots",
-  contextFirewall: "context-firewall",
 } as const;
 export type ConformanceScenarioFamilyId = (typeof conformanceScenarioFamilyIds)[keyof typeof conformanceScenarioFamilyIds];
 

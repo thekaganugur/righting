@@ -9,12 +9,5 @@
     { "name": "Api", "role": "Resource", "directorySegments": ["api"] },
     { "name": "Shared", "role": "Utility", "directorySegments": ["shared"] }
   ],
-  "compositionRoots": ["main"],
-  "variations": ["contextFirewall"],
-  "scopes": [
-    { "kind": "context", "name": "orders", "path": "src/orders/**" },
-    { "kind": "context", "name": "returns", "path": "src/returns/**" },
-    { "kind": "shared", "path": "src/shared/**" },
-    { "kind": "unscoped", "path": "src/application/**" }
-  ]
+  "compositionRoots": ["main"]
 }
