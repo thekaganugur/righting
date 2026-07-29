@@ -12,7 +12,6 @@ const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/manual-main
 const approvedPolicyPath = resolve(fixtureDirectory, "righting-approved.json");
 const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nBefore changing covered code, run `npx righting inspect --json` and use its normalized `contract`.\nAdapter activation remains unknown until separately verified.";
 const skills = [
-  "righting-design-review",
   "righting-eslint",
   "righting-integrate",
   "righting-adapter-authoring",
@@ -102,7 +101,7 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
     assert.equal(readFileSync(resolve(collision, "SKILL.md"), "utf8"), "# Project-owned skill\n");
     assert.equal(existsSync(resolve(collisionProjectDirectory, "righting.json")), false);
     assert.equal(readFileSync(resolve(collisionProjectDirectory, "AGENTS.md"), "utf8"), collisionGuidance);
-    assert.equal(existsSync(resolve(collisionProjectDirectory, ".agents/skills/righting-design-review")), false);
+    assert.equal(existsSync(resolve(collisionProjectDirectory, ".agents/skills/righting-deep-modules")), false);
     assert.equal(existsSync(resolve(collisionProjectDirectory, ".agents/skills/righting-integrate")), false);
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });

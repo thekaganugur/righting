@@ -13,7 +13,6 @@ const packagedResources = [
   "dist/src/policy.js",
   "dist/src/capabilities.js",
   "dist/src/oxlint.js",
-  "skills/righting-design-review/SKILL.md",
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
   "skills/righting-adapter-authoring/SKILL.md",
@@ -74,6 +73,10 @@ test("the integration skill keeps unsupported source treatments visible", () => 
     "source/catalog.client.ts",
   );
   assert.match(skill, /decision brief[\s\S]*exact candidate `righting\.json`[\s\S]*totals[\s\S]*material/i);
+});
+
+test("the retired design-review skill is not packaged", () => {
+  assert.equal(existsSync(resolve(repositoryDirectory, "skills/righting-design-review")), false);
 });
 
 test("packaged skill names use the Righting namespace and match their directories", () => {

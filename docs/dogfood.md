@@ -17,4 +17,4 @@ The project covers `src/**/*.ts`. Its approved directory-token aliases are `Scre
 
 Approval occurred outside Righting; the package cannot witness it. The flat-config adapter requires existing lint and resolver support, and native legacy-debt adoption requires a separate decision. Inspection reports the normalized contract and adapter-neutral capability records but cannot show adapter activation. Static source checks do not prove runtime behavior, use-case validity, contract quality, real volatility, or queued Manager interaction semantics.
 
-The project still has open refinement questions around advisory design-review usefulness, adapter performance at scale, composition-root handling, stronger native suppression identity, and future adapters. These are product questions, not instructions for adopters.
+The project still has open refinement questions around adapter performance at scale, composition-root handling, stronger native suppression identity, and future adapters. These are product questions, not instructions for adopters.

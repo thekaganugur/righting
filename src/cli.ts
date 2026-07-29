@@ -48,7 +48,6 @@ const inspectHelp = [
   "  --json  Emit the machine-facing policy interpretation.",
 ].join("\n");
 const rightingSkillNames = [
-  "righting-design-review",
   "righting-eslint",
   "righting-integrate",
   "righting-adapter-authoring",
@@ -155,6 +154,7 @@ function planSkillLinks(projectDirectory: string): PlannedSkillLinks {
       }
     }
   }
+
   const links = directories.flatMap((directory) =>
     rightingSkillNames.map((name) => {
       const source = resolve(packagedSkillsDirectory, name);

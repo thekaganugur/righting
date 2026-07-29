@@ -21,7 +21,7 @@ Nine fresh-context replays (2026-07-22): five adopt runs against the real dogfoo
 8. **Genericness, pure backend shape (gpt-5.6-terra:high):** synthetic HTTP + queue-consumer project, no UI. The agent mapped route handlers and the consumer to Client, protected `pg` as Resource, kept the composition root intentionally unmapped, and cited the new `clientReadsAccess` cost note when omitting it. Gap: no docs guidance classified backend ingress or composition roots.
 9. **Genericness, library shape (gpt-5.6-terra:high):** synthetic library with no entry point. The agent mapped no Client, classified the public facade as Manager, and resolved an Engine→Engine trap by responsibility clarification (helper → Utility). Gap: no docs guidance for library public-API classification; the Client discussion read UI-oriented.
 
-Files changed by the campaign: `skills/righting-integrate/SKILL.md`, `docs/policy-language.md`, `skills/righting-design-review/SKILL.md`, and this record.
+Files changed by the campaign included the since-retired `skills/righting-design-review/SKILL.md`, plus `skills/righting-integrate/SKILL.md`, `docs/policy-language.md`, and this record.
 
 ## Failure modes found and fixes applied
 
@@ -56,7 +56,7 @@ The default policy table is the book's closed architecture with its documented r
 
 - **Client granularity.** The book's Client is a whole application; mapping component files makes ordinary UI composition a forbidden `Client→Client` edge. All five adopt replays had to remediate it. Fixed in documentation: `docs/policy-language.md` now states the intra-Client composition idiom (explicit `allow` override with reason, or context-scoped Clients).
 - **`clientReadsAccess` is the book's semi-open relaxation** (discouraged outside performance-critical or near-immutable code) and, unlike overrides, carries no required reason. Documented as a deliberate policy-wide relaxation in `docs/policy-language.md`.
-- **Advisory coverage gaps.** The book's naming conventions, Manager cardinality/golden ratio, and event publish/subscribe don'ts had no home. Three probe questions added to `skills/righting-design-review/SKILL.md`.
+- **Advisory coverage gaps.** The book's naming conventions, Manager cardinality/golden ratio, and event publish/subscribe don'ts had no home. Three probe questions were added to the design-review skill during this campaign; that skill has since been retired.
 
 ## Not yet specified
 

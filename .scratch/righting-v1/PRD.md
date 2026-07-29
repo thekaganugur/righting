@@ -14,7 +14,7 @@ The result is that an agent making an otherwise small feature change can introdu
 
 Deliver `righting` v1: a local TypeScript/Node architecture-policy tool with a versioned, language-neutral policy and a first ESLint enforcement adapter. A project declares explicit aliases, role mappings, optional context scopes, and any justified variations in `righting.json`; the `volatility@1` preset then validates source dependencies against the closed Righting role graph.
 
-The core owns policy validation, stable policy-rule keys, agent guidance, and the non-growing legacy-debt ratchet. The ESLint adapter translates that policy into the project's existing modern flat-config lint loop and uses ESLint-native suppressions. The tool provides non-interactive `init`, `baseline`, and `docs` commands, integration skills for deliberate setup, and an advisory design-review skill. It is strict by default, local-only, safe to re-run, explicit about what static analysis can and cannot establish, and validated through a real dogfooding integration before public release.
+The core owns policy validation, stable policy-rule keys, agent guidance, and the non-growing legacy-debt ratchet. The ESLint adapter translates that policy into the project's existing modern flat-config lint loop and uses ESLint-native suppressions. The tool provides non-interactive `init`, `baseline`, and `docs` commands and integration skills for deliberate setup. It is strict by default, local-only, safe to re-run, explicit about what static analysis can and cannot establish, and validated through a real dogfooding integration before public release.
 
 ## User Stories
 
@@ -51,7 +51,7 @@ The core owns policy validation, stable policy-rule keys, agent guidance, and th
 31. As a maintainer without modern ESLint flat config, I want a clear unsupported result rather than an automatic migration, so that the tool does not claim certainty or modify unrelated lint infrastructure.
 32. As a developer, I want `righting init` to create an intentionally incomplete policy template non-interactively, so that an agent and developer must consciously supply architecture decisions before lint activation.
 33. As a maintainer, I want `righting init` to be safe to re-run and preserve project-owned agent guidance, so that setup can be refreshed without overwriting local instructions.
-34. As an agent, I want generated agent guidance to explain aliases, enforced boundaries, adapter limitations, and available design review, so that implementation work starts with the project’s architecture rather than assumptions.
+34. As an agent, I want generated agent guidance to explain aliases, enforced boundaries, and adapter limitations, so that implementation work starts with the project’s architecture rather than assumptions.
 35. As a maintainer, I want optional domain-vocabulary and golden-example references validated for existence, so that agents receive useful pointers without the tool pretending to judge their quality.
 36. As an agent integrating the tool, I want a skill that leads policy, alias, scope, approval, documentation, and baseline decisions, so that strict setup is still practical.
 37. As an agent integrating ESLint, I want a skill that preserves the current flat config and resolver setup while verifying the existing lint command, so that adapter wiring is repeatable and non-destructive.
@@ -63,11 +63,9 @@ The core owns policy validation, stable policy-rule keys, agent guidance, and th
 43. As a developer, I want Righting suppressions stored through the project’s existing ESLint suppression workflow and namespaced to the adapter, so that legacy debt remains compatible with existing lint tooling.
 44. As a maintainer, I want the count-based baseline limitation explained, so that I understand that a same-count swap within one file and rule is not distinguished.
 45. As a future adapter author, I want common allowed and forbidden dependency fixtures, so that a new ecosystem adapter cannot be called supported without matching core policy behavior.
-46. As a maintainer considering a design change, I want an opt-in design-review skill that asks focused questions and reports evidence, risks, and adapter limitations, so that architectural judgment is improved without a misleading score.
-47. As a developer using the design-review skill, I want it to leave policy, CI, and project files unchanged unless I explicitly request an artifact, so that advisory review cannot silently alter the project.
-48. As a privacy-conscious maintainer, I want `righting` to run locally without telemetry or a hosted service, so that architecture information stays in the repository and local environment.
-49. As the product author, I want to dogfood the complete integration and repair loop in a real TypeScript project, so that public release is based on proven agent usability rather than only fixtures.
-50. As a maintainer who has installed Righting, I want an explicit `init --skills` option that exposes the packaged skills through the project-standard `.agents/skills` location without replacing project-owned skills, so that compatible agents can discover the integration workflow without stale copies.
+46. As a privacy-conscious maintainer, I want `righting` to run locally without telemetry or a hosted service, so that architecture information stays in the repository and local environment.
+47. As the product author, I want to dogfood the complete integration and repair loop in a real TypeScript project, so that public release is based on proven agent usability rather than only fixtures.
+48. As a maintainer who has installed Righting, I want an explicit `init --skills` option that exposes the packaged skills through the project-standard `.agents/skills` location without replacing project-owned skills, so that compatible agents can discover the integration workflow without stale copies.
 
 ## Implementation Decisions
 
@@ -105,7 +103,7 @@ The core owns policy validation, stable policy-rule keys, agent guidance, and th
 
 - V1 exposes only `init`, `baseline`, and `docs` commands. The commands are non-interactive by default, safe to re-run, and machine-readable where useful.
 - `init` creates an explicitly incomplete policy template. It must not infer a repository architecture, silently choose aliases or scopes, activate linting before approval, or rewrite an ESLint configuration.
-- `init` updates only a marked managed block in root `AGENTS.md`, preserving all project-owned content around it. The managed guidance explains local aliases, boundaries, adapter limits, the available design-review skill, and the opt-in `init --skills` discovery setup.
+- `init` updates only a marked managed block in root `AGENTS.md`, preserving all project-owned content around it. The managed guidance explains local aliases, boundaries, adapter limits, and the opt-in `init --skills` discovery setup.
 - `init --skills` creates relative symlinks to the packaged Righting skill directories under `.agents/skills`, the cross-agent discovery convention. It is safe to re-run and refuses to replace a non-Righting project-owned skill with the same name.
 - The policy can include optional agent-only extras for domain vocabulary and golden examples. The core validates that configured references exist but does not parse a domain document or determine whether an example is architecturally sound.
 - Skills follow the Agent Skills standard without harness-specific assumptions. `righting-integrate` owns deliberate policy and baseline decisions; `righting-eslint` owns flat-config wiring, resolver setup, native suppression workflow, and verification. The ESLint integration protocol inspects and preserves existing settings, adds only adapter configuration, runs the existing lint command, reports whether typed linting is present and its outcome, and does not restructure lint commands without approval.
@@ -124,11 +122,9 @@ The core owns policy validation, stable policy-rule keys, agent guidance, and th
 - A normal baseline cannot grow. A deliberately enabled or expanded policy may establish an initial legacy baseline only with an explicit migration reason.
 - The count ratchet is intentionally transparent rather than exact: it detects increases but cannot distinguish a same-count violation swap within the same file and policy-rule pair.
 
-### Future adapters and design review
+### Future adapters
 
 - A future adapter is not supported until it passes the common allowed and forbidden dependency fixtures. It must state capabilities and limitations using the shared policy-rule vocabulary.
-- `righting-design-review` is opt-in and advisory. It inspects the policy and relevant code before questioning, uses configured domain vocabulary and golden examples when available, asks one design question at a time, and reports evidence, open questions, risks, and adapter limitations. It does not score, issue pass/fail judgments, or automatically change policy, CI, or project files.
-- The design-review checklist uses original wording inspired by *Righting Software* and must not reproduce book text.
 
 ## Testing Decisions
 
@@ -162,6 +158,6 @@ The core owns policy validation, stable policy-rule keys, agent guidance, and th
 ## Further Notes
 
 - The v1 design is agreed for dogfooding. Public `0.x` publication follows only after the stated dogfood acceptance path succeeds in a real TypeScript repository: approved non-interactive integration, managed policy aliases/scopes, committed legacy debt where needed, generated guidance, an actionable normal-lint boundary failure repaired using the policy or golden example, and green CI without human architecture intervention.
-- Dogfooding is the evidence source for refining `righting-design-review`, adapter performance, composition-root scope needs, stronger baseline identity, and future adapters.
+- Dogfooding is the evidence source for refining adapter performance, composition-root scope needs, stronger baseline identity, and future adapters.
 - No project glossary or ADRs existed when this specification was produced. Terminology is therefore taken from the approved `righting` v1 design and should be added to the project glossary when domain-modeling work establishes durable definitions.
-- The specification credits *Righting Software* as inspiration while requiring original product wording and an original review checklist.
+- The specification credits *Righting Software* as inspiration while requiring original product wording.

@@ -81,7 +81,7 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 
 **Blocked by:** Enforce context-firewall scopes.
 
-- [x] The `docs` command renders aliases, enforced boundaries, adapter limitations, and the available design-review workflow from the policy.
+- [x] The `docs` command renders aliases, enforced boundaries, and adapter limitations from the policy.
 - [x] Each rule is identified as lint-enforced, partially checked, or guidance only.
 - [x] Optional domain-vocabulary and golden-example references are checked for existence without Righting judging their contents.
 - [x] Generated guidance remains safe to regenerate and preserves project-owned agent instructions outside its managed block.
@@ -98,24 +98,13 @@ Work the **frontier**: any ticket whose blockers are all done. Tickets 6 and 7 m
 - [x] Both skills conform to the Agent Skills standard without harness-specific assumptions.
 - [x] `righting init --skills` creates relative symlinks to packaged skills under `.agents/skills` without replacing project-owned collisions, so compatible agents can discover them.
 
-## 09. Offer read-only Righting design review
-
-**What to build:** A developer can opt into a policy-aware design review that examines the proposed behavior and relevant code, asks focused design questions, and returns evidence, risks, open questions, and static-analysis limitations without changing the project.
-
-**Blocked by:** Generate policy and agent guidance.
-
-- [x] The skill reads the policy and relevant code before questioning and uses configured vocabulary and golden examples when present.
-- [x] It asks one question at a time, uses an original Righting-inspired checklist, and does not issue scores or pass/fail verdicts.
-- [x] It flags when a constraint is only partially checkable by an adapter and suggests policy changes conservatively.
-- [x] It changes no policy, CI, or project files automatically; a Markdown artifact is written only when explicitly requested.
-
-## 10. Dogfood the complete v1 workflow
+## 09. Dogfood the complete v1 workflow
 
 **What to build:** In a real TypeScript project, an agent and maintainer can complete the full approved Righting workflow—from deliberate integration through a repaired boundary failure—and leave CI green without a human architecture intervention.
 
-**Blocked by:** Guide deliberate Righting integrations; Offer read-only Righting design review.
+**Blocked by:** Guide deliberate Righting integrations.
 
 - [x] The dogfood project completes non-interactive integration with user-approved aliases, scopes or managed area, generated guidance, and committed legacy debt where needed.
 - [x] A normal feature change encounters an actionable boundary failure in the project’s normal lint loop and is repaired using the policy or a golden example.
 - [x] The final project passes CI without a human architecture intervention.
-- [x] The dogfood record identifies evidence and open refinement questions for design review, adapter performance, composition-root scope, stronger baseline identity, and future adapters.
+- [x] The dogfood record identifies evidence and open refinement questions for adapter performance, composition-root scope, stronger baseline identity, and future adapters.
