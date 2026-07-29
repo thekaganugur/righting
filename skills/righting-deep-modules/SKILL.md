@@ -1,7 +1,7 @@
 ---
-name: volatility-driven-deep-modules
+name: righting-deep-modules
 description: Discover volatility-backed module candidates, design deep interfaces for a selected candidate, and validate composition before restructuring. Use when the user wants understandable architectural boxes whose boundaries follow observed or credible projected change.
-compatibility: Requires the sibling improve-codebase-volatility, codebase-design, and domain-modeling skills packaged with this skill.
+compatibility: Requires the sibling righting-volatility-review, righting-module-design, and righting-domain-modeling skills packaged with this skill.
 ---
 
 # Volatility-driven deep modules
@@ -14,15 +14,15 @@ Default to one incremental candidate. Produce a coarse map only when the user ex
 
 Before starting, read these sibling skill files completely:
 
-- [`improve-codebase-volatility`](../improve-codebase-volatility/SKILL.md), including its linked language and method guidance;
-- [`codebase-design`](../codebase-design/SKILL.md), including [`DEEPENING.md`](../codebase-design/DEEPENING.md); and
-- [`domain-modeling`](../domain-modeling/SKILL.md) only when terms or architectural decisions need to be changed.
+- [`righting-volatility-review`](../righting-volatility-review/SKILL.md), including its linked language and method guidance;
+- [`righting-module-design`](../righting-module-design/SKILL.md), including [`DEEPENING.md`](../righting-module-design/DEEPENING.md); and
+- [`righting-domain-modeling`](../righting-domain-modeling/SKILL.md) only when terms or architectural decisions need to be changed.
 
-Use [`DESIGN-IT-TWICE.md`](../codebase-design/DESIGN-IT-TWICE.md) when the Interface or Seam is non-obvious. Do not also run the parallel workflow from [`CONTRACT-DESIGN.md`](../improve-codebase-volatility/CONTRACT-DESIGN.md); use its Righting role, composition, atomic-business-verb, and contract-metric constraints as judging inputs instead.
+Use [`DESIGN-IT-TWICE.md`](../righting-module-design/DESIGN-IT-TWICE.md) when the Interface or Seam is non-obvious. Do not also run the parallel workflow from [`CONTRACT-DESIGN.md`](../righting-volatility-review/CONTRACT-DESIGN.md); use its Righting role, composition, atomic-business-verb, and contract-metric constraints as judging inputs instead.
 
 ## 1. Discover and select
 
-Run `improve-codebase-volatility` through candidate presentation. Establish core use cases, volatility axes and evidence tiers, affected files, current ripple, role hypothesis, open calls, and the smallest plausible correction. Do not design an Interface or edit code yet.
+Run `righting-volatility-review` through candidate presentation. Establish core use cases, volatility axes and evidence tiers, affected files, current ripple, role hypothesis, open calls, and the smallest plausible correction. Do not design an Interface or edit code yet.
 
 For the default incremental run, use quick inline findings and keep the architecture overview focused on the core use cases and affected areas. Reserve the full HTML report and a whole-codebase candidate map for an explicitly requested broad review.
 
@@ -90,7 +90,7 @@ Keep each specialist's native vocabulary within its phase:
 
 ## 3. Design the Module candidate
 
-Apply `codebase-design` to the handoff and verify its dependency classifications against `DEEPENING.md`. Propose one Module with one complete Interface, its Seam, hidden implementation, dependency strategy, Interface-level test surface, and smallest behavior-preserving migration slice.
+Apply `righting-module-design` to the handoff and verify its dependency classifications against `DEEPENING.md`. Propose one Module with one complete Interface, its Seam, hidden implementation, dependency strategy, Interface-level test surface, and smallest behavior-preserving migration slice.
 
 When alternatives are needed, use `DESIGN-IT-TWICE.md` and compare them by Interface stability under the named volatility, Depth, Leverage, Locality, composition, and Seam placement.
 

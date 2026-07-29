@@ -1,5 +1,5 @@
 ---
-name: improve-codebase-volatility
+name: righting-volatility-review
 description: Find uncontained volatility in a codebase and propose Juval Löwy / Righting Software corrections. Reports candidates as quick inline findings or a visual HTML report, then grills the chosen one. Use when the user wants a volatility-based architecture review, asks to apply The Method or Righting Software, wants to rank volatility by observed evidence (git history, co-change, existing variation), wants to fix functional decomposition, leaky ResourceAccess, or open calls, or wants a more LLM-navigable architecture.
 ---
 
@@ -83,7 +83,7 @@ Once the user picks a candidate, drop into a grilling conversation. Walk the des
 
 Side effects happen inline as decisions crystallize:
 
-- **Naming a component after a concept not in `CONTEXT.md`?** Add the term to `CONTEXT.md` — same discipline as `/domain-modeling` (see [CONTEXT-FORMAT.md](../domain-modeling/CONTEXT-FORMAT.md)). Create the file lazily if it doesn't exist.
+- **Naming a component after a concept not in `CONTEXT.md`?** Add the term to `CONTEXT.md` — same discipline as `righting-domain-modeling` (see [CONTEXT-FORMAT.md](../righting-domain-modeling/CONTEXT-FORMAT.md)). Create the file lazily if it doesn't exist.
 - **Sharpening a fuzzy term during the conversation?** Update `CONTEXT.md` right there.
-- **User rejects the candidate with a load-bearing reason?** Offer an ADR, framed as: _"Want me to record this as an ADR so future architecture reviews don't re-suggest it?"_ Only offer when the reason would actually be needed by a future explorer; skip ephemeral and self-evident reasons. See [ADR-FORMAT.md](../domain-modeling/ADR-FORMAT.md).
+- **User rejects the candidate with a load-bearing reason?** Offer an ADR, framed as: _"Want me to record this as an ADR so future architecture reviews don't re-suggest it?"_ Only offer when the reason would actually be needed by a future explorer; skip ephemeral and self-evident reasons. See [ADR-FORMAT.md](../righting-domain-modeling/ADR-FORMAT.md).
 - **Want to explore alternative contracts for the component?** See [CONTRACT-DESIGN.md](CONTRACT-DESIGN.md).

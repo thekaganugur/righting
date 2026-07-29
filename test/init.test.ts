@@ -17,10 +17,10 @@ const skills = [
   "righting-eslint",
   "righting-integrate",
   "righting-adapter-authoring",
-  "volatility-driven-deep-modules",
-  "improve-codebase-volatility",
-  "codebase-design",
-  "domain-modeling",
+  "righting-deep-modules",
+  "righting-volatility-review",
+  "righting-module-design",
+  "righting-domain-modeling",
 ];
 
 function createProject(): string {

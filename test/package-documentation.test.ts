@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { test } from "node:test";
@@ -17,20 +17,20 @@ const packagedResources = [
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
   "skills/righting-adapter-authoring/SKILL.md",
-  "skills/volatility-driven-deep-modules/SKILL.md",
-  "skills/improve-codebase-volatility/SKILL.md",
-  "skills/improve-codebase-volatility/LANGUAGE.md",
-  "skills/improve-codebase-volatility/method-checklist.md",
-  "skills/improve-codebase-volatility/CONTRACT-DESIGN.md",
-  "skills/improve-codebase-volatility/HTML-REPORT.md",
-  "skills/codebase-design/SKILL.md",
-  "skills/codebase-design/DEEPENING.md",
-  "skills/codebase-design/DESIGN-IT-TWICE.md",
-  "skills/codebase-design/agents/openai.yaml",
-  "skills/domain-modeling/SKILL.md",
-  "skills/domain-modeling/CONTEXT-FORMAT.md",
-  "skills/domain-modeling/ADR-FORMAT.md",
-  "skills/domain-modeling/agents/openai.yaml",
+  "skills/righting-deep-modules/SKILL.md",
+  "skills/righting-volatility-review/SKILL.md",
+  "skills/righting-volatility-review/LANGUAGE.md",
+  "skills/righting-volatility-review/method-checklist.md",
+  "skills/righting-volatility-review/CONTRACT-DESIGN.md",
+  "skills/righting-volatility-review/HTML-REPORT.md",
+  "skills/righting-module-design/SKILL.md",
+  "skills/righting-module-design/DEEPENING.md",
+  "skills/righting-module-design/DESIGN-IT-TWICE.md",
+  "skills/righting-module-design/agents/openai.yaml",
+  "skills/righting-domain-modeling/SKILL.md",
+  "skills/righting-domain-modeling/CONTEXT-FORMAT.md",
+  "skills/righting-domain-modeling/ADR-FORMAT.md",
+  "skills/righting-domain-modeling/agents/openai.yaml",
   "README.md",
   "THIRD_PARTY_NOTICES.md",
   "docs/manual-maintainer.md",
@@ -76,11 +76,23 @@ test("the integration skill keeps unsupported source treatments visible", () => 
   assert.match(skill, /decision brief[\s\S]*exact candidate `righting\.json`[\s\S]*totals[\s\S]*material/i);
 });
 
+test("packaged skill names use the Righting namespace and match their directories", () => {
+  const directories = readdirSync(resolve(repositoryDirectory, "skills"), { withFileTypes: true }).filter((entry) =>
+    entry.isDirectory(),
+  );
+
+  for (const directory of directories) {
+    assert.match(directory.name, /^righting-/, directory.name);
+    const skill = readFileSync(resolve(repositoryDirectory, "skills", directory.name, "SKILL.md"), "utf8");
+    assert.equal(skill.match(/^---\nname: ([^\n]+)/)?.[1], directory.name);
+  }
+});
+
 test("packaged architecture skills read the applicable domain documents before exploration", () => {
   for (const path of [
-    "skills/codebase-design/SKILL.md",
-    "skills/domain-modeling/SKILL.md",
-    "skills/improve-codebase-volatility/SKILL.md",
+    "skills/righting-module-design/SKILL.md",
+    "skills/righting-domain-modeling/SKILL.md",
+    "skills/righting-volatility-review/SKILL.md",
   ]) {
     const skill = readFileSync(resolve(repositoryDirectory, path), "utf8");
     assert.match(skill, /before explor/i, path);
@@ -90,14 +102,11 @@ test("packaged architecture skills read the applicable domain documents before e
 });
 
 test("the deep-module workflow keeps discovery, design, and implementation gates separate", () => {
-  const skill = readFileSync(
-    resolve(repositoryDirectory, "skills/volatility-driven-deep-modules/SKILL.md"),
-    "utf8",
-  );
+  const skill = readFileSync(resolve(repositoryDirectory, "skills/righting-deep-modules/SKILL.md"), "utf8");
 
-  assert.match(skill, /\.\.\/improve-codebase-volatility\/SKILL\.md/);
-  assert.match(skill, /\.\.\/improve-codebase-volatility\/CONTRACT-DESIGN\.md/);
-  assert.match(skill, /\.\.\/codebase-design\/SKILL\.md/);
+  assert.match(skill, /\.\.\/righting-volatility-review\/SKILL\.md/);
+  assert.match(skill, /\.\.\/righting-volatility-review\/CONTRACT-DESIGN\.md/);
+  assert.match(skill, /\.\.\/righting-module-design\/SKILL\.md/);
   assert.match(skill, /schema: volatility-module-candidate\/v1/);
   assert.match(skill, /roleHypothesis:[\s\S]*smallestCorrection:[\s\S]*scenarios:/);
   assert.match(skill, /configuration:[\s\S]*decision: pending \| needs-revision \| accepted \| rejected/);
@@ -121,9 +130,9 @@ test("third-party notices retain the license for copied and adapted skills", () 
 
   assert.match(notice, /https:\/\/github\.com\/mattpocock\/skills/);
   assert.match(notice, /2ab958093e83e0ec752e6c1c5932da465bf23e0c/);
-  assert.match(notice, /skills\/codebase-design/);
-  assert.match(notice, /skills\/domain-modeling/);
-  assert.match(notice, /skills\/improve-codebase-volatility/);
+  assert.match(notice, /skills\/righting-module-design/);
+  assert.match(notice, /skills\/righting-domain-modeling/);
+  assert.match(notice, /skills\/righting-volatility-review/);
   assert.match(notice, /Copyright \(c\) 2026 Matt Pocock/);
   assert.match(notice, /Permission is hereby granted, free of charge/);
   assert.match(notice, /subject to the following conditions/);

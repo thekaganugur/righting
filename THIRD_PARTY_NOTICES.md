@@ -4,9 +4,9 @@
 
 The following packaged skills contain material copied or adapted from [mattpocock/skills](https://github.com/mattpocock/skills), source commit `2ab958093e83e0ec752e6c1c5932da465bf23e0c`:
 
-- `skills/codebase-design/` — copied with local modifications;
-- `skills/domain-modeling/` — copied with local modifications; and
-- `skills/improve-codebase-volatility/` — adapted from `skills/engineering/improve-codebase-architecture/` and its report guidance.
+- `skills/righting-module-design/` — copied from `skills/engineering/codebase-design/` with local modifications;
+- `skills/righting-domain-modeling/` — copied from `skills/engineering/domain-modeling/` with local modifications; and
+- `skills/righting-volatility-review/` — adapted from `skills/engineering/improve-codebase-architecture/` and its report guidance.
 
 The original material is licensed as follows:
 
