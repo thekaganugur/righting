@@ -21,6 +21,7 @@
     "!dist/src/docs.js",
     "skills/",
     "docs/",
+    "THIRD_PARTY_NOTICES.md",
     "!docs/agents/"
   ],
   "scripts": {

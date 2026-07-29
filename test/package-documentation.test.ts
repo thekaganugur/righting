@@ -32,6 +32,7 @@ const packagedResources = [
   "skills/domain-modeling/ADR-FORMAT.md",
   "skills/domain-modeling/agents/openai.yaml",
   "README.md",
+  "THIRD_PARTY_NOTICES.md",
   "docs/manual-maintainer.md",
   "docs/agent-assisted.md",
   "docs/adapter-conformance.md",
@@ -113,6 +114,23 @@ test("the deep-module workflow keeps discovery, design, and implementation gates
   );
   assert.match(skill, /design or test-strategy gate fails[\s\S]*needs-revision[\s\S]*Reject it only when the evidence or scope/i);
   assert.match(skill, /Stop before moving folders[\s\S]*architecture-policy enforcement[\s\S]*application code/i);
+});
+
+test("third-party notices retain the license for copied and adapted skills", () => {
+  const notice = readFileSync(resolve(repositoryDirectory, "THIRD_PARTY_NOTICES.md"), "utf8");
+
+  assert.match(notice, /https:\/\/github\.com\/mattpocock\/skills/);
+  assert.match(notice, /2ab958093e83e0ec752e6c1c5932da465bf23e0c/);
+  assert.match(notice, /skills\/codebase-design/);
+  assert.match(notice, /skills\/domain-modeling/);
+  assert.match(notice, /skills\/improve-codebase-volatility/);
+  assert.match(notice, /Copyright \(c\) 2026 Matt Pocock/);
+  assert.match(notice, /Permission is hereby granted, free of charge/);
+  assert.match(notice, /subject to the following conditions/);
+  assert.match(notice, /copyright notice and this permission notice shall be included in all/);
+  assert.match(notice, /THE SOFTWARE IS PROVIDED "AS IS"/);
+  assert.match(notice, /IN NO EVENT SHALL THE[\s\S]*AUTHORS OR COPYRIGHT HOLDERS BE LIABLE/);
+  assert.match(notice, /root \[`LICENSE`\]\(LICENSE\)/);
 });
 
 test("the packed package publishes every onboarding reference without the retired docs command", () => {

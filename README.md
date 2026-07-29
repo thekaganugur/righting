@@ -54,3 +54,4 @@ This validates and explains the declared adapter-neutral contract. `inspect --js
 - [`volatility-driven-deep-modules`](skills/volatility-driven-deep-modules/SKILL.md) — discover volatility-backed Module candidates, design their Interfaces, and validate composition before restructuring.
 - [Legacy ESLint debt](docs/legacy-debt.md) — approved native suppression, growth detection, and pruning.
 - [Orders/Returns dogfood record](docs/dogfood.md) — a worked record, not onboarding guidance.
+- [Third-party notices](THIRD_PARTY_NOTICES.md) — attribution and licenses for copied or adapted skill material.
