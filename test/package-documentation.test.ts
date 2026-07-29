@@ -17,6 +17,20 @@ const packagedResources = [
   "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
   "skills/righting-adapter-authoring/SKILL.md",
+  "skills/volatility-driven-deep-modules/SKILL.md",
+  "skills/improve-codebase-volatility/SKILL.md",
+  "skills/improve-codebase-volatility/LANGUAGE.md",
+  "skills/improve-codebase-volatility/method-checklist.md",
+  "skills/improve-codebase-volatility/CONTRACT-DESIGN.md",
+  "skills/improve-codebase-volatility/HTML-REPORT.md",
+  "skills/codebase-design/SKILL.md",
+  "skills/codebase-design/DEEPENING.md",
+  "skills/codebase-design/DESIGN-IT-TWICE.md",
+  "skills/codebase-design/agents/openai.yaml",
+  "skills/domain-modeling/SKILL.md",
+  "skills/domain-modeling/CONTEXT-FORMAT.md",
+  "skills/domain-modeling/ADR-FORMAT.md",
+  "skills/domain-modeling/agents/openai.yaml",
   "README.md",
   "docs/manual-maintainer.md",
   "docs/agent-assisted.md",
@@ -59,6 +73,46 @@ test("the integration skill keeps unsupported source treatments visible", () => 
     "source/catalog.client.ts",
   );
   assert.match(skill, /decision brief[\s\S]*exact candidate `righting\.json`[\s\S]*totals[\s\S]*material/i);
+});
+
+test("packaged architecture skills read the applicable domain documents before exploration", () => {
+  for (const path of [
+    "skills/codebase-design/SKILL.md",
+    "skills/domain-modeling/SKILL.md",
+    "skills/improve-codebase-volatility/SKILL.md",
+  ]) {
+    const skill = readFileSync(resolve(repositoryDirectory, path), "utf8");
+    assert.match(skill, /before explor/i, path);
+    assert.match(skill, /CONTEXT-MAP\.md[\s\S]*CONTEXT\.md/i, path);
+    assert.match(skill, /relevant[^\n]*ADR/i, path);
+  }
+});
+
+test("the deep-module workflow keeps discovery, design, and implementation gates separate", () => {
+  const skill = readFileSync(
+    resolve(repositoryDirectory, "skills/volatility-driven-deep-modules/SKILL.md"),
+    "utf8",
+  );
+
+  assert.match(skill, /\.\.\/improve-codebase-volatility\/SKILL\.md/);
+  assert.match(skill, /\.\.\/improve-codebase-volatility\/CONTRACT-DESIGN\.md/);
+  assert.match(skill, /\.\.\/codebase-design\/SKILL\.md/);
+  assert.match(skill, /schema: volatility-module-candidate\/v1/);
+  assert.match(skill, /roleHypothesis:[\s\S]*smallestCorrection:[\s\S]*scenarios:/);
+  assert.match(skill, /configuration:[\s\S]*decision: pending \| needs-revision \| accepted \| rejected/);
+  assert.match(skill, /default incremental run[\s\S]*quick inline findings[\s\S]*Reserve the full HTML report/i);
+  assert.match(
+    skill,
+    /Before designing[\s\S]*role hypothesis[\s\S]*smallest correction[\s\S]*named volatility scenarios[\s\S]*dependency categories/i,
+  );
+  assert.match(skill, /each named volatility scenario[\s\S]*without changing the Interface/i);
+  assert.match(skill, /every core use case composes[\s\S]*without modifying it/i);
+  assert.match(
+    skill,
+    /in-process needs no adapter[\s\S]*local-substitutable has a real stand-in[\s\S]*remote-owned has a port[\s\S]*true-external has an injected port/i,
+  );
+  assert.match(skill, /design or test-strategy gate fails[\s\S]*needs-revision[\s\S]*Reject it only when the evidence or scope/i);
+  assert.match(skill, /Stop before moving folders[\s\S]*architecture-policy enforcement[\s\S]*application code/i);
 });
 
 test("the packed package publishes every onboarding reference without the retired docs command", () => {

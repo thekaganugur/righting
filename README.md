@@ -51,5 +51,6 @@ This validates and explains the declared adapter-neutral contract. `inspect --js
 - [Guardrail adapter conformance](docs/adapter-conformance.md) — the adapter-neutral scenario families and support gate.
 - [Oxlint adapter](docs/oxlint.md) — the centrally supported, exact-version native integration.
 - [`righting-adapter-authoring`](skills/righting-adapter-authoring/SKILL.md) — the generic, conformance-led authoring path for compatible agents.
+- [`volatility-driven-deep-modules`](skills/volatility-driven-deep-modules/SKILL.md) — discover volatility-backed Module candidates, design their Interfaces, and validate composition before restructuring.
 - [Legacy ESLint debt](docs/legacy-debt.md) — approved native suppression, growth detection, and pruning.
 - [Orders/Returns dogfood record](docs/dogfood.md) — a worked record, not onboarding guidance.

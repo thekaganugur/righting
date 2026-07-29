@@ -52,6 +52,10 @@ const rightingSkillNames = [
   "righting-eslint",
   "righting-integrate",
   "righting-adapter-authoring",
+  "volatility-driven-deep-modules",
+  "improve-codebase-volatility",
+  "codebase-design",
+  "domain-modeling",
 ];
 const packagedSkillsDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "../../skills");
 
