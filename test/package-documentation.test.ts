@@ -50,8 +50,17 @@ test("the integration skill keeps unsupported source treatments visible", () => 
     syntheticGeneratedPath,
   );
   assert.match(skill, /version-controlled file inventory[\s\S]*outside coverage/, "public/catalog-worker.js");
+  assert.match(
+    skill,
+    /uncommitted or untracked[\s\S]*ask which snapshot[\s\S]*stop[\s\S]*resume[\s\S]*only after[\s\S]*confirms/i,
+  );
   assert.match(skill, /composition-root token[\s\S]*non-test[\s\S]*maintainer statement/, "source/launchpad.test.ts");
-  assert.match(skill, /exact[\s\S]*contract[\s\S]*evidence[\s\S]*JSON[\s\S]*prose/i, "source/catalog.client.ts");
+  assert.match(
+    skill,
+    /contract[\s\S]*evidence[\s\S]*JSON[\s\S]*working evidence[\s\S]*raw inspection output only on request/i,
+    "source/catalog.client.ts",
+  );
+  assert.match(skill, /decision brief[\s\S]*exact candidate `righting\.json`[\s\S]*totals[\s\S]*material/i);
 });
 
 test("the integration skill keeps contextFirewall optional and context design separate", () => {
@@ -64,10 +73,10 @@ test("the integration skill keeps contextFirewall optional and context design se
   assert.match(guidance, /policy readiness[\s\S]*design suggestion/i);
   assert.match(guidance, /single-context[\s\S]*does not[\s\S]*(good|sound)/i);
   assert.match(guidance, /bounded-context specialist[\s\S]*optional[\s\S]*do not invoke/i);
-  assert.match(guidance, /for each result[\s\S]*recommendation[\s\S]*pros and cons/i);
-  assert.match(guidance, /one question at a time/i);
+  assert.match(guidance, /decision brief[\s\S]*policy readiness[\s\S]*material next step/i);
+  assert.match(guidance, /one short question at a time/i);
   assert.match(guidance, /do not[\s\S]*(infer|derive)[\s\S]*context policy[\s\S]*domain vocabulary alone/i);
-  assert.match(guidance, /righting-bounded-contexts[\s\S]*pros and cons[\s\S]*ask permission[\s\S]*resume/i);
+  assert.match(guidance, /righting-bounded-contexts[\s\S]*reason[\s\S]*trade-off[\s\S]*ask permission[\s\S]*resume/i);
 });
 
 test("the packed package publishes every onboarding reference without the retired docs command", () => {

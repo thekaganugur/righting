@@ -62,7 +62,11 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
     assert.match(integrationSkill, /unchanged normalized contract[\s\S]*righting-eslint/i);
     assert.match(
       integrationSkill,
-      /recommend[^\n]*righting-bounded-contexts[\s\S]*pros and cons[\s\S]*ask permission[\s\S]*after approval[\s\S]*resume/i,
+      /recommend[^\n]*righting-bounded-contexts[\s\S]*reason[\s\S]*trade-off[\s\S]*ask permission[\s\S]*after approval[\s\S]*resume/i,
+    );
+    assert.match(
+      integrationSkill,
+      /decision brief[\s\S]*exact candidate `righting\.json`[\s\S]*raw inspection JSON out of the default reply/i,
     );
     const boundedContextsSkill = readFileSync(
       resolve(projectDirectory, ".agents/skills/righting-bounded-contexts/SKILL.md"),
@@ -71,11 +75,23 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
     assert.match(boundedContextsSkill, /Outcome[\s\S]*candidate[\s\S]*omit-for-now[\s\S]*unresolved/);
     assert.match(boundedContextsSkill, /explicit approval[\s\S]*complete strategic design/i);
     assert.match(boundedContextsSkill, /two bounded passes[\s\S]*highest-impact uncertainty/i);
+    assert.match(
+      boundedContextsSkill,
+      /before the maintainer chooses[\s\S]*working sketches[\s\S]*without expanding[\s\S]*complete context cards/i,
+    );
+    assert.match(
+      boundedContextsSkill,
+      /for `unresolved`[\s\S]*return only this decision brief[\s\S]*## Decision[\s\S]*## Next step/i,
+    );
+    assert.match(
+      boundedContextsSkill,
+      /direction-selection question[\s\S]*recommendation[\s\S]*other\/uncertain[\s\S]*approval follows the complete selected design/i,
+    );
     assert.match(boundedContextsSkill, /node_modules\/\.bin\/righting[\s\S]*PATH\/global executable is not project-local/i);
     assert.match(boundedContextsSkill, /referenced path is absent[\s\S]*not inspected/i);
     assert.match(boundedContextsSkill, /representative documented contract or producer\/consumer path/i);
-    assert.match(boundedContextsSkill, /external actors\/services separately[\s\S]*not a reverse context exchange/i);
-    assert.match(boundedContextsSkill, /verbatim project language[\s\S]*no grouped label[\s\S]*producer[\s\S]*return/i);
+    assert.match(boundedContextsSkill, /external actor or service separately[\s\S]*not a reverse context exchange/i);
+    assert.match(boundedContextsSkill, /verbatim project language[\s\S]*grouped label[\s\S]*producer[\s\S]*return/i);
     assert.match(boundedContextsSkill, /approved-design-and-firewall\.md[\s\S]*completely/i);
     const boundedContextsApprovalBranch = readFileSync(
       resolve(projectDirectory, ".agents/skills/righting-bounded-contexts/references/approved-design-and-firewall.md"),
