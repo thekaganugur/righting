@@ -65,7 +65,7 @@ When the review is delivered as inline findings rather than the HTML report, lea
    **Tier**: Observed | Projected | Speculative.
 ```
 
-Close with a top recommendation, then ask: *Which candidate should we explore?*
+Close with a top recommendation, then ask: *Which candidate, if any, should be handed to `righting-deep-modules`?*
 
 ## Frontend translation
 

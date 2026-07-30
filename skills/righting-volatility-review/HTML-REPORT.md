@@ -50,9 +50,9 @@ Render the candidate fields (SKILL.md §2) as one `<article>`. Rendering specifi
 - **Title** — short, names the containment (e.g. "Contain pricing volatility in a Pricing Engine").
 - **Badge row** — tier (`Observed` = emerald, `Projected` = amber, `Speculative` = slate) plus a smell-category tag (`functional decomposition`, `client orchestration`, `leaky ResourceAccess`, `open call`, `missing Engine`, `Manager too expensive`, `pass-through Manager`). Beside the tier badge, an **evidence chip** in plain words: "changed together in N commits", "same rule in N files", "tenant variation already here", or "no history — speculative".
 - **Files** — `font-mono text-sm`.
-- **Before / After diagram** — the centrepiece. Two columns, side by side. See patterns below.
+- **Before / After diagram** — the centrepiece. Two columns, side by side. Label the after state **Candidate hypothesis** because Interface design happens only after selection. See patterns below.
 - **Volatility / Correction** — one sentence each.
-- **Wins** — bullets, ≤6 words each ("Policy change touches one Engine", "Clients stop orchestrating", "Contract drops to 4 members").
+- **Wins** — bullets, ≤6 words each ("Policy change touches one Engine", "Clients stop orchestrating", "Callers stop seeing CRUD").
 - **ADR callout** (if applicable) — one line in an amber-tinted box.
 
 No paragraphs of explanation. If the diagram needs a paragraph to be understood, redraw the diagram.
@@ -67,7 +67,7 @@ A miniature of the overview diagram, scoped to the candidate's files. Before: a 
 
 ### Mermaid sequence diagram (the workhorse for orchestration and validation)
 
-Use for client orchestration ("the page calls four things in order — that sequence is workflow and belongs in a Manager") and for the top recommendation's composition check (core use case walked through the corrected components). Colour open calls red via link styles.
+Use for client orchestration ("the page calls four things in order — that sequence is workflow and belongs in a Manager") and for the top recommendation's composition check (core use case walked through the corrected components). Use responsibility labels, not final Interface members. Colour open calls red via link styles.
 
 ```html
 <div class="rounded-lg border border-slate-200 bg-white p-4">
@@ -77,9 +77,9 @@ Use for client orchestration ("the page calls four things in order — that sequ
       participant M as OrderManager
       participant E as PricingEngine
       participant RA as OrderAccess
-      C->>M: PlaceOrder
-      M->>E: Price(items)
-      M->>RA: Debit(account)
+      C->>M: core use-case responsibility
+      M->>E: pricing responsibility
+      M->>RA: order-state responsibility
   </pre>
 </div>
 ```
@@ -88,9 +88,9 @@ Use for client orchestration ("the page calls four things in order — that sequ
 
 Before: one volatile change (striped badge, e.g. "new payment method") with red lines fanning out to every file it touches. After: the same badge with one line into the single containing component, the dark `contained` box. The fan-in collapse *is* the argument.
 
-### Contract shrink (good for leaky ResourceAccess)
+### Knowledge containment (good for leaky ResourceAccess)
 
-Two columns of contract members rendered as rows. Before: `get/post/put/delete`, generated endpoint names, 12+ rows, CRUD rows tinted red. After: 3–5 atomic business verbs (`Credit`, `Debit`, `Hold`). Pull verb names from CONTEXT.md.
+Before: show `get/post/put/delete`, generated endpoint names, or storage fields leaking into callers, with the leaked knowledge tinted red. Candidate hypothesis: show callers depending on one proposed ResourceAccess responsibility while CRUD, transport, and generated names sit inside the dark contained box. Do not name final Interface members or facets in the review.
 
 ### Layer cross-section (good for open calls)
 
@@ -120,6 +120,6 @@ Plain English, concise — but the architectural nouns and verbs come straight f
 - "Open call: Engine imports a Client concern."
 - "Contained: tax-rule changes touch one Engine."
 
-**Wins bullets** name the gain in glossary terms: *"containment: payment change touches one component"*, *"composition: new use case is a Manager rewire"*, *"contract drops from 14 members to 4"*. Don't write *"easier to maintain"* or *"cleaner code"* — those terms aren't in the glossary and don't earn their place.
+**Wins bullets** name the gain in glossary terms: *"containment: payment change touches one component"*, *"composition: new use case is a Manager rewire"*, *"callers stop seeing storage shape"*. Don't write *"easier to maintain"* or *"cleaner code"* — those terms aren't in the glossary and don't earn their place.
 
 No hedging, no throat-clearing, no "it's worth noting that…". If a sentence could be a bullet, make it a bullet. If a bullet could be cut, cut it. If a term isn't in [LANGUAGE.md](LANGUAGE.md), reach for one that is before inventing a new one.

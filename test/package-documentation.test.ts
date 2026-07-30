@@ -20,7 +20,6 @@ const packagedResources = [
   "skills/righting-volatility-review/SKILL.md",
   "skills/righting-volatility-review/LANGUAGE.md",
   "skills/righting-volatility-review/method-checklist.md",
-  "skills/righting-volatility-review/CONTRACT-DESIGN.md",
   "skills/righting-volatility-review/HTML-REPORT.md",
   "skills/righting-module-design/SKILL.md",
   "skills/righting-module-design/DEEPENING.md",
@@ -75,8 +74,9 @@ test("the integration skill keeps unsupported source treatments visible", () => 
   assert.match(skill, /decision brief[\s\S]*exact candidate `righting\.json`[\s\S]*totals[\s\S]*material/i);
 });
 
-test("the retired design-review skill is not packaged", () => {
+test("retired architecture-design workflows are not packaged", () => {
   assert.equal(existsSync(resolve(repositoryDirectory, "skills/righting-design-review")), false);
+  assert.equal(existsSync(resolve(repositoryDirectory, "skills/righting-volatility-review/CONTRACT-DESIGN.md")), false);
 });
 
 test("packaged skill names use the Righting namespace and match their directories", () => {
@@ -104,15 +104,43 @@ test("packaged architecture skills read the applicable domain documents before e
   }
 });
 
+test("the volatility review hands selected discovery to deep-module design", () => {
+  const review = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/SKILL.md"), "utf8");
+  const checklist = readFileSync(
+    resolve(repositoryDirectory, "skills/righting-volatility-review/method-checklist.md"),
+    "utf8",
+  );
+  const report = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/HTML-REPORT.md"), "utf8");
+
+  assert.match(review, /schema: volatility-candidate\/v1/);
+  assert.match(review, /decision: selected \| rejected/);
+  assert.match(review, /righting-deep-modules/);
+  assert.match(review, /Speculative[\s\S]*cannot be the top recommendation/i);
+  assert.match(review, /Stop before designing an Interface/i);
+  assert.doesNotMatch(review, /CONTRACT-DESIGN\.md/);
+  assert.doesNotMatch(review, /### 3\. Grilling loop/);
+  assert.match(checklist, /handed to `righting-deep-modules`/i);
+  assert.doesNotMatch(checklist, /Which candidate should we explore\?/);
+  assert.match(report, /candidate hypothes/i);
+  assert.match(report, /responsibility labels[\s\S]*not final Interface members/i);
+  assert.doesNotMatch(report, /PlaceOrder|Price\(items\)|Debit\(account\)/);
+  assert.doesNotMatch(report, /After: 3–5 atomic business verbs/);
+});
+
 test("the deep-module workflow keeps discovery, design, and implementation gates separate", () => {
   const skill = readFileSync(resolve(repositoryDirectory, "skills/righting-deep-modules/SKILL.md"), "utf8");
+  const alternatives = readFileSync(resolve(repositoryDirectory, "skills/righting-module-design/DESIGN-IT-TWICE.md"), "utf8");
+  const readme = readFileSync(resolve(repositoryDirectory, "README.md"), "utf8");
 
   assert.match(skill, /\.\.\/righting-volatility-review\/SKILL\.md/);
-  assert.match(skill, /\.\.\/righting-volatility-review\/CONTRACT-DESIGN\.md/);
+  assert.match(skill, /\.\.\/righting-volatility-review\/LANGUAGE\.md/);
   assert.match(skill, /\.\.\/righting-module-design\/SKILL\.md/);
-  assert.match(skill, /schema: volatility-module-candidate\/v1/);
-  assert.match(skill, /roleHypothesis:[\s\S]*smallestCorrection:[\s\S]*scenarios:/);
-  assert.match(skill, /configuration:[\s\S]*decision: pending \| needs-revision \| accepted \| rejected/);
+  assert.match(skill, /DESIGN-IT-TWICE\.md[\s\S]*sole alternative-Interface workflow/i);
+  assert.doesNotMatch(skill, /CONTRACT-DESIGN\.md/);
+  assert.match(skill, /consume[\s\S]*schema: volatility-candidate\/v1/i);
+  assert.match(skill, /existing[\s\S]*volatility-candidate\/v1[\s\S]*do not rerun discovery/i);
+  assert.match(skill, /schema: volatility-module-candidate\/v1[\s\S]*discovery: <complete volatility-candidate\/v1 packet>/);
+  assert.match(skill, /volatilityScenarios:[\s\S]*configuration:[\s\S]*decision: pending \| needs-revision \| accepted \| rejected/);
   assert.match(skill, /default incremental run[\s\S]*quick inline findings[\s\S]*Reserve the full HTML report/i);
   assert.match(
     skill,
@@ -126,6 +154,11 @@ test("the deep-module workflow keeps discovery, design, and implementation gates
   );
   assert.match(skill, /design or test-strategy gate fails[\s\S]*needs-revision[\s\S]*Reject it only when the evidence or scope/i);
   assert.match(skill, /Stop before moving folders[\s\S]*architecture-policy enforcement[\s\S]*application code/i);
+  assert.match(alternatives, /supplied[\s\S]*domain-specific constraints/i);
+  assert.match(alternatives, /configuration[\s\S]*performance semantics/i);
+  assert.match(alternatives, /delegation[\s\S]*unavailable[\s\S]*sequentially/i);
+  assert.match(readme, /righting-volatility-review[\s\S]*rank[\s\S]*before Interface design/i);
+  assert.match(readme, /righting-deep-modules[\s\S]*(selected candidate|end-to-end)/i);
 });
 
 test("third-party notices retain the license for copied and adapted skills", () => {

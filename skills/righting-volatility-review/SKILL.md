@@ -1,6 +1,6 @@
 ---
 name: righting-volatility-review
-description: Find uncontained volatility in a codebase and propose Juval Löwy / Righting Software corrections. Reports candidates as quick inline findings or a visual HTML report, then grills the chosen one. Use when the user wants a volatility-based architecture review, asks to apply The Method or Righting Software, wants to rank volatility by observed evidence (git history, co-change, existing variation), wants to fix functional decomposition, leaky ResourceAccess, or open calls, or wants a more LLM-navigable architecture.
+description: Find, evidence, rank, and present uncontained-volatility candidates in a codebase, stopping before Interface design. Reports candidates as quick inline findings or a visual HTML report. Use when the user wants a volatility-based architecture review, asks to apply The Method or Righting Software, wants to rank volatility by observed evidence (git history, co-change, existing variation), wants to fix functional decomposition, leaky ResourceAccess, or open calls, or wants a more LLM-navigable architecture.
 ---
 
 # Improve Codebase Volatility
@@ -26,7 +26,7 @@ Guardrails:
 
 Before exploring, read the root `CONTEXT-MAP.md` when present and then each applicable `CONTEXT.md`; otherwise read the root `CONTEXT.md`. Read relevant ADRs for the area. If these files do not exist, proceed silently.
 
-Then walk the codebase. If a sub-agent delegation tool is available (an `Agent`, `Task`, or `subagent` tool — whatever the harness registers), delegate the recon pass to a read-only exploration role (e.g. `Explore` or `scout`); fan out in parallel across areas if the tool supports it — recon output is high-volume and throwaway, and the main context must survive into the grilling loop and any edits, so a delegated role carries that weight instead of the orchestrator. If no such tool is registered, explore inline via `read`, `bash`, and `grep`. Establish two anchors before hunting smells:
+Then walk the codebase. If a sub-agent delegation tool is available (an `Agent`, `Task`, or `subagent` tool — whatever the harness registers), delegate the recon pass to a read-only exploration role (e.g. `Explore` or `scout`); fan out in parallel across areas if the tool supports it — recon output is high-volume and throwaway, and the main context must survive through candidate selection and handoff, so a delegated role carries that weight instead of the orchestrator. If no such tool is registered, explore inline via `read`, `bash`, and `grep`. Establish two anchors before hunting smells:
 
 - **Core use cases** — the few behaviors the system exists to support. Not every route or endpoint.
 - **Volatility list** — apply the axes of volatility. Separate volatility from variability, and from changes to the nature of the business. Watch for solutions masquerading as requirements. Tag each entry **Observed / Projected / Speculative** by evidence — tiers in [method-checklist.md](method-checklist.md).
@@ -65,7 +65,7 @@ For each candidate, render a card:
 - **Before / After diagram** — side-by-side, showing the leak and the containment
 - **Tier** — `Observed`, `Projected`, or `Speculative`, rendered as a badge (the tier is the evidence strength — see [method-checklist.md](method-checklist.md))
 
-End the report with a **Top recommendation** section: which candidate you'd tackle first and why, including its tier and evidence, plus a one-line composition check — which core use cases the corrected components still serve unchanged.
+End the report with a **Top recommendation** section: which candidate you'd tackle first and why, including its tier and evidence, plus a one-line composition check — which core use cases the corrected components still serve unchanged. A Speculative candidate may be listed but cannot be the top recommendation.
 
 **Use CONTEXT.md vocabulary for the domain, and [LANGUAGE.md](LANGUAGE.md) vocabulary for the architecture.** If `CONTEXT.md` defines "Order," talk about "the Order intake Manager" — not "the OrderService," and not "the order feature."
 
@@ -73,17 +73,37 @@ End the report with a **Top recommendation** section: which candidate you'd tack
 
 See [HTML-REPORT.md](HTML-REPORT.md) for the full HTML scaffold, diagram patterns, and styling guidance.
 
-After presenting, ask the user: "Which of these would you like to explore?"
+After presenting, ask the user: "Which candidate, if any, should be handed to `righting-deep-modules`?"
 
-### 3. Grilling loop
+### 3. Record selection and hand off
 
-Once the user picks a candidate, drop into a grilling conversation. Walk the design tree with them — which volatility the component encapsulates, which role it plays, what its contract exposes, what the Manager sequence looks like, what tests move to the new contract.
+When the user selects a candidate, record only the discovery evidence and directional hypotheses in chat, or in a Markdown file when the user requests an artifact:
 
-**Validate by composition before any edit**: walk the core use cases through the corrected components as call chains. If a core use case requires changing a component, the candidate is wrong — say so and revisit.
+```yaml
+schema: volatility-candidate/v1
+candidate:
+  name:
+  files: []
+  currentShape:
+  roleHypothesis:
+  smallestCorrection:
+volatility:
+  axes: []
+  tier: Observed | Projected | Speculative
+  evidence: []
+  currentRipple:
+coreUseCases:
+  - name:
+    currentCallChain: []
+architecture:
+  roles: []
+  openCalls: []
+  leakedKnowledge: []
+  adrConflicts: []
+decision: selected | rejected
+unresolved: []
+```
 
-Side effects happen inline as decisions crystallize:
+The role and correction remain hypotheses. The packet contains no Interface members, facets, Seam, dependency or Adapter strategy, or test migration. Stop before designing an Interface. Hand a selected packet to `righting-deep-modules`; a standalone volatility review ends here.
 
-- **Naming a component after a concept not in `CONTEXT.md`?** Add the term to `CONTEXT.md` — same discipline as `righting-domain-modeling` (see [CONTEXT-FORMAT.md](../righting-domain-modeling/CONTEXT-FORMAT.md)). Create the file lazily if it doesn't exist.
-- **Sharpening a fuzzy term during the conversation?** Update `CONTEXT.md` right there.
-- **User rejects the candidate with a load-bearing reason?** Offer an ADR, framed as: _"Want me to record this as an ADR so future architecture reviews don't re-suggest it?"_ Only offer when the reason would actually be needed by a future explorer; skip ephemeral and self-evident reasons. See [ADR-FORMAT.md](../righting-domain-modeling/ADR-FORMAT.md).
-- **Want to explore alternative contracts for the component?** See [CONTRACT-DESIGN.md](CONTRACT-DESIGN.md).
+If the user rejects every candidate for a load-bearing reason, record `decision: rejected`. Invoke `righting-domain-modeling` to offer an ADR only when its hard-to-reverse, surprising, and real-trade-off conditions all hold.

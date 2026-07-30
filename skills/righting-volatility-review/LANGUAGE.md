@@ -41,7 +41,7 @@ _Avoid_: "circular dependency," "layering issue" — say which call breaks close
 
 **Layer** — a horizontal band of same-role components. _Avoid_: tier (deployment concern, not design).
 
-**Contract** — the public face of a component, designed before internals. **Facet**: one of possibly several independent contracts a component exposes. Metrics (the judging bar): 3–5 members per contract; 1–2 facets per component, each logically consistent and independent; behavioral atomic business verbs, never property-like or CRUD; stable under the volatility — the encapsulated change alters the implementation, never the contract. 12+ members → factor down (a specialized derived contract) or sideways (split unrelated siblings); a single-member contract suggests over-factoring unless it's a deliberate facet.
+**Contract** — the public face of a component, designed before internals. **Facet**: one of possibly several independent contracts a component exposes. Factoring signals, not quotas: 3–5 members per contract; 1–2 facets per component, each logically consistent and independent; behavioral atomic business verbs, never property-like or CRUD; stable under the volatility — the encapsulated change alters the implementation, never the contract. Never add members or facets merely to hit a range. 12+ members → factor down (a specialized derived contract) or sideways (split unrelated siblings); a single-member contract suggests over-factoring unless it's a deliberate facet.
 
 ## Composition terms
 
