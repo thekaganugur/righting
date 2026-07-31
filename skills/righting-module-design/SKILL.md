@@ -1,11 +1,13 @@
 ---
 name: righting-module-design
-description: Shared vocabulary for designing deep modules. Use when the user wants to design or improve a module's interface, find deepening opportunities, decide where a seam goes, make code more testable or AI-navigable, or when another skill needs the deep-module vocabulary.
+description: Vocabulary layer for shaping an already selected Module's Interface, Implementation, and Seam. Use when another skill needs deep-Module vocabulary, or when the user asks about Module shape rather than candidate discovery, acceptance, or migration.
 ---
 
-# Codebase Design
+# Module Design
 
-Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured. The aim is leverage for callers, locality for maintainers, and testability for everyone.
+This skill is the vocabulary layer beneath Module-design workflows. It does not own candidate discovery, design acceptance, or migration planning.
+
+Design **deep Modules**: a lot of behavior behind a small Interface, placed at a clean Seam, testable through that Interface. The aim is Leverage for callers, Locality for maintainers, and testability for everyone.
 
 ## Before exploring
 
@@ -15,9 +17,11 @@ Read the root `CONTEXT-MAP.md` when present and then each applicable `CONTEXT.md
 
 Use these terms exactly — don't substitute "component," "service," "API," or "boundary." Consistent language is the whole point.
 
-**Module** — anything with an interface and an implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit, component, service.
+**Module** — anything with an Interface and an Implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit, component, service.
 
-**Interface** — everything a caller must know to use the module correctly: the type signature, but also invariants, ordering constraints, error modes, required configuration, and performance characteristics. _Avoid_: API, signature (too narrow — they refer only to the type-level surface).
+**Architecture Module** — a Module whose boundary encapsulates evidenced volatility and change ownership. It may contain smaller internal Modules and several Righting-role implementations. Routes, features, domain entities, and directories are evidence, not boundary rules.
+
+**Interface** — everything a caller must know to use the Module correctly: the type signature, but also invariants, ordering constraints, error modes, required configuration, and performance characteristics. One conceptual Interface may expose several cohesive facets or entry points. _Avoid_: API, signature (too narrow — they refer only to the type-level surface).
 
 **Implementation** — what's inside a module, its body of code. Distinct from **Adapter**: a thing can be a small adapter with a large implementation (a Postgres repo) or a large adapter with a small implementation (an in-memory fake). Reach for "adapter" when the seam is the topic; "implementation" otherwise.
 
@@ -66,7 +70,6 @@ When designing an interface, ask:
 - **Depth is a property of the interface, not the implementation.** A deep module can be internally composed of small, mockable, swappable parts — they just aren't part of the interface. A module can have **internal seams** (private to its implementation, used by its own tests) as well as the **external seam** at its interface.
 - **The deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep.
 - **The interface is the test surface.** Callers and tests cross the same seam. If you want to test *past* the interface, the module is probably the wrong shape.
-- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it.
 
 ## Designing for testability
 
@@ -100,7 +103,7 @@ Good interfaces make testing natural:
 
 ## Relationships
 
-- A **Module** has exactly one **Interface** (the surface it presents to callers and tests).
+- A **Module** has one complete conceptual **Interface**; coherent facets are views within it, not automatically separate Modules.
 - **Depth** is a property of a **Module**, measured against its **Interface**.
 - A **Seam** is where a **Module**'s **Interface** lives.
 - An **Adapter** sits at a **Seam** and satisfies the **Interface**.
