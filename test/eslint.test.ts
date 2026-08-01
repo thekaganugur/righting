@@ -147,7 +147,43 @@ conformanceTest(conformanceScenarioFamilyIds.staticDependencyForms, "the adapter
   assert.match(output(unresolved), /righting\/unresolved-local-import/);
 });
 
-conformanceTest(conformanceScenarioFamilyIds.canonicalAndAliasClassification, "canonical and alias conventions classify the same Client semantics", () => {
+conformanceTest(conformanceScenarioFamilyIds.canonicalAndAliasClassification, "canonical and alias conventions classify with canonical role semantics", () => {
+  withFiles(
+    {
+      "src/canonical.client.js": "export {};\n",
+      "src/canonical.manager.js": "export {};\n",
+      "src/canonical.engine.js": "export {};\n",
+      "src/canonical.access.js": "export {};\n",
+      "src/canonical.resource.js": "export {};\n",
+      "src/canonical.utility.js": "export {};\n",
+      "src/clients/canonical.js": "export {};\n",
+      "src/managers/canonical.js": "export {};\n",
+      "src/engines/canonical.js": "export {};\n",
+      "src/access/canonical.js": "export {};\n",
+      "src/resources/canonical.js": "export {};\n",
+      "src/utilities/canonical.js": "export {};\n",
+    },
+    () => {
+      withPolicy({ preset: "volatility@1", coverage: ["src/**/*.js"] }, () => {
+        const result = runLint([
+          "src/canonical.client.js",
+          "src/canonical.manager.js",
+          "src/canonical.engine.js",
+          "src/canonical.access.js",
+          "src/canonical.resource.js",
+          "src/canonical.utility.js",
+          "src/clients/canonical.js",
+          "src/managers/canonical.js",
+          "src/engines/canonical.js",
+          "src/access/canonical.js",
+          "src/resources/canonical.js",
+          "src/utilities/canonical.js",
+        ]);
+        assert.equal(result.status, 0, output(result));
+      });
+    },
+  );
+
   withFiles(
     {
       "src/page.client.js": 'import { value } from "./work.manager.js";\nexport { value };\n',
@@ -194,6 +230,7 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
       "src/engine/read-access.js": 'import { value } from "../resource-access/value.js";\nexport { value };\n',
       "src/manager/protected.js": 'import "protected-resource";\n',
       "src/resource-access/protected.js": 'import "protected-resource";\n',
+      "src/client/protected-utility.js": 'import "protected-utility";\n',
     },
     () => {
       withPolicy(policy(), () => {
@@ -212,7 +249,10 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
               reason: "Approved read model.",
             },
           ],
-          protectedDependencies: [{ package: "protected-resource", role: "Resource" }],
+          protectedDependencies: [
+            { package: "protected-resource", role: "Resource" },
+            { package: "protected-utility", role: "Utility" },
+          ],
         }),
         () => {
           assert.equal(runLint(["src/client/read-access.js", "src/client/read-resource.js"]).status, 0);
@@ -224,6 +264,8 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
           assert.match(output(manager), /righting\/role-dependency/);
           const access = runLint("src/resource-access/protected.js");
           assert.equal(access.status, 0, output(access));
+          const utility = runLint("src/client/protected-utility.js");
+          assert.equal(utility.status, 0, output(utility));
         },
       );
     },
