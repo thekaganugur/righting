@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
@@ -148,41 +148,65 @@ conformanceTest(conformanceScenarioFamilyIds.staticDependencyForms, "the adapter
 });
 
 conformanceTest(conformanceScenarioFamilyIds.canonicalAndAliasClassification, "canonical and alias conventions classify with canonical role semantics", () => {
-  withFiles(
-    {
-      "src/canonical.client.js": "export {};\n",
-      "src/canonical.manager.js": "export {};\n",
-      "src/canonical.engine.js": "export {};\n",
-      "src/canonical.access.js": "export {};\n",
-      "src/canonical.resource.js": "export {};\n",
-      "src/canonical.utility.js": "export {};\n",
-      "src/clients/canonical.js": "export {};\n",
-      "src/managers/canonical.js": "export {};\n",
-      "src/engines/canonical.js": "export {};\n",
-      "src/access/canonical.js": "export {};\n",
-      "src/resources/canonical.js": "export {};\n",
-      "src/utilities/canonical.js": "export {};\n",
-    },
-    () => {
-      withPolicy({ preset: "volatility@1", coverage: ["src/**/*.js"] }, () => {
-        const result = runLint([
-          "src/canonical.client.js",
-          "src/canonical.manager.js",
-          "src/canonical.engine.js",
-          "src/canonical.access.js",
-          "src/canonical.resource.js",
-          "src/canonical.utility.js",
-          "src/clients/canonical.js",
-          "src/managers/canonical.js",
-          "src/engines/canonical.js",
-          "src/access/canonical.js",
-          "src/resources/canonical.js",
-          "src/utilities/canonical.js",
-        ]);
-        assert.equal(result.status, 0, output(result));
-      });
-    },
-  );
+  const suffixes: Record<Role, string> = {
+    Client: ".client",
+    Manager: ".manager",
+    Engine: ".engine",
+    ResourceAccess: ".access",
+    Resource: ".resource",
+    Utility: ".utility",
+  };
+  const directories: Record<Role, string> = {
+    Client: "clients",
+    Manager: "managers",
+    Engine: "engines",
+    ResourceAccess: "access",
+    Resource: "resources",
+    Utility: "utilities",
+  };
+  const canonicalFiles: Record<string, string> = {};
+  const allowed: string[] = [];
+  const forbidden: string[] = [];
+  for (const role of roles) {
+    for (const target of roles) {
+      const targetPath = `src/targets/value${suffixes[target]}.js`;
+      canonicalFiles[targetPath] = "export const value = 1;\n";
+      for (const sourcePath of [
+        `src/canonical-${role.toLowerCase()}-to-${target.toLowerCase()}${suffixes[role]}.js`,
+        `src/${directories[role]}/${role.toLowerCase()}-to-${target.toLowerCase()}.js`,
+      ]) {
+        const specifier = relative(dirname(sourcePath), targetPath);
+        canonicalFiles[sourcePath] = `import { value } from "${specifier.startsWith(".") ? specifier : `./${specifier}`}";\nexport { value };\n`;
+        const edge = `${role}:${target}` as RoleEdge;
+        (allowedRoleEdges.has(edge) || edge === "Utility:Client" ? allowed : forbidden).push(sourcePath);
+      }
+    }
+  }
+  withFiles(canonicalFiles, () => {
+    withPolicy(
+      {
+        preset: "volatility@1",
+        coverage: ["src/**/*.js"],
+        overrides: [
+          {
+            name: "utility-reads-client",
+            from: "Utility",
+            to: "Client",
+            effect: "allow",
+            reason: "Distinguishes Utility classification in conformance.",
+          },
+        ],
+      },
+      () => {
+        const allowedResult = runLint(allowed);
+        assert.equal(allowedResult.status, 0, output(allowedResult));
+        const forbiddenResult = runLint(forbidden);
+        assert.equal(forbiddenResult.status, 1, output(forbiddenResult));
+        assert.match(output(forbiddenResult), /righting\/role-dependency/);
+        for (const target of forbidden) assert.ok(output(forbiddenResult).includes(target), target);
+      },
+    );
+  });
 
   withFiles(
     {
@@ -231,6 +255,7 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
       "src/manager/protected.js": 'import "protected-resource";\n',
       "src/resource-access/protected.js": 'import "protected-resource";\n',
       "src/client/protected-utility.js": 'import "protected-utility";\n',
+      "src/resource/protected-utility.js": 'import "protected-utility";\n',
     },
     () => {
       withPolicy(policy(), () => {
@@ -248,6 +273,13 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
               effect: "allow",
               reason: "Approved read model.",
             },
+            {
+              name: "client-cannot-use-utility",
+              from: "Client",
+              to: "Utility",
+              effect: "disallow",
+              reason: "Proves protected Utility classification.",
+            },
           ],
           protectedDependencies: [
             { package: "protected-resource", role: "Resource" },
@@ -264,8 +296,11 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
           assert.match(output(manager), /righting\/role-dependency/);
           const access = runLint("src/resource-access/protected.js");
           assert.equal(access.status, 0, output(access));
-          const utility = runLint("src/client/protected-utility.js");
-          assert.equal(utility.status, 0, output(utility));
+          const forbiddenUtility = runLint("src/client/protected-utility.js");
+          assert.equal(forbiddenUtility.status, 1, output(forbiddenUtility));
+          assert.match(output(forbiddenUtility), /righting\/role-dependency/);
+          const allowedUtility = runLint("src/resource/protected-utility.js");
+          assert.equal(allowedUtility.status, 0, output(allowedUtility));
         },
       );
     },
