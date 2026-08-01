@@ -44,11 +44,10 @@ test("a packed Righting artifact proves the manual-maintainer route and JSON con
     const publicSurface = runCommand(projectDirectory, process.execPath, [
       "--input-type=module",
       "--eval",
-      'console.log(JSON.stringify({ contract: Object.keys(await import("righting/contract")), core: Object.keys(await import("righting/core")), eslint: Object.keys(await import("righting/eslint")) }));',
+      'console.log(JSON.stringify({ core: Object.keys(await import("righting/core")), eslint: Object.keys(await import("righting/eslint")) }));',
     ]);
     assertCommandSucceeded(publicSurface);
-    const exports = JSON.parse(publicSurface.stdout) as { contract: string[]; core: string[]; eslint: string[] };
-    assert.deepEqual(exports.contract, ["classifySource"]);
+    const exports = JSON.parse(publicSurface.stdout) as { core: string[]; eslint: string[] };
     assert.equal(exports.core.includes("classifySource"), false);
     assert.equal(exports.core.includes("isPolicyExpansion"), false);
     assert.equal(exports.eslint.includes("normalizeEslintSuppressions"), false);

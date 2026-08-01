@@ -3,317 +3,80 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Righting adapter architecture — proposed target state</title>
+  <title>Righting adapter architecture — final state</title>
   <style>
-    :root {
-      color-scheme: light;
-      --paper: #f7f4ee;
-      --card: rgba(255, 255, 255, .94);
-      --ink: #172438;
-      --muted: #607186;
-      --line: #cdd9e5;
-      --blue: #087ea4;
-      --blue-soft: #e7f5fa;
-      --green: #147a55;
-      --green-soft: #e9f7f0;
-      --amber: #a96300;
-      --amber-soft: #fff5df;
-      --violet: #674eb3;
-      --violet-soft: #f1edff;
-      --shadow: 0 18px 54px rgba(43, 64, 85, .10);
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background:
-        radial-gradient(circle at 12% 4%, rgba(8, 126, 164, .10), transparent 30rem),
-        radial-gradient(circle at 90% 17%, rgba(103, 78, 179, .08), transparent 28rem),
-        var(--paper);
-      color: var(--ink);
-      font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    main { width: min(1180px, calc(100% - 32px)); margin: auto; padding: 62px 0 82px; }
-    h1, h2, h3, p { margin-top: 0; }
-    h1 { max-width: 950px; margin-bottom: 16px; font-size: clamp(2.35rem, 6vw, 4.7rem); line-height: .98; letter-spacing: -.055em; }
-    h2 { margin-bottom: 18px; font-size: 1.4rem; letter-spacing: -.025em; }
-    h3 { margin-bottom: 7px; font-size: 1rem; }
-    p { color: var(--muted); }
-    code { color: #086887; font: .92em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .eyebrow { margin-bottom: 12px; color: var(--blue); font-size: .74rem; font-weight: 850; letter-spacing: .17em; text-transform: uppercase; }
-    .lede { max-width: 830px; font-size: 1.13rem; }
-    .badges { display: flex; flex-wrap: wrap; gap: 9px; margin: 26px 0 46px; }
-    .badge { padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.75); color: var(--muted); font-size: .78rem; }
-    .badge strong { color: var(--ink); }
-    .badge.target { border-color: rgba(8,126,164,.35); background: var(--blue-soft); color: var(--blue); font-weight: 800; }
-
-    .card, .section {
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: linear-gradient(145deg, rgba(8,126,164,.028), transparent 42%), var(--card);
-      box-shadow: var(--shadow);
-    }
-    .card { padding: 23px 25px; }
-    .card p { margin-bottom: 0; }
-    .stage { max-width: 760px; margin: auto; }
-    .stage.policy { border-color: rgba(20,122,85,.46); }
-    .stage.transport { border-color: rgba(8,126,164,.50); }
-    .stage.loader { border-style: dashed; border-color: rgba(169,99,0,.55); }
-    .label { margin-bottom: 7px; color: var(--muted); font-size: .7rem; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
-    .pill { display: inline-block; margin-top: 14px; padding: 5px 9px; border-radius: 7px; background: var(--green-soft); color: var(--green); font-size: .71rem; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
-    .pill.blue { background: var(--blue-soft); color: var(--blue); }
-    .pill.amber { background: var(--amber-soft); color: var(--amber); }
-    .pill.violet { background: var(--violet-soft); color: var(--violet); }
-    .arrow { height: 44px; text-align: center; color: var(--blue); font-size: 1.55rem; line-height: 33px; }
-    .arrow small { display: block; margin-top: -12px; color: var(--muted); font-size: .65rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; }
-
-    .snapshot { max-width: 860px; margin: auto; border-color: rgba(103,78,179,.46); }
-    .snapshot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 17px; }
-    .datum { padding: 11px; border-radius: 10px; background: var(--violet-soft); color: var(--violet); font-size: .77rem; font-weight: 750; text-align: center; }
-
-    .compose-label { display: flex; align-items: center; gap: 12px; max-width: 930px; margin: 8px auto 14px; color: var(--muted); font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-    .compose-label::before, .compose-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-    .composition { display: grid; grid-template-columns: .84fr 1.16fr; gap: 18px; }
-    .interpreter { border-color: rgba(8,126,164,.48); }
-    .native { border-color: rgba(20,122,85,.48); }
-    .api { margin: 16px 0 0; padding: 13px 14px; border: 1px solid rgba(8,126,164,.22); border-radius: 10px; background: var(--blue-soft); color: #075d79; font: .86rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
-    .list { display: grid; gap: 8px; margin: 15px 0 0; padding: 0; list-style: none; }
-    .list li { position: relative; padding-left: 20px; color: var(--muted); }
-    .list li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 900; }
-    .not-list li::before { content: "×"; color: var(--amber); }
-
-    .adapters { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-    .adapter { padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.72); }
-    .adapter p { margin: 4px 0 0; font-size: .86rem; }
-
-    .external { margin-top: 18px; border-style: dashed; border-color: rgba(103,78,179,.48); }
-    .routes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-    .route { padding: 15px; border-radius: 12px; background: var(--violet-soft); }
-    .route p { margin: 4px 0 0; font-size: .87rem; }
-
-    .section { margin-top: 46px; padding: 28px; }
-    .surface { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-    .surface-card { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.72); }
-    .surface-card p { margin-bottom: 0; }
-    .surface-card.public { border-top: 4px solid var(--blue); }
-    .surface-card.private { border-top: 4px solid var(--amber); }
-    .surface-card.native { border-top: 4px solid var(--green); }
-
-    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
-    table { width: 100%; min-width: 760px; border-collapse: collapse; }
-    th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-    th { background: rgba(23,36,56,.035); color: var(--muted); font-size: .71rem; letter-spacing: .1em; text-transform: uppercase; }
-    tr:last-child td { border-bottom: 0; }
-    td:first-child { color: var(--ink); font-weight: 750; }
-    .low { color: var(--green); }
-    .controlled { color: var(--amber); }
-    .intentional { color: var(--violet); }
-
-    .gate { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; margin-top: 22px; padding: 20px; border: 1px dashed rgba(169,99,0,.55); border-radius: 14px; background: var(--amber-soft); }
-    .gate-icon { font-size: 2rem; }
-    .gate h3 { margin-bottom: 2px; }
-    .gate p { margin-bottom: 0; }
-
-    .verdict { margin-top: 46px; padding: 30px; border: 1px solid rgba(8,126,164,.40); border-radius: 20px; background: linear-gradient(110deg, var(--blue-soft), var(--violet-soft)); box-shadow: var(--shadow); }
-    .verdict p { max-width: 930px; margin: 7px 0 0; color: #3d536a; font-size: 1.08rem; }
-    .verdict strong { color: var(--blue); }
-    footer { margin-top: 26px; color: var(--muted); font-size: .78rem; }
-
-    @media (max-width: 820px) {
-      .composition, .surface, .routes { grid-template-columns: 1fr; }
-      .snapshot-grid { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 560px) {
-      main { padding-top: 38px; }
-      .adapters, .snapshot-grid { grid-template-columns: 1fr; }
-      .section { padding: 20px; }
-    }
-    @media print {
-      body { background: white; }
-      main { width: 100%; padding: 20px; }
-      .card, .section, .verdict { box-shadow: none; break-inside: avoid; }
-    }
+    :root { color-scheme: light; --bg:#f7f4ee; --card:#fff; --ink:#172438; --muted:#607186; --line:#ccd8e4; --blue:#087ea4; --blue-soft:#e7f5fa; --green:#157a55; --green-soft:#e8f7ef; --amber:#a46100; --amber-soft:#fff4dc; --violet:#6750b0; --violet-soft:#f1edff; --shadow:0 18px 54px rgba(43,64,85,.1); }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(circle at 12% 5%,rgba(8,126,164,.1),transparent 29rem),radial-gradient(circle at 90% 14%,rgba(103,80,176,.08),transparent 28rem),var(--bg); color:var(--ink); font:15px/1.55 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    main { width:min(1140px,calc(100% - 32px)); margin:auto; padding:60px 0 80px; }
+    h1,h2,h3,p { margin-top:0; } h1 { max-width:920px; margin-bottom:16px; font-size:clamp(2.3rem,6vw,4.6rem); line-height:.98; letter-spacing:-.055em; } h2 { margin-bottom:17px; font-size:1.38rem; letter-spacing:-.025em; } h3 { margin-bottom:6px; font-size:1rem; }
+    p { color:var(--muted); } code { color:#086987; font:.92em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .eyebrow { margin-bottom:11px; color:var(--blue); font-size:.73rem; font-weight:850; letter-spacing:.16em; text-transform:uppercase; }
+    .lede { max-width:830px; font-size:1.12rem; } .badges { display:flex; flex-wrap:wrap; gap:9px; margin:25px 0 44px; } .badge { padding:6px 10px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.76); color:var(--muted); font-size:.76rem; } .badge strong { color:var(--ink); }
+    .card,.section { border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.94); box-shadow:var(--shadow); } .card { padding:23px 25px; } .card p { margin-bottom:0; }
+    .stage { max-width:750px; margin:auto; } .policy { border-color:rgba(21,122,85,.45); } .seam { border-color:rgba(8,126,164,.48); } .loader { border-style:dashed; border-color:rgba(164,97,0,.5); }
+    .label { margin-bottom:7px; color:var(--muted); font-size:.69rem; font-weight:850; letter-spacing:.13em; text-transform:uppercase; } .pill { display:inline-block; margin-top:13px; padding:5px 9px; border-radius:7px; background:var(--blue-soft); color:var(--blue); font-size:.7rem; font-weight:850; text-transform:uppercase; } .pill.green { background:var(--green-soft); color:var(--green); } .pill.amber { background:var(--amber-soft); color:var(--amber); }
+    .arrow { height:43px; color:var(--blue); text-align:center; font-size:1.52rem; line-height:31px; } .arrow small { display:block; margin-top:-10px; color:var(--muted); font-size:.65rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .fork-label { display:flex; align-items:center; gap:12px; margin:10px 0 15px; color:var(--muted); font-size:.71rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; } .fork-label::before,.fork-label::after { content:""; flex:1; height:1px; background:var(--line); }
+    .adapters { display:grid; grid-template-columns:1fr 1fr; gap:20px; } .adapter { overflow:hidden; padding:0; } .adapter-head { padding:22px 23px 17px; border-bottom:1px solid var(--line); } .adapter-head p { margin:4px 0 0; } .eslint { border-color:rgba(21,122,85,.48); } .oxlint { border-color:rgba(103,80,176,.48); }
+    .steps { display:grid; gap:1px; background:var(--line); } .step { min-height:103px; padding:17px 22px; background:#fbfdff; } .step p { margin:0; } .num { float:left; display:grid; width:27px; height:27px; margin:1px 11px 22px 0; place-items:center; border-radius:50%; background:rgba(23,36,56,.06); color:var(--muted); font:700 .73rem ui-monospace,monospace; }
+    .outcome { margin:18px 22px 21px; padding:13px 14px; border-radius:11px; font-size:.87rem; } .eslint .outcome { background:var(--green-soft); color:var(--green); } .oxlint .outcome { background:var(--violet-soft); color:var(--violet); }
+    .converge { display:grid; grid-template-columns:auto 1fr; gap:18px; align-items:center; max-width:860px; margin:20px auto 0; padding:21px; border:1px dashed rgba(164,97,0,.55); border-radius:15px; background:var(--amber-soft); } .icon { font-size:2rem; } .converge p { margin:3px 0 0; }
+    .section { margin-top:44px; padding:27px; } .surface { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; } .surface-card { padding:18px; border:1px solid var(--line); border-radius:14px; background:#fff; } .surface-card p { margin-bottom:0; } .surface-card:nth-child(1) { border-top:4px solid var(--blue); } .surface-card:nth-child(2) { border-top:4px solid var(--amber); } .surface-card:nth-child(3) { border-top:4px solid var(--green); }
+    .table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:14px; } table { width:100%; min-width:720px; border-collapse:collapse; } th,td { padding:14px 16px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } th { background:rgba(23,36,56,.035); color:var(--muted); font-size:.71rem; letter-spacing:.09em; text-transform:uppercase; } tr:last-child td { border-bottom:0; } td:first-child { color:var(--ink); font-weight:750; } .shared { color:var(--green); } .controlled { color:var(--amber); } .native { color:var(--violet); }
+    .verdict { margin-top:44px; padding:29px; border:1px solid rgba(8,126,164,.38); border-radius:20px; background:linear-gradient(110deg,var(--blue-soft),var(--violet-soft)); box-shadow:var(--shadow); } .verdict p { max-width:920px; margin:7px 0 0; color:#40556b; font-size:1.08rem; } .verdict strong { color:var(--blue); } footer { margin-top:25px; color:var(--muted); font-size:.78rem; }
+    @media (max-width:800px) { .adapters,.surface { grid-template-columns:1fr; } } @media (max-width:560px) { main { padding-top:38px; } .section { padding:20px; } .converge { grid-template-columns:1fr; } } @media print { body { background:#fff; } main { width:100%; padding:20px; } .card,.section,.verdict { box-shadow:none; break-inside:avoid; } }
   </style>
 </head>
 <body>
   <main>
     <header>
-      <p class="eyebrow">Proposed architecture · final agreed direction</p>
-      <h1>One contract seam.<br>Shared interpretation where it pays.</h1>
-      <p class="lede">The normalized contract stays authoritative and language-neutral. JavaScript and TypeScript guardrail adapters may reuse one narrow reference interpreter without moving native enforcement into core.</p>
-      <div class="badges">
-        <span class="badge target">Target state — not yet implemented</span>
-        <span class="badge"><strong>Authority:</strong> normalized contract</span>
-        <span class="badge"><strong>JS/TS reuse:</strong> source classification</span>
-        <span class="badge"><strong>Support gate:</strong> native conformance</span>
-      </div>
+      <p class="eyebrow">Final architecture</p>
+      <h1>One contract.<br>Different native translations.</h1>
+      <p class="lede"><code>righting inspect --json</code> is the sole guardrail-adapter seam. Righting shares normalized semantics, not a required execution model.</p>
+      <div class="badges"><span class="badge"><strong>Universal interface:</strong> normalized JSON</span><span class="badge"><strong>ESLint:</strong> compiles</span><span class="badge"><strong>Oxlint:</strong> interprets</span><span class="badge"><strong>Parity:</strong> conformance</span></div>
     </header>
 
-    <section aria-label="Target runtime flow">
-      <article class="card stage policy">
-        <div class="label">Maintainer-owned declaration</div>
-        <h2><code>righting.json</code></h2>
-        <p>Declares project policy: coverage, vocabulary aliases, variations, overrides, protected dependencies, and explicit source treatments.</p>
-        <span class="pill">Source of architectural intent</span>
-      </article>
+    <article class="card stage policy"><div class="label">Maintainer-owned intent</div><h2><code>righting.json</code></h2><p>Declares coverage, aliases, variations, overrides, protected dependencies, and explicit source treatments.</p><span class="pill green">Source of architectural intent</span></article>
+    <div class="arrow" aria-hidden="true">↓<small>read · validate · normalize</small></div>
+    <article class="card stage"><div class="label">Righting core</div><h2>Policy normalization</h2><p>Produces configured provenance and effective conventions, role relationships, capabilities, stable rule identities, and evidence limits.</p></article>
+    <div class="arrow" aria-hidden="true">↓<small>serialize the supported seam</small></div>
+    <article class="card stage seam"><div class="label">Public · language-neutral</div><h2><code>righting inspect --json</code></h2><p>Emits one versioned normalized contract. Every supported guardrail adapter validates and consumes this JSON rather than reading or normalizing policy itself.</p><span class="pill">Sole adapter seam</span></article>
+    <div class="arrow" aria-hidden="true">↓<small>packaged adapters acquire one snapshot</small></div>
+    <article class="card stage loader"><div class="label">Package-private plumbing</div><h2>Shared inspection loader</h2><p>The packaged adapters share CLI invocation, JSON parsing, and common envelope/version validation. This is not a public adapter interface.</p><span class="pill amber">Replaceable internal plumbing</span></article>
+    <div class="arrow" aria-hidden="true">↓<small>same normalized contract · different composition</small></div>
+    <div class="fork-label">Guardrail adapters</div>
 
-      <div class="arrow" aria-hidden="true">↓<small>read · validate · normalize</small></div>
-
-      <article class="card stage">
-        <div class="label">Righting core</div>
-        <h2>Policy normalization</h2>
-        <p>Produces the versioned normalized contract containing configured provenance and effective semantics. It does not perform native lint traversal or suppression.</p>
-      </article>
-
-      <div class="arrow" aria-hidden="true">↓<small>serialize one official adapter interface</small></div>
-
-      <article class="card stage transport">
-        <div class="label">Public · cross-language transport</div>
-        <h2><code>righting inspect --json</code></h2>
-        <p>Emits the inspection envelope and normalized contract. This remains the official acquisition seam for every supported guardrail adapter.</p>
-        <span class="pill blue">Language-neutral seam</span>
-      </article>
-
-      <div class="arrow" aria-hidden="true">↓<small>packaged adapters acquire once</small></div>
-
-      <article class="card stage loader">
-        <div class="label">Package-private plumbing</div>
-        <h2><code>loadAdapterContract()</code></h2>
-        <p>Invokes the adjacent CLI, parses JSON, validates the inspection envelope and supported versions, then returns one immutable contract snapshot for the adapter run.</p>
-        <span class="pill amber">Shared by packaged adapters · not exported</span>
-      </article>
-
-      <div class="arrow" aria-hidden="true">↓<small>validated contract snapshot</small></div>
-
-      <article class="card snapshot">
-        <div class="label">Authoritative runtime data</div>
-        <h2>Normalized contract</h2>
-        <p>Both adapters observe the same effective decisions for the whole run. A policy change takes effect when the native lint process restarts.</p>
-        <div class="snapshot-grid">
-          <div class="datum">coverage</div>
-          <div class="datum">role graph</div>
-          <div class="datum">conventions</div>
-          <div class="datum"><code>righting/*</code> IDs</div>
+    <section class="adapters">
+      <article class="card adapter eslint">
+        <div class="adapter-head"><div class="label">Compiler-style adapter</div><h2>ESLint + Boundaries</h2><p>Translates contract data into native configuration.</p></div>
+        <div class="steps">
+          <div class="step"><span class="num">1</span><h3>Compile conventions</h3><p>Generate Boundaries element descriptors from role, test, generated, and composition-root conventions.</p></div>
+          <div class="step"><span class="num">2</span><h3>Compile dependency policy</h3><p>Generate native policies from effective allowed dependencies and protected packages.</p></div>
+          <div class="step"><span class="num">3</span><h3>Run native mechanics</h3><p>Boundaries owns traversal, resolution, matching, diagnostics, and ESLint suppression behavior.</p></div>
         </div>
+        <div class="outcome"><strong>Compiled translation:</strong> no shared classifier function is required.</div>
       </article>
 
-      <div class="arrow" aria-hidden="true">↓<small>compose shared semantics with native mechanics</small></div>
-      <div class="compose-label">Packaged JS/TS guardrail adapters</div>
-
-      <div class="composition">
-        <article class="card interpreter">
-          <div class="label">Public · optional JS/TS reference interpreter</div>
-          <h2><code>righting/contract</code></h2>
-          <div class="api">classifySource(contract, sourcePath)<br>→ SourceClassification</div>
-          <ul class="list">
-            <li>Classifies one path under normalized semantics</li>
-            <li>Owns classification precedence and ambiguity</li>
-            <li>Returns structured results and stable rule IDs</li>
-            <li>Rejects unsupported contract versions</li>
-          </ul>
-          <ul class="list not-list">
-            <li>No policy reading or inspection</li>
-            <li>No filesystem or import resolution</li>
-            <li>No AST traversal or diagnostic prose</li>
-          </ul>
-          <span class="pill blue">One deep classification interface</span>
-        </article>
-
-        <article class="card native">
-          <div class="label">Guardrail-adapter-owned implementation</div>
-          <h2>Native enforcement</h2>
-          <p>Each adapter composes the shared classification result with its own native mechanics and capability checks.</p>
-          <div class="adapters">
-            <div class="adapter">
-              <h3>ESLint</h3>
-              <p>Boundaries plugin, ESLint locations, severity, messages, and suppression lifecycle.</p>
-            </div>
-            <div class="adapter">
-              <h3>Oxlint</h3>
-              <p>Oxlint AST traversal, supported local resolution, locations, messages, and directives.</p>
-            </div>
-          </div>
-          <ul class="list">
-            <li>Resolve and inspect native dependency forms</li>
-            <li>Apply adapter-specific capability limits</li>
-            <li>Format native diagnostics and locations</li>
-            <li>Delegate suppression to the native tool</li>
-          </ul>
-          <span class="pill">Native responsibility stays native</span>
-        </article>
-      </div>
-
-      <article class="card external">
-        <div class="label">External guardrail adapters</div>
-        <h2>Same contract, ecosystem-appropriate interpretation</h2>
-        <div class="routes">
-          <div class="route">
-            <h3>JavaScript / TypeScript</h3>
-            <p>Consume and validate inspection JSON, then optionally import <code>righting/contract</code> for source classification.</p>
-          </div>
-          <div class="route">
-            <h3>Other languages</h3>
-            <p>Consume the same normalized JSON contract, implement equivalent classification, and prove behavior through conformance.</p>
-          </div>
+      <article class="card adapter oxlint">
+        <div class="adapter-head"><div class="label">Interpreter-style adapter</div><h2>Oxlint</h2><p>Applies contract data while traversing native paths.</p></div>
+        <div class="steps">
+          <div class="step"><span class="num">1</span><h3>Resolve natively</h3><p>Oxlint visitors and the supported resolver surface produce importer and target paths.</p></div>
+          <div class="step"><span class="num">2</span><h3>Interpret conventions</h3><p>The adapter classifies those paths from normalized coverage and conventions.</p></div>
+          <div class="step"><span class="num">3</span><h3>Report natively</h3><p>The adapter applies effective relationships and emits Oxlint diagnostics and directives.</p></div>
         </div>
+        <div class="outcome"><strong>Interpreted translation:</strong> native code implements the contract semantics.</div>
       </article>
     </section>
 
-    <section class="section">
-      <p class="eyebrow">Responsibility surface</p>
-      <h2>Small public interfaces; replaceable plumbing</h2>
-      <div class="surface">
-        <article class="surface-card public">
-          <h3>Public and stable</h3>
-          <p><code>inspect --json</code>, normalized contract semantics, and <code>classifySource()</code> with its input/output types.</p>
-        </article>
-        <article class="surface-card private">
-          <h3>Package-private</h3>
-          <p>Subprocess launch, adjacent-CLI discovery, JSON parsing, common envelope validation, and snapshot acquisition.</p>
-        </article>
-        <article class="surface-card native">
-          <h3>Adapter-owned</h3>
-          <p>AST traversal, import resolution, capability compatibility, diagnostic prose, severity, locations, and suppression.</p>
-        </article>
-      </div>
-    </section>
+    <div class="converge"><div class="icon" aria-hidden="true">🛡️</div><div><h3>Black-box conformance reunifies the paths</h3><p>Both implementations execute the same adapter-neutral scenarios through their public native lint commands. Stable <code>righting/*</code> identities and allowed/forbidden outcomes—not shared internal code—establish parity.</p></div></div>
 
-    <section class="section">
-      <p class="eyebrow">Drift after the change</p>
-      <h2>What the target state removes—and retains</h2>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Potential drift</th><th>Target state</th><th>Control</th></tr></thead>
-          <tbody>
-            <tr><td>Policy data differs between adapters</td><td class="low">Removed</td><td>Both acquire the current normalized contract through inspection.</td></tr>
-            <tr><td>JS/TS source classification differs</td><td class="low">Removed</td><td>Both call the same package-owned reference interpreter.</td></tr>
-            <tr><td>Inspection/version validation differs</td><td class="low">Removed for packaged adapters</td><td>One private loader validates the common envelope.</td></tr>
-            <tr><td>Native import resolution differs</td><td class="controlled">Retained and controlled</td><td>Declared adapter support limits plus native black-box scenarios.</td></tr>
-            <tr><td>Non-JS interpretation differs</td><td class="controlled">Retained and controlled</td><td>Versioned contract and adapter-neutral conformance families.</td></tr>
-            <tr><td>Diagnostic wording differs</td><td class="intentional">Intentional</td><td>Stable <code>righting/*</code> identity; native tool owns useful prose.</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <section class="section"><p class="eyebrow">Responsibility surface</p><h2>What Righting provides and what adapters own</h2><div class="surface"><article class="surface-card"><h3>Public and stable</h3><p>Inspection envelope, normalized contract, contract version, policy-rule identities, capability records, and conformance expectations.</p></article><article class="surface-card"><h3>Package-private</h3><p>Adjacent CLI discovery, subprocess invocation, parsing, common validation, and internal core inspection helpers.</p></article><article class="surface-card"><h3>Adapter-owned</h3><p>Compilation or interpretation, native matching, traversal, resolution, capability compatibility, diagnostics, and suppression.</p></article></div></section>
 
-      <div class="gate">
-        <div class="gate-icon" aria-hidden="true">🛡️</div>
-        <div>
-          <h3>Conformance remains the support gate</h3>
-          <p>Shared classification does not replace native black-box testing. Every supported adapter must still prove dependency forms, coverage, classification, treatment, reporting, and claimed capabilities through its public native lint entry point.</p>
-        </div>
-      </div>
-    </section>
+    <section class="section"><p class="eyebrow">Drift model</p><h2>Centralize decisions; verify translations</h2><div class="table-wrap"><table><thead><tr><th>Concern</th><th>Status</th><th>Control</th></tr></thead><tbody><tr><td>Policy data and effective graph</td><td class="shared">Centralized</td><td>One normalized contract from inspection.</td></tr><tr><td>Inspection and version validation</td><td class="shared">Shared internally</td><td>One private loader for packaged adapters.</td></tr><tr><td>Classification implementation</td><td class="controlled">Adapter-specific</td><td>Versioned semantics and native black-box scenarios.</td></tr><tr><td>Native resolution and traversal</td><td class="native">Intentionally native</td><td>Declared support tuple and resolver limitations.</td></tr><tr><td>Diagnostic wording and suppression</td><td class="native">Intentionally native</td><td>Stable rule identity plus native lifecycle tests.</td></tr></tbody></table></div></section>
 
-    <section class="verdict">
-      <p class="eyebrow">Final architecture</p>
-      <p><strong>Path B remains the architecture.</strong> The normalized JSON contract is the authoritative seam. <code>righting/contract</code> is a narrow, optional JS/TS reference interpreter that removes needless semantic duplication, while a private loader removes packaged plumbing duplication. Guardrail adapters continue to own everything genuinely native.</p>
-    </section>
-
-    <footer>
-      Proposed target-state artifact. Decisions reflected: authoritative normalized contract; classification-only reference interpreter; fail-closed version checks; immutable per-run snapshot; private packaged loader; adapter-owned diagnostics and capabilities; unchanged conformance obligations.
-    </footer>
+    <section class="verdict"><p class="eyebrow">Final decision</p><p><strong>The normalized contract is enough.</strong> Righting does not ship a public reference interpreter or duplicate fixed classification semantics in another contract layer. Compiler-style and interpreter-style adapters remain peers, with conformance controlling translation drift.</p></section>
+    <footer>See <code>docs/adapter-conformance.md</code>.</footer>
   </main>
 </body>
 </html>

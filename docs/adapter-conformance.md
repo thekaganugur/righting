@@ -10,7 +10,22 @@ Start every run with the exact output of:
 npx righting inspect --json
 ```
 
-Proceed only when the response is successful, the policy is valid, and both the response `schemaVersion` and `contract.contractVersion` are supported. The adapter consumes `contract.configured` provenance and `contract.effective` semantics; it does not normalize `righting.json`, infer architecture from files, or import Righting core. A JavaScript or TypeScript adapter may optionally use `classifySource` from `righting/contract` as the package-owned reference interpreter after validating inspection; this does not replace native black-box conformance. Inspection's `adapter.status` is not conformance evidence.
+Proceed only when the response is successful, the policy is valid, and both the response `schemaVersion` and `contract.contractVersion` are supported. The adapter consumes `contract.configured` provenance and `contract.effective` semantics; it does not normalize `righting.json`, infer architecture from files, or import Righting core. Inspection's `adapter.status` is not conformance evidence.
+
+```text
+righting.json
+    ↓
+righting inspect --json
+    ↓
+normalized contract
+   ↙                 ↘
+ESLint compiles      Oxlint interprets
+to Boundaries        native paths
+   ↘                 ↙
+black-box conformance
+```
+
+The normalized contract is the sole guardrail-adapter seam. Each adapter translates its semantics through the host's supported composition model; shared execution code is not required. Black-box conformance proves the observable policy outcomes of both compiled and interpreted implementations.
 
 For each scenario, record the contract fixture, native source fixtures, exact native command, exit status, and diagnostics. Allowed cases pass without a Righting finding. Forbidden cases fail and identify the expected stable policy rule, even when the host uses a different native rule ID. Run cases through the adapter's public native lint entry point, not an internal policy helper.
 

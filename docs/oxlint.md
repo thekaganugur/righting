@@ -36,7 +36,7 @@ Add the package export under an explicit native plugin name and enable its five 
 }
 ```
 
-Preserve the project's existing Oxlint plugins, categories, rules, and command. Run that command from the project root. Adapter loading invokes the adjacent packaged CLI as `righting inspect --json`, requires inspection schema 1 and normalized contract version 2, and fails before linting when inspection is unsuccessful, the policy is incomplete, a version is unsupported, or an unsupported static capability applies. It uses the package-owned `righting/contract` reference interpreter for source classification; it neither imports `righting/core` nor reads or normalizes `righting.json` itself.
+Preserve the project's existing Oxlint plugins, categories, rules, and command. Run that command from the project root. Adapter loading invokes the adjacent packaged CLI as `righting inspect --json`, requires inspection schema 1 and normalized contract version 2, and fails before linting when inspection is unsuccessful, the policy is incomplete, a version is unsupported, or an unsupported static capability applies. It interprets the normalized conventions against native paths; it neither imports `righting/core` nor reads or normalizes `righting.json` itself.
 
 ## Native suppression
 

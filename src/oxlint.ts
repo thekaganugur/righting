@@ -1,17 +1,33 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, relative, resolve, sep } from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-import { loadAdapterContract } from "./adapter-contract.js";
-import { classifySource } from "./contract.js";
+import { loadNormalizedContract } from "./adapter-inspection.js";
+
+const packageRequire = createRequire(import.meta.url);
+const { isMatch } = packageRequire("micromatch") as {
+  isMatch(path: string, patterns: readonly string[]): boolean;
+};
 
 const projectDirectory = process.cwd();
 const supportedOxlintVersion = "1.75.0";
+const roles = ["Client", "Manager", "Engine", "ResourceAccess", "Resource", "Utility"] as const;
+type Role = (typeof roles)[number];
 type RuleId =
   | "righting/role-dependency"
   | "righting/unresolved-local-import"
   | "righting/unclassified-source"
   | "righting/ambiguous-source"
   | "righting/test-dependency";
+
+type Convention = { filenameMarkers?: string[]; directorySegments?: string[] };
+type Classification =
+  | { kind: "outside" }
+  | { kind: "ambiguous"; roles: Role[] }
+  | { kind: "role"; role: Role; test: boolean }
+  | { kind: "composition-root"; test: boolean }
+  | { kind: "test" }
+  | { kind: "unclassified" };
 type Node = { source?: { value?: unknown }; arguments?: Array<{ value?: unknown }>; callee?: { type?: string; name?: string } };
 type RuleContext = {
   filename: string;
@@ -30,13 +46,14 @@ function verifyOxlintVersion(context: RuleContext): void {
   }
 }
 
-const contract = loadAdapterContract(projectDirectory);
+const contract = loadNormalizedContract(projectDirectory);
 const unsupported = contract.effective.capabilities.filter(
   (capability) => capability.applies && capability.id === "protected-dependency",
 );
 if (unsupported.length > 0) {
   fail(`contract requires unsupported capabilities: ${unsupported.map(({ id }) => id).join(", ")}.`);
 }
+const conventions = contract.effective.conventions;
 const allowed = contract.effective.allowedDependencies;
 const extensions = [".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"];
 const packageJson = JSON.parse(readFileSync(resolve(projectDirectory, "package.json"), "utf8")) as {
@@ -46,6 +63,38 @@ const packageImports = packageJson.imports ?? {};
 
 function projectPath(path: string): string {
   return relative(projectDirectory, path).split(sep).join("/");
+}
+
+function hasConvention(path: string, convention: Convention): boolean {
+  const parts = path.split("/");
+  const filename = parts.at(-1) ?? path;
+  const directories = parts.slice(0, -1);
+  return (
+    convention.filenameMarkers?.some((marker) => filename.includes(marker)) === true ||
+    convention.directorySegments?.some((segment) => directories.includes(segment)) === true
+  );
+}
+
+function classify(path: string): Classification {
+  if (!isMatch(path, contract.configured.coverage)) return { kind: "outside" };
+  const parts = path.split("/");
+  const filename = parts.at(-1) ?? path;
+  const directories = parts.slice(0, -1);
+  const test = hasConvention(path, conventions.tests);
+  const generated = hasConvention(path, conventions.generated);
+  const matches = roles.filter((role) => {
+    const rule = conventions.roles[role];
+    return (
+      rule.filenameSuffixes.some((marker) => filename.includes(marker)) ||
+      rule.directorySegments.some((segment) => directories.includes(segment))
+    );
+  });
+  if (matches.length > 1) return { kind: "ambiguous", roles: matches };
+  if (matches.length === 1) return { kind: "role", role: matches[0]!, test };
+  const basename = filename.includes(".") ? filename.slice(0, filename.indexOf(".")) : filename;
+  if (conventions.compositionRoots.includes(basename)) return { kind: "composition-root", test };
+  if (test && !generated) return { kind: "test" };
+  return { kind: "unclassified" };
 }
 
 function packageImportPath(specifier: string): string | undefined {
@@ -103,7 +152,7 @@ function dependencyRule(ruleId: RuleId) {
     create(context: RuleContext) {
       verifyOxlintVersion(context);
       const filename = context.filename;
-      const from = classifySource(contract, projectPath(filename));
+      const from = classify(projectPath(filename));
       function report(node: unknown, message: string) {
         context.report({ node, message: `${ruleId}: ${message}` });
       }
@@ -123,8 +172,8 @@ function dependencyRule(ruleId: RuleId) {
           }
           return;
         }
-        const to = classifySource(contract, target.path);
-        if (to.kind === "outside-coverage") return;
+        const to = classify(target.path);
+        if (to.kind === "outside") return;
         if (to.kind === "test" || ((to.kind === "role" || to.kind === "composition-root") && to.test)) {
           if (ruleId === "righting/test-dependency") {
             report(node, "Governed production source cannot depend on test source.");
@@ -188,15 +237,14 @@ function classificationRule(ruleId: RuleId) {
       verifyOxlintVersion(context);
       return {
         Program(node: unknown) {
-          const classification = classifySource(contract, projectPath(context.filename));
-          if (classification.kind !== "violation" || classification.ruleId !== ruleId) return;
-          if (ruleId === "righting/unclassified-source") {
+          const classification = classify(projectPath(context.filename));
+          if (ruleId === "righting/unclassified-source" && classification.kind === "unclassified") {
             context.report({
               node,
               message: `${ruleId}: This covered source does not match a canonical role or explicit source treatment.`,
             });
           }
-          if (ruleId === "righting/ambiguous-source" && classification.ruleId === "righting/ambiguous-source") {
+          if (ruleId === "righting/ambiguous-source" && classification.kind === "ambiguous") {
             context.report({
               node,
               message: `${ruleId}: This covered source matches multiple canonical roles: ${classification.roles.join(", ")}.`,

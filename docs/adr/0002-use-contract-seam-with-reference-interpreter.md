@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: superseded
 ---
 
 # Use the normalized contract seam with a reference interpreter

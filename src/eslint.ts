@@ -1,7 +1,12 @@
+import { createRequire } from "node:module";
 import { relative, resolve, sep } from "node:path";
 import boundaries from "eslint-plugin-boundaries";
-import { loadAdapterContract } from "./adapter-contract.js";
-import { classifySource, type NormalizedContract, type Role } from "./contract.js";
+import { loadNormalizedContract } from "./adapter-inspection.js";
+import type { NormalizedContract, Role } from "./policy.js";
+
+const { isMatch } = createRequire(import.meta.url)("micromatch") as {
+  isMatch(path: string, patterns: string | readonly string[]): boolean;
+};
 const externalOrigins = ["external", "core"];
 const testElementType = "righting-treatment-test";
 const generatedElementType = "righting-treatment-generated";
@@ -31,6 +36,36 @@ function directoryDescriptor(type: string, segment: string) {
   return { type, pattern: `**/${segment}/**`, partialMatch: false };
 }
 
+function matchesMarker(filename: string, markers: readonly string[]): boolean {
+  return markers.some((marker) => filename.includes(marker));
+}
+
+function matchesSegment(segments: readonly string[], conventions: readonly string[]): boolean {
+  return conventions.some((convention) => segments.includes(convention));
+}
+
+function sourceViolation(contract: NormalizedContract, sourcePath: string) {
+  if (!isMatch(sourcePath, contract.configured.coverage)) return undefined;
+  const parts = sourcePath.split("/");
+  const filename = parts.at(-1) ?? sourcePath;
+  const directories = parts.slice(0, -1);
+  const matches = contract.roles.filter((role) => {
+    const convention = contract.effective.conventions.roles[role];
+    return matchesMarker(filename, convention.filenameSuffixes) || matchesSegment(directories, convention.directorySegments);
+  });
+  if (matches.length > 1) return { ruleId: "righting/ambiguous-source" as const, roles: matches };
+  if (matches.length === 1) return undefined;
+  const basename = filename.includes(".") ? filename.slice(0, filename.indexOf(".")) : filename;
+  if (contract.effective.conventions.compositionRoots.includes(basename)) return undefined;
+  const test =
+    matchesMarker(filename, contract.effective.conventions.tests.filenameMarkers) ||
+    matchesSegment(directories, contract.effective.conventions.tests.directorySegments);
+  const generated =
+    matchesMarker(filename, contract.effective.conventions.generated.filenameMarkers) ||
+    matchesSegment(directories, contract.effective.conventions.generated.directorySegments);
+  return test && !generated ? undefined : { ruleId: "righting/unclassified-source" as const };
+}
+
 function classificationRule(contract: NormalizedContract, projectDirectory: string) {
   return {
     meta: {
@@ -42,16 +77,16 @@ function classificationRule(contract: NormalizedContract, projectDirectory: stri
       return {
         Program(node: unknown) {
           const path = relative(projectDirectory, context.filename).split(sep).join("/");
-          const classification = classifySource(contract, path);
-          if (classification.kind === "violation") {
+          const violation = sourceViolation(contract, path);
+          if (violation !== undefined) {
             const detail =
-              classification.ruleId === "righting/ambiguous-source"
-                ? ` matches multiple canonical roles: ${classification.roles.join(", ")}.`
+              violation.ruleId === "righting/ambiguous-source"
+                ? ` matches multiple canonical roles: ${violation.roles.join(", ")}.`
                 : " does not match a canonical role or explicit source treatment.";
             context.report({
               node,
               messageId: "violation",
-              data: { message: `${classification.ruleId}: This covered source${detail}` },
+              data: { message: `${violation.ruleId}: This covered source${detail}` },
             });
           }
         },
@@ -62,7 +97,7 @@ function classificationRule(contract: NormalizedContract, projectDirectory: stri
 
 export function eslintConfig() {
   const projectDirectory = resolve(process.cwd());
-  const contract = loadAdapterContract(projectDirectory);
+  const contract = loadNormalizedContract(projectDirectory);
   const roles = contract.roles;
   const packagesByRole = emptyRoleMap(roles);
   for (const dependency of contract.configured.protectedDependencies) {

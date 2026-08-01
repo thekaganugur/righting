@@ -124,12 +124,4 @@ import { normalizePolicy, readPolicy } from "righting/core";
 const contract = normalizePolicy(readPolicy("righting.json"));
 ```
 
-JavaScript and TypeScript consumers can apply the package-owned reference interpreter to any validated normalized contract through `righting/contract`:
-
-```js
-import { classifySource } from "righting/contract";
-
-const classification = classifySource(contract, "src/orders/create.manager.ts");
-```
-
-`classifySource` rejects unsupported contract versions. It classifies source paths only; guardrail adapters still own native import resolution, diagnostics, capability checks, suppression, and conformance. Use `npx righting inspect` after replacing the starter to validate and explain the normalized contract.
+Guardrail adapters consume and validate the normalized contract from `righting inspect --json`, then compile or interpret its effective semantics through native host mechanics. Use `npx righting inspect` after replacing the starter to validate and explain the normalized contract.

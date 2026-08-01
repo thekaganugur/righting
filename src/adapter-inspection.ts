@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import type { NormalizedContract } from "./contract.js";
+import type { NormalizedContract } from "./policy.js";
 
 type InspectionResponse = {
   schemaVersion?: number;
@@ -15,7 +15,7 @@ function fail(message: string): never {
   throw new Error(`Righting adapter: ${message}`);
 }
 
-export function loadAdapterContract(projectDirectory: string): NormalizedContract {
+export function loadNormalizedContract(projectDirectory: string): NormalizedContract {
   const cli = fileURLToPath(new URL("./cli.js", import.meta.url));
   const inspection = spawnSync(process.execPath, [cli, "inspect", "--json"], {
     cwd: projectDirectory,

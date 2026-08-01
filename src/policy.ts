@@ -1,8 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
-import type { NormalizedContract, Role } from "./contract.js";
 
-export const roles = ["Client", "Manager", "Engine", "ResourceAccess", "Resource", "Utility"] as const satisfies readonly Role[];
+export const roles = ["Client", "Manager", "Engine", "ResourceAccess", "Resource", "Utility"] as const;
+export type Role = (typeof roles)[number];
 export type Variation = "clientReadsAccess" | "pureEngines";
 export type OverrideEffect = "allow" | "disallow";
 
@@ -58,6 +58,49 @@ export type ContractCapability = {
   establishes: string[];
   doesNotEstablish: string[];
 };
+
+export type NormalizedContract = {
+  contractVersion: 2;
+  preset: "volatility@1";
+  roles: Role[];
+  configured: {
+    coverage: string[];
+    aliases: AliasConvention[];
+    generated: GeneratedConvention;
+    protectedDependencies: ProtectedDependency[];
+    variations: Variation[];
+    overrides: RoleEdgeOverride[];
+    compositionRoots: string[];
+    guidance: Guidance;
+  };
+  effective: {
+    allowedDependencies: Record<Role, Role[]>;
+    conventions: {
+      roles: Record<Role, { filenameSuffixes: string[]; directorySegments: string[] }>;
+      tests: { filenameMarkers: string[]; directorySegments: string[] };
+      generated: { filenameMarkers: string[]; directorySegments: string[] };
+      compositionRoots: string[];
+    };
+    policyRuleIds: string[];
+    protectedDependencyRules: Array<{
+      package: string;
+      role: "Resource" | "Utility";
+      allowedFrom: Role[];
+      forbiddenFrom: Role[];
+      policyRuleId: "righting/role-dependency";
+    }>;
+    capabilities: ContractCapability[];
+    evidenceLimits: string[];
+  };
+};
+
+export type SourceClassification =
+  | { kind: "outside-coverage" }
+  | { kind: "role"; role: Role; test: boolean; generated: boolean; editable: boolean }
+  | { kind: "test"; generated: false; editable: true }
+  | { kind: "composition-root"; test: boolean; generated: boolean; editable: boolean }
+  | { kind: "violation"; ruleId: "righting/unclassified-source" }
+  | { kind: "violation"; ruleId: "righting/ambiguous-source"; roles: Role[] };
 
 const canonicalConventions: Record<Role, { filenameSuffixes: string[]; directorySegments: string[] }> = {
   Client: { filenameSuffixes: [".client."], directorySegments: ["clients"] },

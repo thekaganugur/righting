@@ -5,8 +5,8 @@ import { dirname, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { inspectPolicy } from "../src/inspect.js";
-import { classifySource, type NormalizedContract } from "../src/contract.js";
-import { normalizePolicy, readPolicySource, roles } from "../src/policy.js";
+import { normalizePolicy, readPolicySource, roles, type NormalizedContract } from "../src/policy.js";
+import { classifySource } from "../src/source-classification.js";
 
 function policy(source: object, projectDirectory: string) {
   return readPolicySource(JSON.stringify(source), resolve(projectDirectory, "righting.json"));
@@ -272,24 +272,6 @@ test("project generated conventions preserve generated composition-root treatmen
       kind: "violation",
       ruleId: "righting/unclassified-source",
     });
-  } finally {
-    rmSync(directory, { recursive: true, force: true });
-  }
-});
-
-test("the reference interpreter rejects unsupported normalized contract versions", () => {
-  const directory = project();
-  try {
-    const contract = normalizePolicy(policy({ preset: "volatility@1", coverage: ["source/**/*.ts"] }, directory));
-
-    assert.throws(
-      () =>
-        classifySource(
-          { ...contract, contractVersion: 3 } as unknown as NormalizedContract,
-          "source/page.client.ts",
-        ),
-      /unsupported contractVersion 3; expected 2/,
-    );
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
