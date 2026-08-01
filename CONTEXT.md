@@ -16,6 +16,10 @@ _Avoid_: Partial policy, draft contract
 The versioned, adapter-neutral representation of an approved Righting policy, containing both configured decisions and their effective semantics. It defines durable rules rather than observed project files or adapter mechanics.
 _Avoid_: Inspection result, adapter configuration, repository snapshot
 
+**Reference interpreter**:
+A package-owned implementation of normalized-contract semantics that compatible consumers may reuse without making that implementation the source of truth or a required guardrail-adapter dependency.
+_Avoid_: Core policy, adapter interface, canonical adapter
+
 **Guardrail adapter**:
 A consumer that translates the normalized contract into a platform's native enforcement while owning that platform's diagnostics, suppression, and legacy-debt mechanics.
 _Avoid_: Core policy, source of truth
