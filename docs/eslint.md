@@ -32,6 +32,8 @@ export default [
 ];
 ```
 
+On configuration load, the adapter invokes the adjacent packaged CLI as `righting inspect --json`, validates inspection schema 1 and normalized contract version 2, and obtains one contract snapshot for the lint run. It uses the package-owned `righting/contract` reference interpreter for source classification while ESLint and `eslint-plugin-boundaries` retain native traversal, resolution, diagnostics, and suppression behavior. Inspection or version failure stops configuration before linting.
+
 Run the project's established lint command unchanged. Its native `righting/...` diagnostics are the adapter evidence; the [capability catalog](capabilities.md) states what those static diagnostics do and do not establish. Adapter debt status comes from ESLint's lint/prune output and `eslint-suppressions.json`, not from `righting inspect`.
 
 ## Adopt and maintain legacy debt

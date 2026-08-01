@@ -230,6 +230,19 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
   );
 });
 
+test("the ESLint adapter fails closed when inspection is incomplete or invalid", () => {
+  withPolicy({ preset: "volatility@1", status: "incomplete" }, () => {
+    const incomplete = runLint("src/client/value.js");
+    assert.notEqual(incomplete.status, 0);
+    assert.match(output(incomplete), /must return a valid normalized contract/);
+  });
+  withPolicy({ preset: "volatility@1", coverage: ["src/**/*.js"], unknown: true }, () => {
+    const invalid = runLint("src/client/value.js");
+    assert.notEqual(invalid.status, 0);
+    assert.match(output(invalid), /unsupported property "unknown"/);
+  });
+});
+
 conformanceTest(conformanceScenarioFamilyIds.declaredCoverage, "source outside declared coverage remains unchecked", () => {
   withFiles(
     {

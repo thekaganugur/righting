@@ -1,6 +1,7 @@
 import { relative, resolve, sep } from "node:path";
 import boundaries from "eslint-plugin-boundaries";
-import { classifySource, normalizePolicy, readPolicy, roles, type NormalizedContract, type Role } from "./policy.js";
+import { loadAdapterContract } from "./adapter-contract.js";
+import { classifySource, type NormalizedContract, type Role } from "./contract.js";
 const externalOrigins = ["external", "core"];
 const testElementType = "righting-treatment-test";
 const generatedElementType = "righting-treatment-generated";
@@ -8,8 +9,10 @@ const compositionRootElementType = "righting-composition-root";
 export const roleDependencyRule = "righting/role-dependency";
 export const sourceClassificationRule = "righting/source-classification";
 
-function emptyRoleMap(): Record<Role, string[]> {
-  return { Client: [], Manager: [], Engine: [], ResourceAccess: [], Resource: [], Utility: [] };
+function emptyRoleMap(roles: readonly Role[]): Record<Role, string[]> {
+  const result = {} as Record<Role, string[]>;
+  for (const role of roles) result[role] = [];
+  return result;
 }
 
 function roleElementType(role: Role): string {
@@ -57,10 +60,11 @@ function classificationRule(contract: NormalizedContract, projectDirectory: stri
   };
 }
 
-export function eslintConfig(policyPath = resolve(process.cwd(), "righting.json")) {
-  const projectDirectory = resolve(policyPath, "..");
-  const contract = normalizePolicy(readPolicy(policyPath));
-  const packagesByRole = emptyRoleMap();
+export function eslintConfig() {
+  const projectDirectory = resolve(process.cwd());
+  const contract = loadAdapterContract(projectDirectory);
+  const roles = contract.roles;
+  const packagesByRole = emptyRoleMap(roles);
   for (const dependency of contract.configured.protectedDependencies) {
     packagesByRole[dependency.role].push(dependency.package);
   }

@@ -116,13 +116,20 @@ Keep optional fields absent unless approved and applicable:
 
 `righting inspect --json` places approved semantics once under `contract`. `contractVersion` versions this adapter-neutral interface independently from `volatility@1`. The contract retains configured provenance and exposes effective conventions, the closed role graph, protected-dependency rules, stable `righting/...` policy-rule IDs, adapter-neutral capabilities, and evidence limits. Repository file snapshots and adapter mechanics are not contract data.
 
-Core consumers can import the same helpers from `righting/core`:
+Core consumers can read and normalize a local policy through `righting/core`:
 
 ```js
-import { classifySource, normalizePolicy, readPolicy } from "righting/core";
+import { normalizePolicy, readPolicy } from "righting/core";
 
 const contract = normalizePolicy(readPolicy("righting.json"));
+```
+
+JavaScript and TypeScript consumers can apply the package-owned reference interpreter to any validated normalized contract through `righting/contract`:
+
+```js
+import { classifySource } from "righting/contract";
+
 const classification = classifySource(contract, "src/orders/create.manager.ts");
 ```
 
-Use `npx righting inspect` after replacing the starter to validate and explain the normalized contract.
+`classifySource` rejects unsupported contract versions. It classifies source paths only; guardrail adapters still own native import resolution, diagnostics, capability checks, suppression, and conformance. Use `npx righting inspect` after replacing the starter to validate and explain the normalized contract.

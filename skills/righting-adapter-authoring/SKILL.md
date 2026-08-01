@@ -14,6 +14,8 @@ Run `npx righting inspect --json` from the target project before designing adapt
 
 Consume the JSON `contract` through the CLI boundary. Keep normalization in Righting: the adapter must not parse or normalize `righting.json`, import `righting/core`, infer roles from the repository, or treat inspection's unknown adapter status as activation evidence.
 
+A JavaScript or TypeScript adapter may optionally import `classifySource` from `righting/contract` as Righting's reference interpreter after validating the inspection envelope and contract version. This optional helper covers source classification only; it does not replace native resolution, diagnostics, capability checks, or black-box conformance.
+
 **Completion:** retain the exact inspection JSON inline or at a named path with its SHA-256, target revision, CLI artifact identity, inspected contract versions, policy path, exact command, and fail-closed behavior. Every later fixture and claim references this capture or a named isolated-fixture capture.
 
 ## 2. Bound the capability claim

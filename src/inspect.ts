@@ -1,16 +1,14 @@
 import { readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, relative, sep } from "node:path";
+import { classifySource, type NormalizedContract, type Role } from "./contract.js";
 import {
-  classifySource,
   incompletePolicyRequirements,
   isExactIncompleteStarterFile,
   normalizePolicy,
   readPolicy,
   roles,
   type ContractCapability,
-  type NormalizedContract,
-  type Role,
 } from "./policy.js";
 
 const { isMatch } = createRequire(import.meta.url)("micromatch") as {

@@ -43,7 +43,7 @@ Both routes require a maintainer to choose and explicitly approve broad source c
 npx righting inspect
 ```
 
-This validates and explains the declared adapter-neutral contract. `inspect --json` also reports current covered-source classification counts and concrete classification violations outside the contract. It does **not** check imports, dependency edges, approval provenance, or adapter activation. Coding agents and independent consumers can use the same helpers through `righting/core`; to enforce imports, separately approve a compatible guardrail adapter such as the [additive ESLint integration](docs/eslint.md) or the [pinned Oxlint integration](docs/oxlint.md).
+This validates and explains the declared adapter-neutral contract. `inspect --json` also reports current covered-source classification counts and concrete classification violations outside the contract. It does **not** check imports, dependency edges, approval provenance, or adapter activation. Core consumers can read and normalize policy through `righting/core`; JavaScript and TypeScript consumers can classify normalized source paths through `righting/contract`. To enforce imports, separately approve a compatible guardrail adapter such as the [additive ESLint integration](docs/eslint.md) or the [pinned Oxlint integration](docs/oxlint.md).
 
 ## References
 

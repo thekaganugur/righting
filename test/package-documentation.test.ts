@@ -10,6 +10,7 @@ const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
 const packagedResources = [
   "dist/src/cli.js",
+  "dist/src/contract.js",
   "dist/src/policy.js",
   "dist/src/capabilities.js",
   "dist/src/oxlint.js",
@@ -227,11 +228,13 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(eslintReference, /normalized contract[\s\S]*does not establish[\s\S]*adapter/i);
     assert.match(eslintReference, /--suppress-rule righting\/role-dependency/);
     assert.match(eslintReference, /--prune-suppressions/);
+    assert.match(eslintReference, /inspect --json[\s\S]*righting\/contract/i);
     const oxlintReference = readFileSync(resolve(packageDirectory, "package/docs/oxlint.md"), "utf8");
     assert.match(oxlintReference, /righting\/oxlint/);
     assert.match(oxlintReference, /Oxlint exactly `1\.75\.0`/);
     assert.match(oxlintReference, /inspection schema 1[\s\S]*normalized contract version 2/i);
     assert.match(oxlintReference, /unsupported capabilities:[\s\S]*protected-dependency/i);
+    assert.match(oxlintReference, /righting\/contract/);
     const eslintSkill = readFileSync(resolve(packageDirectory, "package/skills/righting-eslint/SKILL.md"), "utf8");
     assert.match(eslintSkill, /ask the maintainer[\s\S]*before running[\s\S]*--suppress-rule/i);
     assert.match(eslintSkill, /new findings[\s\S]*unchanged lint command/i);
@@ -240,6 +243,7 @@ test("the packed package publishes every onboarding reference without the retire
       "utf8",
     );
     assert.match(adapterSkill, /righting inspect --json/);
+    assert.match(adapterSkill, /optional[\s\S]*righting\/contract[\s\S]*reference interpreter/i);
     assert.match(adapterSkill, /docs\/adapter-conformance\.md/);
     assert.match(adapterSkill, /stable[\s\S]*righting\/\*/i);
     assert.match(adapterSkill, /compose[\s\S]*(native|established)/i);
@@ -266,6 +270,8 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(supportGuidance, /establishes[\s\S]*doesNotEstablish[\s\S]*policyRuleIds/i);
     assert.match(supportGuidance, /scenario family[\s\S]*fixture[\s\S]*native command[\s\S]*exit status/i);
     assert.match(supportGuidance, /clean[\s\S]*(packed|released)[\s\S]*public package specifier/i);
+    const policyLanguage = readFileSync(resolve(packageDirectory, "package/docs/policy-language.md"), "utf8");
+    assert.match(policyLanguage, /righting\/contract[\s\S]*classifySource/);
     for (const resource of ["dist/src/policy.js", "dist/src/policy.d.ts", "docs/policy-language.md", "docs/capabilities.md"]) {
       const contents = readFileSync(resolve(packageDirectory, "package", resource), "utf8");
       assert.doesNotMatch(contents, /eslint|suppression-file/i, `${resource} leaks adapter mechanics into the core contract`);

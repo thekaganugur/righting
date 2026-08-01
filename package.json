@@ -12,6 +12,7 @@
     "righting": "dist/src/cli.js"
   },
   "exports": {
+    "./contract": "./dist/src/contract.js",
     "./core": "./dist/src/policy.js",
     "./eslint": "./dist/src/eslint.js",
     "./oxlint": "./dist/src/oxlint.js"
