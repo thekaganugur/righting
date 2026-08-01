@@ -36,6 +36,44 @@ On configuration load, the adapter invokes the adjacent packaged CLI as `rightin
 
 Run the project's established lint command unchanged. Its native `righting/...` diagnostics are the adapter evidence; the [capability catalog](capabilities.md) states what those static diagnostics do and do not establish. Adapter debt status comes from ESLint's lint/prune output and `eslint-suppressions.json`, not from `righting inspect`.
 
+## Support record
+
+Tested tuple:
+
+- Righting and adapter: `0.1.0-alpha.3`;
+- inspection `schemaVersion`: `1`;
+- normalized `contractVersion`: `2`;
+- ESLint: `9.39.5`;
+- `eslint-plugin-boundaries`: `7.1.0`;
+- `@boundaries/elements`: `3.1.0`;
+- `eslint-module-utils`: `2.12.1`;
+- `eslint-import-resolver-node`: `0.3.9`;
+- Micromatch: `4.0.8`.
+
+Claimed capability: complete `role-dependency`, including all 36 canonical role edges, normalized variations and overrides, protected Resource and Utility packages, static imports, named and star re-exports, literal `require`, dynamic and type-only imports, declared coverage, canonical and alias classification, tests, generated source, composition roots, and unresolved local imports.
+
+- Establishes: `configured-role-dependency-boundaries`, `unresolved-local-import-is-forbidden`.
+- Does not establish: `files-outside-coverage`, `runtime-dependency-behavior`.
+- Policy rules: `righting/role-dependency`, `righting/unresolved-local-import`, `righting/unclassified-source`, `righting/ambiguous-source`, `righting/test-dependency`.
+
+`protected-dependency` is supported. It establishes `configured-resource-and-utility-package-classification`; it does not establish `external-service-runtime-behavior` or `utility-package-access-restriction`. `manager-interaction` remains partially checkable: direct Manager imports are governed, but queued interaction semantics are not established. Guidance-only `design-judgment` is unsupported by static enforcement.
+
+The native suite executes all eight documented conformance families through the packaged ESLint entry point. The separate suppression suite covers growth, pruning, and native count-based limitations; suppression is evidence beyond the adapter support gate.
+
+Reproduce the support claim:
+
+```sh
+npm run build
+node --test dist/test/eslint.test.js
+node --test dist/test/eslint-suppressions.test.js
+node --test dist/test/packed-manual.test.js
+npm test
+npm run typecheck
+git diff --check
+```
+
+For this tuple, nine native ESLint tests passed, including all eight conformance families and fail-closed inspection; the suppression and clean packed-consumer tests passed; the full 54-test package suite, typecheck, build, and diff check passed.
+
 ## Adopt and maintain legacy debt
 
 During initial adapter integration, report existing `righting/role-dependency` findings and obtain explicit maintainer approval before recording them as legacy debt. Then let ESLint write only those findings to its normal suppression file:

@@ -88,4 +88,4 @@ npm run build
 git diff --check
 ```
 
-For the tuple above, 11 focused native tests passed with allowed exits `0`, forbidden exits `1`, and the expected stable identities; the clean packed-consumer test passed its allowed normal lint run and failed its intentional dependency with `righting/role-dependency`. The full 47-test package suite, typecheck, build, and diff check passed.
+For the tuple above, 11 focused native tests passed with allowed exits `0`, forbidden exits `1`, and the expected stable identities; the clean packed-consumer test passed its allowed normal lint run and failed its intentional dependency with `righting/role-dependency`. The full 54-test package suite, typecheck, build, and diff check passed.
