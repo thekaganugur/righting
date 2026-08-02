@@ -39,6 +39,7 @@ const packagedResources = [
   "docs/capabilities.md",
   "docs/eslint.md",
   "docs/oxlint.md",
+  "docs/evidence/oxlint-inspection.json",
   "docs/legacy-debt.md",
   "docs/dogfood.md",
 ];
@@ -217,6 +218,7 @@ test("the packed package publishes every onboarding reference without the retire
     assert.equal(existsSync(resolve(consumerDirectory, "node_modules/eslint")), false);
     assert.equal(existsSync(resolve(consumerDirectory, "node_modules/eslint-plugin-boundaries")), false);
     assert.equal(existsSync(resolve(consumerDirectory, "node_modules/oxlint")), false);
+    assert.equal(existsSync(resolve(consumerDirectory, "node_modules/oxc-resolver")), true);
 
     const extracted = run("tar", ["-xzf", tarball, "-C", packageDirectory]);
     assert.equal(extracted.status, 0, extracted.stderr);
@@ -233,7 +235,8 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(oxlintReference, /righting\/oxlint/);
     assert.match(oxlintReference, /Oxlint exactly `1\.75\.0`/);
     assert.match(oxlintReference, /inspection schema 1[\s\S]*normalized contract version 2/i);
-    assert.match(oxlintReference, /unsupported capabilities:[\s\S]*protected-dependency/i);
+    assert.match(oxlintReference, /protected-dependency[\s\S]*supported/i);
+    assert.match(oxlintReference, /Oxc Resolver: `11\.24\.2`/);
     const integrationSkill = readFileSync(
       resolve(packageDirectory, "package/skills/righting-integrate/SKILL.md"),
       "utf8",

@@ -61,6 +61,10 @@ test("a packed project loads righting/oxlint through its normal pinned Oxlint co
       'import { value } from "./work.manager.js";\nexport { value };\n',
     );
 
+    const installedResolver = JSON.parse(
+      readFileSync(resolve(projectDirectory, "node_modules/oxc-resolver/package.json"), "utf8"),
+    ) as { version: string };
+    assert.equal(installedResolver.version, "11.24.2");
     assertCommandSucceeded(runCommand(projectDirectory, "npm", ["run", "lint"]));
 
     writeFileSync(resolve(projectDirectory, "src/view.client.js"), "export const value = 1;\n");

@@ -21,6 +21,7 @@ export function loadNormalizedContract(projectDirectory: string): NormalizedCont
     cwd: projectDirectory,
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
+    timeout: 10_000,
   });
   if (inspection.error !== undefined) {
     fail(`could not run righting inspect --json: ${inspection.error.message}`);

@@ -46,7 +46,8 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "micromatch": "4.0.8"
+    "micromatch": "4.0.8",
+    "oxc-resolver": "11.24.2"
   },
   "peerDependencies": {
     "eslint": ">=9.0.0",

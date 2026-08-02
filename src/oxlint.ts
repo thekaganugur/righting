@@ -1,17 +1,25 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
-import { dirname, relative, resolve, sep } from "node:path";
+import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { ResolverFactory, type ResolveResult } from "oxc-resolver";
 import { loadNormalizedContract } from "./adapter-inspection.js";
+import type { NormalizedContract } from "./policy.js";
 
 const packageRequire = createRequire(import.meta.url);
 const { isMatch } = packageRequire("micromatch") as {
   isMatch(path: string, patterns: readonly string[]): boolean;
 };
 
-const projectDirectory = process.cwd();
 const supportedOxlintVersion = "1.75.0";
 const roles = ["Client", "Manager", "Engine", "ResourceAccess", "Resource", "Utility"] as const;
+const supportedCapabilities = new Set([
+  "role-dependency",
+  "manager-interaction",
+  "protected-dependency",
+  "design-judgment",
+]);
+const extensions = [".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs", ".json"];
 type Role = (typeof roles)[number];
 type RuleId =
   | "righting/role-dependency"
@@ -19,7 +27,6 @@ type RuleId =
   | "righting/unclassified-source"
   | "righting/ambiguous-source"
   | "righting/test-dependency";
-
 type Convention = { filenameMarkers?: string[]; directorySegments?: string[] };
 type Classification =
   | { kind: "outside" }
@@ -28,12 +35,38 @@ type Classification =
   | { kind: "composition-root"; test: boolean }
   | { kind: "test" }
   | { kind: "unclassified" };
-type Node = { source?: { value?: unknown }; arguments?: Array<{ value?: unknown }>; callee?: { type?: string; name?: string } };
+type Resolution =
+  | { kind: "local"; path: string }
+  | { kind: "external"; packageName?: string }
+  | { kind: "builtin" }
+  | { kind: "unresolved"; reason: string };
+type DependencyAnalysis =
+  | Exclude<Resolution, { kind: "local" }>
+  | { kind: "local"; path: string; classification: Classification };
+type DependencyKind = "import" | "require";
+type SourceNode = { value?: unknown };
+type Node = { source?: SourceNode; arguments?: SourceNode[]; callee?: { type?: string; name?: string } };
+type ScopeVariable = { name?: string; defs?: unknown[] };
+type Scope = { set?: Map<string, ScopeVariable>; variables?: ScopeVariable[]; upper?: Scope | null };
+type SourceCode = { getScope?(node: unknown): Scope };
 type RuleContext = {
   filename: string;
+  sourceCode?: SourceCode;
   languageOptions: { parser: { name: string; version: string } };
   report(input: { node: unknown; message: string }): void;
 };
+type AdapterState = {
+  projectDirectory: string;
+  stamp: string;
+  contract: NormalizedContract;
+  importResolver: ResolverFactory;
+  requireResolver: ResolverFactory;
+  packageNames: Map<string, string | undefined>;
+};
+
+const states = new Map<string, AdapterState>();
+const analyses = new WeakMap<object, Map<string, DependencyAnalysis>>();
+const preparedRoots = new WeakMap<object, Set<string>>();
 
 function fail(message: string): never {
   throw new Error(`Righting Oxlint adapter: ${message}`);
@@ -46,23 +79,71 @@ function verifyOxlintVersion(context: RuleContext): void {
   }
 }
 
-const contract = loadNormalizedContract(projectDirectory);
-const unsupported = contract.effective.capabilities.filter(
-  (capability) => capability.applies && capability.id === "protected-dependency",
-);
-if (unsupported.length > 0) {
-  fail(`contract requires unsupported capabilities: ${unsupported.map(({ id }) => id).join(", ")}.`);
+function absoluteFilename(filename: string): string {
+  return isAbsolute(filename) ? filename : resolve(process.cwd(), filename);
 }
-const conventions = contract.effective.conventions;
-const allowed = contract.effective.allowedDependencies;
-const extensions = [".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"];
-const packageJson = JSON.parse(readFileSync(resolve(projectDirectory, "package.json"), "utf8")) as {
-  imports?: Record<string, unknown>;
-};
-const packageImports = packageJson.imports ?? {};
 
-function projectPath(path: string): string {
-  return relative(projectDirectory, path).split(sep).join("/");
+function findProjectDirectory(filename: string): string {
+  let directory = dirname(absoluteFilename(filename));
+  while (true) {
+    if (existsSync(resolve(directory, "righting.json"))) return realpathSync(directory);
+    const parent = dirname(directory);
+    if (parent === directory) fail(`could not find righting.json for ${filename}.`);
+    directory = parent;
+  }
+}
+
+function stateStamp(projectDirectory: string): string {
+  return ["righting.json", "package.json", "tsconfig.json", "jsconfig.json"]
+    .map((name) => {
+      const path = resolve(projectDirectory, name);
+      if (!existsSync(path)) return `${name}:missing`;
+      const { ctimeMs, ino, mtimeMs, size } = statSync(path);
+      return `${name}:${ino}:${ctimeMs}:${mtimeMs}:${size}`;
+    })
+    .join("|");
+}
+
+function createResolver(conditionNames: string[], mainFields: string[]): ResolverFactory {
+  return new ResolverFactory({
+    builtinModules: true,
+    conditionNames,
+    extensions,
+    mainFields,
+    tsconfig: "auto",
+  });
+}
+
+function createState(projectDirectory: string, stamp: string): AdapterState {
+  const contract = loadNormalizedContract(projectDirectory);
+  const unsupported = contract.effective.capabilities.filter(
+    (capability) => capability.applies && !supportedCapabilities.has(capability.id),
+  );
+  if (unsupported.length > 0) {
+    fail(`contract requires unsupported capabilities: ${unsupported.map(({ id }) => id).join(", ")}.`);
+  }
+  return {
+    projectDirectory,
+    stamp,
+    contract,
+    importResolver: createResolver(["node", "import", "default"], ["module", "main"]),
+    requireResolver: createResolver(["node", "require", "default"], ["main", "module"]),
+    packageNames: new Map(),
+  };
+}
+
+function stateFor(context: RuleContext): AdapterState {
+  const projectDirectory = findProjectDirectory(context.filename);
+  const stamp = stateStamp(projectDirectory);
+  const cached = states.get(projectDirectory);
+  if (cached !== undefined && cached.stamp === stamp) return cached;
+  const state = createState(projectDirectory, stamp);
+  states.set(projectDirectory, state);
+  return state;
+}
+
+function projectPath(state: AdapterState, path: string): string {
+  return relative(state.projectDirectory, path).split(sep).join("/");
 }
 
 function hasConvention(path: string, convention: Convention): boolean {
@@ -75,7 +156,9 @@ function hasConvention(path: string, convention: Convention): boolean {
   );
 }
 
-function classify(path: string): Classification {
+function classify(state: AdapterState, path: string): Classification {
+  const { contract } = state;
+  const conventions = contract.effective.conventions;
   if (!isMatch(path, contract.configured.coverage)) return { kind: "outside" };
   const parts = path.split("/");
   const filename = parts.at(-1) ?? path;
@@ -97,53 +180,121 @@ function classify(path: string): Classification {
   return { kind: "unclassified" };
 }
 
-function packageImportPath(specifier: string): string | undefined {
-  const match = Object.entries(packageImports)
-    .filter(([pattern]) => {
-      const wildcard = pattern.indexOf("*");
-      return wildcard === -1
-        ? specifier === pattern
-        : specifier.startsWith(pattern.slice(0, wildcard)) && specifier.endsWith(pattern.slice(wildcard + 1));
-    })
-    .sort(([left], [right]) => {
-      const leftWildcard = left.indexOf("*");
-      const rightWildcard = right.indexOf("*");
-      if (leftWildcard === -1) return -1;
-      if (rightWildcard === -1) return 1;
-      return rightWildcard - leftWildcard || right.length - left.length;
-    })[0];
-  if (match === undefined || typeof match[1] !== "string") return undefined;
-  const [pattern, target] = match;
-  const wildcard = pattern.indexOf("*");
-  const value =
-    wildcard === -1 ? "" : specifier.slice(wildcard, specifier.length - (pattern.length - wildcard - 1));
-  return resolve(projectDirectory, target.replaceAll("*", value));
+function cleanSpecifier(specifier: string): string {
+  if (specifier.startsWith("#")) return specifier.split("?")[0]!;
+  const query = specifier.indexOf("?");
+  const fragment = specifier.indexOf("#");
+  const end = [query, fragment].filter((index) => index !== -1).sort((left, right) => left - right)[0];
+  return end === undefined ? specifier : specifier.slice(0, end);
 }
 
-function existingPath(candidate: string): string | undefined {
-  const candidates = [
-    candidate,
-    ...extensions.map((extension) => `${candidate}${extension}`),
-    ...extensions.map((extension) => resolve(candidate, `index${extension}`)),
-  ];
-  return candidates.find((path) => existsSync(path) && statSync(path).isFile());
+function packageSpecifierName(specifier: string): string | undefined {
+  if (specifier.startsWith(".") || specifier.startsWith("#") || isAbsolute(specifier)) return undefined;
+  const parts = specifier.split("/");
+  return specifier.startsWith("@") ? (parts.length >= 2 ? parts.slice(0, 2).join("/") : undefined) : parts[0];
 }
 
-function localTarget(filename: string, specifier: string): { local: boolean; path?: string } {
-  const clean = specifier.startsWith("#") ? specifier.split("?")[0]! : specifier.split(/[?#]/)[0]!;
-  const packageImport = clean.startsWith("#");
-  const candidate = clean.startsWith(".")
-    ? resolve(dirname(filename), clean)
-    : packageImport
-      ? packageImportPath(clean)
-      : undefined;
-  if (candidate === undefined) return { local: packageImport };
-  const path = existingPath(candidate);
-  return { local: true, ...(path === undefined ? {} : { path: projectPath(path) }) };
+function packageName(state: AdapterState, result: ResolveResult, specifier: string): string | undefined {
+  const packageJsonPath = result.packageJsonPath;
+  if (packageJsonPath !== undefined) {
+    if (!state.packageNames.has(packageJsonPath)) {
+      try {
+        const metadata = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { name?: unknown };
+        state.packageNames.set(packageJsonPath, typeof metadata.name === "string" ? metadata.name : undefined);
+      } catch {
+        state.packageNames.set(packageJsonPath, undefined);
+      }
+    }
+    const name = state.packageNames.get(packageJsonPath);
+    if (name !== undefined && packageJsonPath !== resolve(state.projectDirectory, "package.json")) return name;
+  }
+  return packageSpecifierName(specifier);
+}
+
+function isProjectPath(state: AdapterState, path: string): boolean {
+  const relativePath = projectPath(state, path);
+  return (
+    relativePath !== ".." &&
+    !relativePath.startsWith("../") &&
+    !isAbsolute(relativePath) &&
+    !relativePath.split("/").includes("node_modules")
+  );
+}
+
+function resolveDependency(
+  state: AdapterState,
+  filename: string,
+  specifier: string,
+  kind: DependencyKind,
+): Resolution {
+  const clean = cleanSpecifier(specifier);
+  let result: ResolveResult;
+  try {
+    result = (kind === "require" ? state.requireResolver : state.importResolver).resolveFileSync(filename, clean);
+  } catch (error) {
+    return { kind: "unresolved", reason: error instanceof Error ? error.message : String(error) };
+  }
+  if (result.builtin !== undefined) return { kind: "builtin" };
+  if (result.path !== undefined) {
+    return isProjectPath(state, result.path)
+      ? { kind: "local", path: projectPath(state, result.path) }
+      : { kind: "external", packageName: packageName(state, result, clean) };
+  }
+  return { kind: "unresolved", reason: result.error ?? `Could not resolve ${clean}.` };
+}
+
+function analyzeDependency(
+  context: RuleContext,
+  state: AdapterState,
+  filename: string,
+  specifier: string,
+  kind: DependencyKind,
+): DependencyAnalysis {
+  const calculate = () => {
+    const resolution = resolveDependency(state, filename, specifier, kind);
+    return resolution.kind === "local"
+      ? { ...resolution, classification: classify(state, resolution.path) }
+      : resolution;
+  };
+  const sourceCode = context.sourceCode;
+  if (sourceCode === undefined || typeof sourceCode !== "object") return calculate();
+  let roots = preparedRoots.get(sourceCode);
+  if (roots === undefined) {
+    roots = new Set();
+    preparedRoots.set(sourceCode, roots);
+  }
+  if (!roots.has(state.projectDirectory)) {
+    state.importResolver.clearCache();
+    state.requireResolver.clearCache();
+    roots.add(state.projectDirectory);
+  }
+  let cache = analyses.get(sourceCode);
+  if (cache === undefined) {
+    cache = new Map();
+    analyses.set(sourceCode, cache);
+  }
+  const key = `${state.projectDirectory}\0${state.stamp}\0${filename}\0${kind}\0${specifier}`;
+  const cached = cache.get(key);
+  if (cached !== undefined) return cached;
+  const analysis = calculate();
+  cache.set(key, analysis);
+  return analysis;
 }
 
 function sourceOf(node: Node): string | undefined {
   return typeof node.source?.value === "string" ? node.source.value : undefined;
+}
+
+function isModuleRequire(context: RuleContext, node: Node): boolean {
+  const sourceCode = context.sourceCode;
+  if (sourceCode?.getScope === undefined) return true;
+  let scope: Scope | null | undefined = sourceCode.getScope(node);
+  while (scope !== undefined && scope !== null) {
+    const variable = scope.set?.get("require") ?? scope.variables?.find(({ name }) => name === "require");
+    if (variable !== undefined && (variable.defs?.length ?? 0) > 0) return false;
+    scope = scope.upper;
+  }
+  return true;
 }
 
 function dependencyRule(ruleId: RuleId) {
@@ -151,28 +302,40 @@ function dependencyRule(ruleId: RuleId) {
     meta: { type: "problem", schema: [] },
     create(context: RuleContext) {
       verifyOxlintVersion(context);
-      const filename = context.filename;
-      const from = classify(projectPath(filename));
+      const state = stateFor(context);
+      const filename = absoluteFilename(context.filename);
+      const from = classify(state, projectPath(state, filename));
       function report(node: unknown, message: string) {
         context.report({ node, message: `${ruleId}: ${message}` });
       }
-      function inspect(node: unknown, specifier: string | undefined) {
+      function inspect(node: unknown, specifier: string | undefined, kind: DependencyKind) {
         if (
           specifier === undefined ||
-          (from.kind !== "role" && from.kind !== "composition-root") ||
-          from.test
+          (from.kind !== "role" && from.kind !== "composition-root" && from.kind !== "test")
         ) {
           return;
         }
-        const target = localTarget(filename, specifier);
-        if (!target.local) return;
-        if (target.path === undefined) {
+        const target = analyzeDependency(context, state, filename, specifier, kind);
+        if (target.kind === "unresolved") {
           if (ruleId === "righting/unresolved-local-import") {
-            report(node, "Covered source cannot depend on an unresolved local import.");
+            report(node, `Covered source cannot depend on unresolved import ${JSON.stringify(specifier)}: ${target.reason}`);
           }
           return;
         }
-        const to = classify(target.path);
+        if (target.kind === "builtin") return;
+        if (target.kind === "external") {
+          if (ruleId !== "righting/role-dependency" || from.kind !== "role" || from.test) return;
+          const protectedDependency = state.contract.effective.protectedDependencyRules.find(
+            ({ package: name }) => name === target.packageName,
+          );
+          if (protectedDependency !== undefined && protectedDependency.forbiddenFrom.includes(from.role)) {
+            report(node, `${from.role} cannot depend on protected ${protectedDependency.role} package ${protectedDependency.package}.`);
+          }
+          return;
+        }
+        if ((from.kind === "role" || from.kind === "composition-root") && from.test) return;
+        if (from.kind === "test") return;
+        const to = target.classification;
         if (to.kind === "outside") return;
         if (to.kind === "test" || ((to.kind === "role" || to.kind === "composition-root") && to.test)) {
           if (ruleId === "righting/test-dependency") {
@@ -202,27 +365,31 @@ function dependencyRule(ruleId: RuleId) {
           }
           return;
         }
-        if (ruleId === "righting/role-dependency" && !allowed[from.role].includes(to.role)) {
+        if (ruleId === "righting/role-dependency" && !state.contract.effective.allowedDependencies[from.role].includes(to.role)) {
           report(node, `${from.role} cannot depend on ${to.role}.`);
         }
       }
       return {
         ImportDeclaration(node: Node) {
-          inspect(node, sourceOf(node));
+          inspect(node.source ?? node, sourceOf(node), "import");
         },
         ExportAllDeclaration(node: Node) {
-          inspect(node, sourceOf(node));
+          inspect(node.source ?? node, sourceOf(node), "import");
         },
         ExportNamedDeclaration(node: Node) {
-          inspect(node, sourceOf(node));
+          inspect(node.source ?? node, sourceOf(node), "import");
         },
         ImportExpression(node: Node) {
-          inspect(node, sourceOf(node));
+          inspect(node.source ?? node, sourceOf(node), "import");
         },
         CallExpression(node: Node) {
-          if (node.callee?.type === "Identifier" && node.callee.name === "require") {
-            const value = node.arguments?.[0]?.value;
-            inspect(node, typeof value === "string" ? value : undefined);
+          if (
+            node.callee?.type === "Identifier" &&
+            node.callee.name === "require" &&
+            isModuleRequire(context, node)
+          ) {
+            const argument = node.arguments?.[0];
+            inspect(argument ?? node, typeof argument?.value === "string" ? argument.value : undefined, "require");
           }
         },
       };
@@ -235,9 +402,10 @@ function classificationRule(ruleId: RuleId) {
     meta: { type: "problem", schema: [] },
     create(context: RuleContext) {
       verifyOxlintVersion(context);
+      const state = stateFor(context);
       return {
         Program(node: unknown) {
-          const classification = classify(projectPath(context.filename));
+          const classification = classify(state, projectPath(state, absoluteFilename(context.filename)));
           if (ruleId === "righting/unclassified-source" && classification.kind === "unclassified") {
             context.report({
               node,

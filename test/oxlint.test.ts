@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
@@ -7,9 +8,11 @@ import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   allowedRoleEdges,
+  conformanceScenarioFamilyIds,
   dependencyForms,
   roleDirectories,
   roles,
+  type ConformanceScenarioFamilyId,
   type Role,
   type RoleEdge,
 } from "./conformance-cases.js";
@@ -21,6 +24,7 @@ const fixtureDirectory = mkdtempSync(resolve(tmpdir(), "righting-oxlint-conforma
 const fixturePolicyPath = resolve(fixtureDirectory, "righting.json");
 const fixturePackagePath = resolve(fixtureDirectory, "package.json");
 const oxlint = resolve(repositoryDirectory, "node_modules/.bin/oxlint");
+const executableScenarioFamilyIds = new Set<ConformanceScenarioFamilyId>();
 
 cpSync(sourceFixtureDirectory, fixtureDirectory, { recursive: true });
 writeFileSync(
@@ -42,7 +46,23 @@ writeFileSync(
 );
 writeFileSync(fixturePackagePath, '{"private":true,"type":"module","imports":{"#/*":"./src/*"}}\n');
 
-after(() => rmSync(fixtureDirectory, { recursive: true, force: true }));
+function conformanceTest(id: ConformanceScenarioFamilyId, name: string, run: () => void) {
+  assert.equal(executableScenarioFamilyIds.has(id), false, `duplicate executable scenario family: ${id}`);
+  executableScenarioFamilyIds.add(id);
+  test(`${id}: ${name}`, run);
+}
+
+after(() => {
+  try {
+    assert.deepEqual(
+      [...executableScenarioFamilyIds].sort(),
+      [...Object.values(conformanceScenarioFamilyIds)].sort(),
+      "every registered scenario family must have one executable family test",
+    );
+  } finally {
+    rmSync(fixtureDirectory, { recursive: true, force: true });
+  }
+});
 
 const aliases = [
   { name: "client", role: "Client", directorySegments: ["client"] },
@@ -57,24 +77,22 @@ function policy(extra: Record<string, unknown> = {}) {
   return { preset: "volatility@1", coverage: ["src/**/*.{js,cjs,mts}"], aliases, ...extra };
 }
 
-function withPolicy(candidate: object, action: () => void) {
-  const original = readFileSync(fixturePolicyPath, "utf8");
-  writeFileSync(fixturePolicyPath, `${JSON.stringify(candidate, null, 2)}\n`);
+function withJson(path: string, candidate: object, action: () => void) {
+  const original = readFileSync(path, "utf8");
+  writeFileSync(path, `${JSON.stringify(candidate, null, 2)}\n`);
   try {
     action();
   } finally {
-    writeFileSync(fixturePolicyPath, original);
+    writeFileSync(path, original);
   }
 }
 
+function withPolicy(candidate: object, action: () => void) {
+  withJson(fixturePolicyPath, candidate, action);
+}
+
 function withPackage(candidate: object, action: () => void) {
-  const original = readFileSync(fixturePackagePath, "utf8");
-  writeFileSync(fixturePackagePath, `${JSON.stringify(candidate, null, 2)}\n`);
-  try {
-    action();
-  } finally {
-    writeFileSync(fixturePackagePath, original);
-  }
+  withJson(fixturePackagePath, candidate, action);
 }
 
 function withFiles(files: Record<string, string>, action: () => void) {
@@ -90,9 +108,13 @@ function withFiles(files: Record<string, string>, action: () => void) {
   }
 }
 
-function runLint(targets: string | readonly string[], options: readonly string[] = []) {
+function runLint(
+  targets: string | readonly string[],
+  options: readonly string[] = [],
+  workingDirectory = fixtureDirectory,
+) {
   return spawnSync(oxlint, [...options, ...(typeof targets === "string" ? [targets] : targets)], {
-    cwd: fixtureDirectory,
+    cwd: workingDirectory,
     encoding: "utf8",
   });
 }
@@ -100,6 +122,21 @@ function runLint(targets: string | readonly string[], options: readonly string[]
 function output(result: ReturnType<typeof runLint>): string {
   return `${result.stdout}\n${result.stderr}`;
 }
+
+test("the Oxlint support record retains a reproducible inspection capture", () => {
+  const cli = resolve(repositoryDirectory, "dist/src/cli.js");
+  const inspection = spawnSync(process.execPath, [cli, "inspect", "--json"], {
+    cwd: sourceFixtureDirectory,
+    encoding: "utf8",
+  });
+  assert.equal(inspection.status, 0, inspection.stderr);
+  const expected = readFileSync(resolve(repositoryDirectory, "docs/evidence/oxlint-inspection.json"), "utf8");
+  assert.equal(inspection.stdout, expected);
+  assert.equal(
+    createHash("sha256").update(expected).digest("hex"),
+    "d3fe86488eee441bc1645100e67cd3a0c050b79ef09febc76c8580278574b608",
+  );
+});
 
 type RoleDependency = readonly [Role, Role];
 
@@ -120,7 +157,7 @@ function runRoleDependencies(dependencies: readonly RoleDependency[]) {
   return { result, targets: Object.keys(files) };
 }
 
-test("Oxlint 1.75.0 enforces all 36 default role edges", () => {
+conformanceTest(conformanceScenarioFamilyIds.defaultRoleEdges, "Oxlint 1.75.0 enforces all 36 default role edges", () => {
   const allowed: RoleDependency[] = [];
   const forbidden: RoleDependency[] = [];
   for (const from of roles) {
@@ -136,7 +173,7 @@ test("Oxlint 1.75.0 enforces all 36 default role edges", () => {
   for (const target of forbiddenResult.targets) assert.ok(output(forbiddenResult.result).includes(target), target);
 });
 
-test("Oxlint covers static dependency forms, extension and index resolution, package imports, and unresolved locals", () => {
+conformanceTest(conformanceScenarioFamilyIds.staticDependencyForms, "Oxlint covers static dependency forms, extension and index resolution, package imports, and unresolved locals", () => {
   const allowed = runLint(dependencyForms.map(({ allowed: target }) => target));
   assert.equal(allowed.status, 0, output(allowed));
   const forbidden = runLint(dependencyForms.map(({ forbidden: target }) => target));
@@ -199,10 +236,19 @@ test("Oxlint covers static dependency forms, extension and index resolution, pac
   withFiles(
     {
       "src/client/unresolved-package.js": 'import "#missing";\n',
-      "src/client/unsupported-package-import.js": 'import "#blocked/manager/value.js";\n',
+      "src/client/unresolved-package-name.js": 'import "missing-package";\n',
+      "src/client/conditional-package-import.js": 'import "#conditional/manager/value.js";\n',
+      "src/manager/conditional-package-import.js": 'import "#conditional/client/value.js";\n',
+      "src/client/conditional-import.js": 'import "#conditioned";\n',
+      "src/manager/conditional-require.cjs": 'require("#conditioned");\n',
+      "src/client/array-package-import.js": 'import "#array/manager/value.js";\n',
+      "src/manager/array-package-import.js": 'import "#array/client/value.js";\n',
+      "src/client/ts-path.mts": 'import "@local/manager/value.js";\n',
+      "src/manager/ts-path.mts": 'import "@local/client/value.js";\n',
+      "tsconfig.json": `${JSON.stringify({ compilerOptions: { baseUrl: ".", paths: { "@local/*": ["src/*"] } } })}\n`,
     },
     () => {
-      const unresolvedPackage = runLint("src/client/unresolved-package.js");
+      const unresolvedPackage = runLint(["src/client/unresolved-package.js", "src/client/unresolved-package-name.js"]);
       assert.equal(unresolvedPackage.status, 1, output(unresolvedPackage));
       assert.match(output(unresolvedPackage), /righting\/unresolved-local-import/);
       withPackage(
@@ -211,15 +257,44 @@ test("Oxlint covers static dependency forms, extension and index resolution, pac
           type: "module",
           imports: {
             "#*": "./src/utility/value.js",
-            "#blocked/*": { default: "./src/*" },
+            "#conditional/*": { import: "./src/*", default: "./src/utility/value.js" },
+            "#conditioned": {
+              import: "./src/manager/value.js",
+              require: "./src/client/value.js",
+            },
+            "#array/*": ["../invalid/*", "./src/*"],
           },
         },
         () => {
-          const unsupported = runLint("src/client/unsupported-package-import.js");
-          assert.equal(unsupported.status, 1, output(unsupported));
-          assert.match(output(unsupported), /righting\/unresolved-local-import/);
+          const allowedAliases = runLint([
+            "src/client/conditional-package-import.js",
+            "src/client/conditional-import.js",
+            "src/client/array-package-import.js",
+            "src/client/ts-path.mts",
+          ]);
+          assert.equal(allowedAliases.status, 0, output(allowedAliases));
+          const forbiddenAliases = runLint([
+            "src/manager/conditional-package-import.js",
+            "src/manager/conditional-require.cjs",
+            "src/manager/array-package-import.js",
+            "src/manager/ts-path.mts",
+          ]);
+          assert.equal(forbiddenAliases.status, 1, output(forbiddenAliases));
+          assert.match(output(forbiddenAliases), /righting\/role-dependency/);
         },
       );
+    },
+  );
+  withFiles(
+    {
+      "src/manager/external-and-builtin.js": 'import "ordinary/subpath";\nimport "node:fs";\n',
+      "node_modules/ordinary/package.json":
+        '{"name":"ordinary","type":"module","exports":{"./subpath":"./subpath.js"}}\n',
+      "node_modules/ordinary/subpath.js": "export {};\n",
+    },
+    () => {
+      const external = runLint("src/manager/external-and-builtin.js");
+      assert.equal(external.status, 0, output(external));
     },
   );
   const unresolved = runLint("src/client/unresolved.js");
@@ -227,7 +302,20 @@ test("Oxlint covers static dependency forms, extension and index resolution, pac
   assert.match(output(unresolved), /righting\/unresolved-local-import/);
 });
 
-test("Oxlint gives canonical and project aliases the same role semantics", () => {
+test("Oxlint ignores calls to locally shadowed require functions", () => {
+  withFiles(
+    {
+      "src/manager/shadowed-require.js":
+        'function require(value) { return value; }\nexport const value = require("../client/value.js");\n',
+    },
+    () => {
+      const result = runLint("src/manager/shadowed-require.js");
+      assert.equal(result.status, 0, output(result));
+    },
+  );
+});
+
+conformanceTest(conformanceScenarioFamilyIds.canonicalAndAliasClassification, "Oxlint gives canonical and project aliases the same role semantics", () => {
   withFiles(
     {
       "src/page.client.js": 'import { value } from "./work.manager.js";\nexport { value };\n',
@@ -303,7 +391,7 @@ test("Oxlint classifies every canonical filename and directory convention", () =
   });
 });
 
-test("Oxlint consumes normalized variations and overrides and rejects unsupported static capabilities", () => {
+conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDependencies, "Oxlint consumes normalized variations, overrides, and protected dependencies", () => {
   withFiles(
     {
       "src/client/read-access.js": 'import { value } from "../resource-access/value.js";\nexport { value };\n',
@@ -338,11 +426,99 @@ test("Oxlint consumes normalized variations and overrides and rejects unsupporte
     },
   );
 
-  withPolicy(policy({ protectedDependencies: [{ package: "protected-resource", role: "Resource" }] }), () => {
-    const result = runLint("src/client/client.js");
-    assert.equal(result.status, 1, output(result));
-    assert.match(output(result), /unsupported capabilities: protected-dependency/);
-  });
+  withFiles(
+    {
+      "src/manager/protected.js": 'import "protected-resource/subpath";\n',
+      "src/resource-access/protected.js": 'import "protected-resource/subpath";\n',
+      "src/client/protected-utility.js": 'import "@example/protected-utility/subpath";\n',
+      "src/resource/protected-utility.js": 'import "@example/protected-utility/subpath";\n',
+      "src/manager/protected-import-map.js": 'import "#protected-resource";\n',
+      "src/resource-access/protected-import-map.js": 'import "#protected-resource";\n',
+      "src/resource-access/missing-protected.js": 'import "missing-protected/subpath";\n',
+      "node_modules/protected-resource/package.json":
+        '{"name":"protected-resource","type":"module","exports":{".":"./index.js","./subpath":"./subpath.js"}}\n',
+      "node_modules/protected-resource/index.js": "export {};\n",
+      "node_modules/protected-resource/subpath.js": "export {};\n",
+      "node_modules/@example/protected-utility/package.json":
+        '{"name":"@example/protected-utility","type":"module","exports":{"./subpath":"./subpath.js"}}\n',
+      "node_modules/@example/protected-utility/subpath.js": "export {};\n",
+    },
+    () => {
+      withPackage(
+        {
+          private: true,
+          type: "module",
+          imports: { "#protected-resource": "protected-resource" },
+        },
+        () => {
+          withPolicy(
+            policy({
+              overrides: [
+                {
+                  name: "client-cannot-use-utility",
+                  from: "Client",
+                  to: "Utility",
+                  effect: "disallow",
+                  reason: "Proves protected Utility classification.",
+                },
+              ],
+              protectedDependencies: [
+                { package: "protected-resource", role: "Resource" },
+                { package: "@example/protected-utility", role: "Utility" },
+                { package: "missing-protected", role: "Resource" },
+              ],
+            }),
+            () => {
+              const manager = runLint(["src/manager/protected.js", "src/manager/protected-import-map.js"]);
+              assert.equal(manager.status, 1, output(manager));
+              assert.match(output(manager), /righting\/role-dependency/);
+              assert.equal(
+                runLint(["src/resource-access/protected.js", "src/resource-access/protected-import-map.js"]).status,
+                0,
+              );
+              const client = runLint("src/client/protected-utility.js");
+              assert.equal(client.status, 1, output(client));
+              assert.match(output(client), /righting\/role-dependency/);
+              assert.equal(runLint("src/resource/protected-utility.js").status, 0);
+              const missing = runLint("src/resource-access/missing-protected.js");
+              assert.equal(missing.status, 1, output(missing));
+              assert.match(output(missing), /righting\/unresolved-local-import/);
+            },
+          );
+        },
+      );
+    },
+  );
+});
+
+test("Oxlint discovers the policy root when invoked from a project subdirectory", () => {
+  const workingDirectory = resolve(fixtureDirectory, "src");
+  const allowed = runLint("client/client.js", ["--config", "../.oxlintrc.json"], workingDirectory);
+  assert.equal(allowed.status, 0, output(allowed));
+  const forbidden = runLint("manager/forbidden.js", ["--config", "../.oxlintrc.json"], workingDirectory);
+  assert.equal(forbidden.status, 1, output(forbidden));
+  assert.match(output(forbidden), /righting\/role-dependency/);
+});
+
+test("Oxlint keeps normalized contracts isolated across project roots in one process", () => {
+  withFiles(
+    {
+      "workspace-a/righting.json": '{"preset":"volatility@1","coverage":["src/**/*.js"]}\n',
+      "workspace-a/package.json": '{"private":true,"type":"module"}\n',
+      "workspace-a/src/page.client.js": 'import "./work.manager.js";\n',
+      "workspace-a/src/work.manager.js": "export {};\n",
+      "workspace-b/righting.json": '{"preset":"volatility@1","coverage":["src/**/*.js"]}\n',
+      "workspace-b/package.json": '{"private":true,"type":"module"}\n',
+      "workspace-b/src/work.manager.js": 'import "./page.client.js";\n',
+      "workspace-b/src/page.client.js": "export {};\n",
+    },
+    () => {
+      const result = runLint(["workspace-a/src/page.client.js", "workspace-b/src/work.manager.js"]);
+      assert.equal(result.status, 1, output(result));
+      assert.match(output(result), /workspace-b[\\/]src[\\/]work\.manager\.js/);
+      assert.doesNotMatch(output(result), /workspace-a[\\/]src[\\/]page\.client\.js/);
+    },
+  );
 });
 
 test("Oxlint fails closed when inspection is incomplete or invalid", () => {
@@ -358,7 +534,7 @@ test("Oxlint fails closed when inspection is incomplete or invalid", () => {
   });
 });
 
-test("Oxlint leaves source outside declared coverage unchecked", () => {
+conformanceTest(conformanceScenarioFamilyIds.declaredCoverage, "Oxlint leaves source outside declared coverage unchecked", () => {
   withFiles(
     {
       "outside/value.js": 'export const value = "outside";\n',
@@ -372,7 +548,7 @@ test("Oxlint leaves source outside declared coverage unchecked", () => {
   );
 });
 
-test("Oxlint reports unclassified and ambiguous covered source", () => {
+conformanceTest(conformanceScenarioFamilyIds.sourceClassificationViolations, "Oxlint reports unclassified and ambiguous covered source", () => {
   withFiles(
     {
       "src/plain.js": "export {};\n",
@@ -389,18 +565,23 @@ test("Oxlint reports unclassified and ambiguous covered source", () => {
   );
 });
 
-test("Oxlint keeps test source visible while exempting only its outgoing dependencies", () => {
+conformanceTest(conformanceScenarioFamilyIds.testSourceTreatment, "Oxlint keeps test source visible while exempting only its outgoing dependencies", () => {
   withFiles(
     {
       "src/manager/forbidden.test.js": 'import { value } from "../client/value.js";\nexport { value };\n',
       "src/manager/target.test.js": 'export const value = "test";\n',
       "src/client/import-test.js": 'import { value } from "../manager/target.test.js";\nexport { value };\n',
       "src/tests/manager/forbidden.js": 'import { value } from "../../client/value.js";\nexport { value };\n',
+      "src/manager/unresolved.test.js": 'import "./missing.js";\n',
+      "src/tests/manager/unresolved.js": 'import "./missing.js";\n',
       "src/tests/manager/target.js": 'export const value = "test directory";\n',
       "src/client/import-test-directory.js": 'import { value } from "../tests/manager/target.js";\nexport { value };\n',
     },
     () => {
       assert.equal(runLint(["src/manager/forbidden.test.js", "src/tests/manager/forbidden.js"]).status, 0);
+      const unresolved = runLint(["src/manager/unresolved.test.js", "src/tests/manager/unresolved.js"]);
+      assert.equal(unresolved.status, 1, output(unresolved));
+      assert.match(output(unresolved), /righting\/unresolved-local-import/);
       const production = runLint(["src/client/import-test.js", "src/client/import-test-directory.js"]);
       assert.equal(production.status, 1, output(production));
       assert.match(output(production), /righting\/test-dependency/);
@@ -408,7 +589,7 @@ test("Oxlint keeps test source visible while exempting only its outgoing depende
   );
 });
 
-test("Oxlint governs generated roles and keeps composition roots exact", () => {
+conformanceTest(conformanceScenarioFamilyIds.generatedSourceAndCompositionRoots, "Oxlint governs generated roles and keeps composition roots exact", () => {
   withFiles(
     {
       "src/manager/forbidden.generated.js": 'import { value } from "../client/value.js";\nexport { value };\n',
@@ -439,11 +620,25 @@ test("Oxlint native directives suppress exact dependency and classification find
         '// oxlint-disable-next-line righting/role-dependency -- approved legacy dependency\nimport { value } from "../client/value.js";\nexport { value };\n',
       "src/suppressed-plain.js":
         "// oxlint-disable righting/unclassified-source -- approved legacy classification\nexport {};\n",
+      "src/engines/suppressed.client.js":
+        "// oxlint-disable righting/ambiguous-source -- approved legacy classification\nexport {};\n",
+      "src/client/suppressed-unresolved.js":
+        '// oxlint-disable-next-line righting/unresolved-local-import -- approved unresolved dependency\nimport "./missing.js";\n',
+      "src/manager/suppressed-target.test.js": "export {};\n",
+      "src/client/suppressed-test.js":
+        '// oxlint-disable-next-line righting/test-dependency -- approved test dependency\nimport "../manager/suppressed-target.test.js";\n',
     },
     () => {
-      const result = runLint(["src/manager/suppressed.js", "src/suppressed-plain.js"], [
-        "--report-unused-disable-directives",
-      ]);
+      const result = runLint(
+        [
+          "src/manager/suppressed.js",
+          "src/suppressed-plain.js",
+          "src/engines/suppressed.client.js",
+          "src/client/suppressed-unresolved.js",
+          "src/client/suppressed-test.js",
+        ],
+        ["--report-unused-disable-directives"],
+      );
       assert.equal(result.status, 0, output(result));
     },
   );

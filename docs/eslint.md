@@ -40,7 +40,7 @@ Run the project's established lint command unchanged. Its native `righting/...` 
 
 Tested tuple:
 
-- Righting and adapter: `0.1.0-alpha.3`;
+- Righting and adapter: `0.1.0-alpha.5`;
 - inspection `schemaVersion`: `1`;
 - normalized `contractVersion`: `2`;
 - ESLint: `9.39.5`;
@@ -72,7 +72,7 @@ npm run typecheck
 git diff --check
 ```
 
-For this tuple, nine native ESLint tests passed, including all eight conformance families and fail-closed inspection; the suppression and clean packed-consumer tests passed; the full 54-test package suite, typecheck, build, and diff check passed.
+For this tuple, the native ESLint suite covers all eight registered conformance families and fail-closed inspection; the suppression and clean packed-consumer suites verify the public adapter path. Re-run the commands above against the current artifact rather than relying on a historical total test count.
 
 ## Adopt and maintain legacy debt
 
