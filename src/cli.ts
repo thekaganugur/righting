@@ -48,7 +48,6 @@ const inspectHelp = [
   "  --json  Emit the machine-facing policy interpretation.",
 ].join("\n");
 const rightingSkillNames = [
-  "righting-eslint",
   "righting-integrate",
   "righting-adapter-authoring",
   "righting-deep-modules",

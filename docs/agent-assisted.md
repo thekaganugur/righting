@@ -29,7 +29,7 @@ It reports the normalized contract once under `contract`, including configured p
 
 ## 4. Choose whether to hand off adapter work
 
-After policy approval, `righting-integrate` lists available guardrail adapters and recommends a compatible fit. V1 provides the optional [`righting-eslint`](../skills/righting-eslint/SKILL.md) adapter for an existing supported ESLint flat-config loop and the [pinned Oxlint adapter](oxlint.md) for its exact documented tuple and resolver limits. Neither is universal. The maintainer explicitly chooses and separately approves whether to invoke one.
+After policy approval, `righting-integrate` lists available guardrail adapters and recommends a compatible fit. V1 provides an optional [ESLint workflow](../skills/righting-integrate/ESLINT.md) for an existing supported ESLint flat-config loop and the [pinned Oxlint adapter](oxlint.md) for its exact documented tuple and resolver limits. Neither is universal. The maintainer explicitly chooses and separately approves whether to invoke one; `righting-integrate` loads the ESLint workflow only after ESLint is selected.
 
 The handoff gives the chosen adapter the unchanged normalized contract. Verified diagnostics become **adapter findings**; only separately approved native suppressions become **adapter-native legacy debt**. Only the project's successful normal lint command establishes active guardrails.
 

@@ -13,8 +13,8 @@ const packagedResources = [
   "dist/src/policy.js",
   "dist/src/capabilities.js",
   "dist/src/oxlint.js",
-  "skills/righting-eslint/SKILL.md",
   "skills/righting-integrate/SKILL.md",
+  "skills/righting-integrate/ESLINT.md",
   "skills/righting-adapter-authoring/SKILL.md",
   "skills/righting-deep-modules/SKILL.md",
   "skills/righting-volatility-review/SKILL.md",
@@ -204,6 +204,7 @@ test("the packed package publishes every onboarding reference without the retire
     assert.equal(files.has("dist/src/suppressions.js"), false);
     assert.equal(files.has("docs/agents/issue-tracker.md"), false);
     assert.equal(files.has("docs/agents/domain.md"), false);
+    assert.equal(files.has("skills/righting-eslint/SKILL.md"), false);
 
     const consumerDirectory = resolve(packageDirectory, "consumer");
     mkdirSync(consumerDirectory);
@@ -232,9 +233,24 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(oxlintReference, /Oxlint exactly `1\.75\.0`/);
     assert.match(oxlintReference, /inspection schema 1[\s\S]*normalized contract version 2/i);
     assert.match(oxlintReference, /unsupported capabilities:[\s\S]*protected-dependency/i);
-    const eslintSkill = readFileSync(resolve(packageDirectory, "package/skills/righting-eslint/SKILL.md"), "utf8");
-    assert.match(eslintSkill, /ask the maintainer[\s\S]*before running[\s\S]*--suppress-rule/i);
-    assert.match(eslintSkill, /new findings[\s\S]*unchanged lint command/i);
+    const integrationSkill = readFileSync(
+      resolve(packageDirectory, "package/skills/righting-integrate/SKILL.md"),
+      "utf8",
+    );
+    assert.match(integrationSkill, /chooses ESLint[\s\S]*read `ESLINT\.md` completely/i);
+    assert.match(
+      integrationSkill,
+      /direct request to activate ESLint[\s\S]*valid normalized contract[\s\S]*maintainer-approved[\s\S]*skip the policy-candidate evidence work/i,
+    );
+    assert.match(integrationSkill, /inspection cannot establish approval[\s\S]*without repeating candidate derivation/i);
+    assert.match(integrationSkill, /incomplete or invalid[\s\S]*do not load ESLint guidance[\s\S]*policy flow/i);
+    const eslintWorkflow = readFileSync(
+      resolve(packageDirectory, "package/skills/righting-integrate/ESLINT.md"),
+      "utf8",
+    );
+    assert.doesNotMatch(eslintWorkflow, /^---/);
+    assert.match(eslintWorkflow, /ask the maintainer[\s\S]*before running[\s\S]*--suppress-rule/i);
+    assert.match(eslintWorkflow, /new findings[\s\S]*unchanged lint command/i);
     const adapterSkill = readFileSync(
       resolve(packageDirectory, "package/skills/righting-adapter-authoring/SKILL.md"),
       "utf8",

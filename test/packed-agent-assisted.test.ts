@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { assertFailureEnvelope, assertSuccessEnvelope, type Json } from "./json-contract.js";
+import { assertSuccessEnvelope, type Json } from "./json-contract.js";
 import { createPackedProject, packRighting, righting, runCommand } from "./packed-artifact.js";
 
 const testDirectory = dirname(fileURLToPath(import.meta.url));
@@ -12,7 +12,6 @@ const fixtureDirectory = resolve(repositoryDirectory, "test/fixtures/manual-main
 const approvedPolicyPath = resolve(fixtureDirectory, "righting-approved.json");
 const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nBefore changing covered code, run `npx righting inspect --json` and use its normalized `contract`.\nAdapter activation remains unknown until separately verified.";
 const skills = [
-  "righting-eslint",
   "righting-integrate",
   "righting-adapter-authoring",
   "righting-deep-modules",
@@ -61,7 +60,9 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
     const integrationSkill = readFileSync(resolve(projectDirectory, ".agents/skills/righting-integrate/SKILL.md"), "utf8");
     assert.match(integrationSkill, /dependency ledger[\s\S]*observed inconsistencies/i);
     assert.match(integrationSkill, /list the available guardrail adapters[\s\S]*recommend[\s\S]*maintainer explicitly chooses/i);
-    assert.match(integrationSkill, /unchanged normalized contract[\s\S]*righting-eslint/i);
+    assert.match(integrationSkill, /chooses ESLint[\s\S]*read `ESLINT\.md` completely/i);
+    assert.ok(existsSync(resolve(projectDirectory, ".agents/skills/righting-integrate/ESLINT.md")));
+    assert.equal(existsSync(resolve(projectDirectory, ".agents/skills/righting-eslint")), false);
     assert.match(
       integrationSkill,
       /decision brief[\s\S]*exact candidate `righting\.json`[\s\S]*raw inspection JSON out of the default reply/i,
@@ -96,13 +97,18 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
     const collision = resolve(collisionProjectDirectory, ".agents/skills/righting-eslint");
     mkdirSync(collision, { recursive: true });
     writeFileSync(resolve(collision, "SKILL.md"), "# Project-owned skill\n");
-    const refused = assertFailureEnvelope(righting(collisionProjectDirectory, "init", "--skills", "--json"), "init", "skill-collision", "resolve-skill-collision");
-    assert.equal((refused.error as Json).path, relative(collisionProjectDirectory, collision));
+    const initResult = assertSuccessEnvelope(
+      righting(collisionProjectDirectory, "init", "--skills", "--json"),
+      "init",
+      "incomplete",
+    );
+    assert.deepEqual(initResult.skills, { path: ".agents/skills", claudePath: ".claude/skills", linked: skills });
     assert.equal(readFileSync(resolve(collision, "SKILL.md"), "utf8"), "# Project-owned skill\n");
-    assert.equal(existsSync(resolve(collisionProjectDirectory, "righting.json")), false);
-    assert.equal(readFileSync(resolve(collisionProjectDirectory, "AGENTS.md"), "utf8"), collisionGuidance);
-    assert.equal(existsSync(resolve(collisionProjectDirectory, ".agents/skills/righting-deep-modules")), false);
-    assert.equal(existsSync(resolve(collisionProjectDirectory, ".agents/skills/righting-integrate")), false);
+    assert.equal(lstatSync(collision).isSymbolicLink(), false);
+    assert.equal(existsSync(resolve(collisionProjectDirectory, "righting.json")), true);
+    assert.notEqual(readFileSync(resolve(collisionProjectDirectory, "AGENTS.md"), "utf8"), collisionGuidance);
+    assert.ok(lstatSync(resolve(collisionProjectDirectory, ".agents/skills/righting-deep-modules")).isSymbolicLink());
+    assert.ok(lstatSync(resolve(collisionProjectDirectory, ".agents/skills/righting-integrate")).isSymbolicLink());
   } finally {
     rmSync(projectDirectory, { recursive: true, force: true });
     rmSync(collisionProjectDirectory, { recursive: true, force: true });

@@ -13,7 +13,6 @@ const managedStart = "<!-- righting:managed:start -->";
 const managedEnd = "<!-- righting:managed:end -->";
 const policyPointer = "This project has a Righting architecture policy in `righting.json`.\nBefore changing covered code, run `npx righting inspect --json` and use its normalized `contract`.\nAdapter activation remains unknown until separately verified.";
 const skills = [
-  "righting-eslint",
   "righting-integrate",
   "righting-adapter-authoring",
   "righting-deep-modules",
@@ -247,11 +246,12 @@ test("righting init --skills creates repeatable relative links and preflights co
     mkdirSync(projectOwnedSkill, { recursive: true });
     writeFileSync(resolve(projectOwnedSkill, "SKILL.md"), "# Project-owned skill\n");
 
-    const collision = run(collisionDirectory, "init", "--skills", "--json");
-    assertFailureEnvelope(collision, "skill-collision", ".agents/skills/righting-eslint", "resolve-skill-collision");
+    const initResult = assertSuccessEnvelope(run(collisionDirectory, "init", "--skills", "--json"));
+    assert.deepEqual(initResult.skills, { path: ".agents/skills", claudePath: ".claude/skills", linked: skills });
     assert.equal(readFileSync(resolve(projectOwnedSkill, "SKILL.md"), "utf8"), "# Project-owned skill\n");
-    assert.equal(existsSync(resolve(collisionDirectory, "righting.json")), false);
-    assert.equal(existsSync(resolve(collisionDirectory, "AGENTS.md")), false);
+    assert.equal(lstatSync(projectOwnedSkill).isSymbolicLink(), false);
+    assert.equal(existsSync(resolve(collisionDirectory, "righting.json")), true);
+    assert.equal(existsSync(resolve(collisionDirectory, "AGENTS.md")), true);
 
     writeFileSync(resolve(ancestorCollisionDirectory, ".agents"), "Project-owned path\n");
     const ancestorCollision = run(ancestorCollisionDirectory, "init", "--skills", "--json");
