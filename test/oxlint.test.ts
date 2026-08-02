@@ -22,6 +22,14 @@ const repositoryDirectory = resolve(testDirectory, "../..");
 const sourceFixtureDirectory = resolve(repositoryDirectory, "test/fixtures/dependency-conformance");
 const protectedFixtureDirectory = resolve(repositoryDirectory, "test/fixtures/oxlint-protected-dependency");
 const protectedPolicy = JSON.parse(readFileSync(resolve(protectedFixtureDirectory, "righting.json"), "utf8")) as object;
+const protectedSourceFiles = Object.fromEntries(
+  [
+    "src/client/protected-utility.js",
+    "src/manager/protected-resource.js",
+    "src/resource-access/protected-resource.js",
+    "src/resource/protected-utility.js",
+  ].map((path) => [path, readFileSync(resolve(protectedFixtureDirectory, path), "utf8")]),
+);
 const fixtureDirectory = mkdtempSync(resolve(tmpdir(), "righting-oxlint-conformance-"));
 const canonicalFixtureDirectory = realpathSync(fixtureDirectory);
 const fixturePolicyPath = resolve(fixtureDirectory, "righting.json");
@@ -32,10 +40,12 @@ type NativeExecution = {
   command: string;
   exitStatus: number;
   diagnostics: string[];
+  inspectionSha256: string;
   stdout: string;
   stderr: string;
 };
 const nativeExecutions = new Map<ConformanceScenarioFamilyId, NativeExecution[]>();
+const inspectionCaptures = new Map<string, string>();
 let activeScenarioFamily: ConformanceScenarioFamilyId | undefined;
 const policyRuleIds = [
   "righting/role-dependency",
@@ -87,6 +97,7 @@ after(() => {
         generatedBy: "node --test dist/test/oxlint.test.js",
         fixture: "isolated copy of test/fixtures/dependency-conformance with per-family additions from test/oxlint.test.ts",
         executable: "node_modules/.bin/oxlint",
+        inspectionCaptures: Object.fromEntries([...inspectionCaptures].sort(([left], [right]) => left.localeCompare(right))),
         families: Object.fromEntries(familyIds.map((id) => [id, nativeExecutions.get(id)])),
       };
       const evidencePath = resolve(repositoryDirectory, "docs/evidence/oxlint-native-executions.json");
@@ -155,12 +166,26 @@ function stableNativeOutput(value: string): string {
   return lines.length === 0 ? "" : `${lines.join("\n")}\n`;
 }
 
+function retainInspection(workingDirectory: string): string {
+  const cli = resolve(repositoryDirectory, "dist/src/cli.js");
+  const inspection = spawnSync(process.execPath, [cli, "inspect", "--json"], {
+    cwd: workingDirectory,
+    encoding: "utf8",
+  });
+  assert.equal(inspection.status, 0, inspection.stderr);
+  const sha256 = createHash("sha256").update(inspection.stdout).digest("hex");
+  inspectionCaptures.set(sha256, inspection.stdout);
+  return sha256;
+}
+
 function runLint(
   targets: string | readonly string[],
   options: readonly string[] = [],
   workingDirectory = fixtureDirectory,
 ) {
   const arguments_ = [...options, ...(typeof targets === "string" ? [targets] : targets)];
+  const inspectionSha256 =
+    activeScenarioFamily === undefined ? undefined : retainInspection(workingDirectory);
   const result = spawnSync(oxlint, arguments_, { cwd: workingDirectory, encoding: "utf8" });
   if (activeScenarioFamily !== undefined) {
     const text = output(result);
@@ -168,6 +193,7 @@ function runLint(
       command: `node_modules/.bin/oxlint ${arguments_.map((argument) => JSON.stringify(argument)).join(" ")}`,
       exitStatus: result.status ?? -1,
       diagnostics: policyRuleIds.filter((ruleId) => text.includes(ruleId)),
+      inspectionSha256: inspectionSha256!,
       stdout: stableNativeOutput(result.stdout),
       stderr: stableNativeOutput(result.stderr),
     });
@@ -424,9 +450,7 @@ conformanceTest(conformanceScenarioFamilyIds.canonicalAndAliasClassification, "O
       );
     },
   );
-});
 
-test("Oxlint classifies every canonical filename and directory convention", () => {
   const suffixes: Record<Role, string> = {
     Client: "client",
     Manager: "manager",
@@ -495,10 +519,7 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
 
   withFiles(
     {
-      "src/manager/protected.js": 'import "protected-resource/subpath";\n',
-      "src/resource-access/protected.js": 'import "protected-resource/subpath";\n',
-      "src/client/protected-utility.js": 'import "@example/protected-utility/subpath";\n',
-      "src/resource/protected-utility.js": 'import "@example/protected-utility/subpath";\n',
+      ...protectedSourceFiles,
       "src/manager/protected-import-map.js": 'import "#protected-resource";\n',
       "src/resource-access/protected-import-map.js": 'import "#protected-resource";\n',
       "node_modules/protected-resource/package.json":
@@ -520,11 +541,11 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
           withPolicy(
             protectedPolicy,
             () => {
-              const manager = runLint(["src/manager/protected.js", "src/manager/protected-import-map.js"]);
+              const manager = runLint(["src/manager/protected-resource.js", "src/manager/protected-import-map.js"]);
               assert.equal(manager.status, 1, output(manager));
               assert.match(output(manager), /righting\/role-dependency/);
               assert.equal(
-                runLint(["src/resource-access/protected.js", "src/resource-access/protected-import-map.js"]).status,
+                runLint(["src/resource-access/protected-resource.js", "src/resource-access/protected-import-map.js"]).status,
                 0,
               );
               const client = runLint("src/client/protected-utility.js");

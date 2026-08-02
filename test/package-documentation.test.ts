@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
@@ -245,7 +246,10 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(oxlintReference, /Observed validation outcomes:[\s\S]*npm test[\s\S]*passed/i);
     const nativeEvidence = JSON.parse(
       readFileSync(resolve(packageDirectory, "package/docs/evidence/oxlint-native-executions.json"), "utf8"),
-    ) as { families: Record<string, { command: string; exitStatus: number }[]> };
+    ) as {
+      inspectionCaptures: Record<string, string>;
+      families: Record<string, { command: string; exitStatus: number; inspectionSha256: string }[]>;
+    };
     assert.deepEqual(Object.keys(nativeEvidence.families).sort(), [
       "canonical-and-alias-classification",
       "declared-coverage",
@@ -261,8 +265,24 @@ test("the packed package publishes every onboarding reference without the retire
       for (const execution of executions) {
         assert.match(execution.command, /^node_modules\/.bin\/oxlint /);
         assert.ok(execution.exitStatus === 0 || execution.exitStatus === 1);
+        const capture = nativeEvidence.inspectionCaptures[execution.inspectionSha256];
+        assert.ok(capture !== undefined);
+        assert.equal(createHash("sha256").update(capture).digest("hex"), execution.inspectionSha256);
+        assert.equal((JSON.parse(capture) as { ok: boolean }).ok, true);
       }
     }
+    const retainedInspections = Object.values(nativeEvidence.inspectionCaptures).map(
+      (capture) => JSON.parse(capture) as { contract: { configured: { variations: string[]; overrides: object[] } } },
+    );
+    assert.ok(
+      retainedInspections.some(
+        ({ contract }) =>
+          contract.configured.variations.includes("clientReadsAccess") &&
+          contract.configured.variations.includes("pureEngines") &&
+          contract.configured.overrides.length === 1,
+      ),
+      "the native ledger must retain the exact variation-and-override inspection input",
+    );
     const integrationSkill = readFileSync(
       resolve(packageDirectory, "package/skills/righting-integrate/SKILL.md"),
       "utf8",
