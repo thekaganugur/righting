@@ -16,6 +16,7 @@ const packagedResources = [
   "skills/righting-integrate/SKILL.md",
   "skills/righting-integrate/ESLINT.md",
   "skills/righting-adapter-authoring/SKILL.md",
+  "skills/righting-adapter-authoring/APPROVAL.md",
   "skills/righting-deep-modules/SKILL.md",
   "skills/righting-volatility-review/SKILL.md",
   "skills/righting-volatility-review/LANGUAGE.md",
@@ -260,15 +261,38 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(adapterSkill, /docs\/adapter-conformance\.md/);
     assert.match(adapterSkill, /stable[\s\S]*righting\/\*/i);
     assert.match(adapterSkill, /compose[\s\S]*(native|established)/i);
+    for (const phrase of ["narrowest useful seam", "resolver-only", "complete-plugin", "replace overlapping owned behavior"]) {
+      assert.match(adapterSkill, new RegExp(phrase, "i"));
+    }
+    assert.doesNotMatch(adapterSkill, /\b(?:eslint|oxlint)\b/i);
     assert.match(adapterSkill, /approved candidate artifacts[\s\S]*activation or upgrade/i);
-    assert.match(adapterSkill, /package-conformance and target-activation ledgers/i);
-    assert.match(adapterSkill, /passed[\s\S]*observed exit[\s\S]*required[\s\S]*observed: pending/i);
-    assert.match(adapterSkill, /fresh materializations[\s\S]*both digests/i);
-    assert.match(adapterSkill, /isolated consumers[\s\S]*proposed final tree/i);
+    assert.match(adapterSkill, /APPROVAL\.md[\s\S]*completely[\s\S]*explicit approval/i);
+    const approvalGuidance = readFileSync(
+      resolve(packageDirectory, "package/skills/righting-adapter-authoring/APPROVAL.md"),
+      "utf8",
+    );
+    assert.match(approvalGuidance, /package-conformance and target-activation ledgers/i);
+    assert.match(approvalGuidance, /passed[\s\S]*observed exit[\s\S]*required[\s\S]*observed: pending/i);
+    assert.match(approvalGuidance, /fresh materializations[\s\S]*both digests/i);
+    assert.match(approvalGuidance, /isolated consumers[\s\S]*proposed final tree/i);
     const resolverGuidance = adapterSkill.slice(
       adapterSkill.indexOf("## 3. Choose the compose/own seam"),
       adapterSkill.indexOf("## 4. Implement through the native entry point"),
     );
+    for (const phrase of [
+      "total outcome",
+      "resolved local target",
+      "resolved external dependency",
+      "host builtin",
+      "unresolved with a reason",
+      "dependency-path mapping",
+      "project-root selection",
+      "snapshot lifetime",
+      "long-lived processes",
+      "multi-root behavior",
+    ]) {
+      assert.match(resolverGuidance, new RegExp(phrase, "i"));
+    }
     assert.match(resolverGuidance, /local-like[\s\S]*remain local[\s\S]*fail closed/i);
     assert.match(resolverGuidance, /overlapping[\s\S]*host precedence[\s\S]*unsupported[\s\S]*broader/i);
     const conformanceReference = readFileSync(
@@ -281,13 +305,22 @@ test("the packed package publishes every onboarding reference without the retire
       adapterSkill.indexOf("## 6. Leave an honest support record"),
     );
     assert.match(conformanceGuidance, /allowed and forbidden/);
+    for (const phrase of ["family ledger", "registration set", "registrations match that ledger"]) {
+      assert.match(conformanceGuidance, new RegExp(phrase, "i"));
+    }
     assert.match(conformanceGuidance, /every canonical role[\s\S]*filename and directory conventions[\s\S]*every configured alias/i);
     assert.match(conformanceGuidance, /both directions[\s\S]*coverage boundary/i);
+    assert.match(adapterSkill, /policy-ID-specific suppression/i);
+    assert.match(adapterSkill, /collapsed suppression granularity/i);
     const supportGuidance = adapterSkill.slice(adapterSkill.indexOf("## 6. Leave an honest support record"));
     assert.match(supportGuidance, /exact host[\s\S]*runtime version/i);
     assert.match(supportGuidance, /establishes[\s\S]*doesNotEstablish[\s\S]*policyRuleIds/i);
     assert.match(supportGuidance, /scenario family[\s\S]*fixture[\s\S]*native command[\s\S]*exit status/i);
-    assert.match(supportGuidance, /clean[\s\S]*(packed|released)[\s\S]*public package specifier/i);
+    assert.match(supportGuidance, /adapter version recorded[\s\S]*equals[\s\S]*artifact's version/i);
+    for (const phrase of ["performance claim", "representative benchmark", "regression budget"]) {
+      assert.match(supportGuidance, new RegExp(phrase, "i"));
+    }
+    assert.match(supportGuidance, /clean[\s\S]*(packed|released)[\s\S]*public installation locator/i);
     for (const resource of ["dist/src/policy.js", "dist/src/policy.d.ts", "docs/policy-language.md", "docs/capabilities.md"]) {
       const contents = readFileSync(resolve(packageDirectory, "package", resource), "utf8");
       assert.doesNotMatch(contents, /eslint|suppression-file/i, `${resource} leaks adapter mechanics into the core contract`);

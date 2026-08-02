@@ -55,6 +55,8 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
       "utf8",
     );
     assert.match(adapterAuthoringSkill, /node_modules\/righting\/docs\/adapter-conformance\.md/);
+    assert.match(adapterAuthoringSkill, /APPROVAL\.md/);
+    assert.ok(existsSync(resolve(projectDirectory, ".agents/skills/righting-adapter-authoring/APPROVAL.md")));
     assert.ok(existsSync(resolve(projectDirectory, "node_modules/righting/docs/adapter-conformance.md")));
 
     const integrationSkill = readFileSync(resolve(projectDirectory, ".agents/skills/righting-integrate/SKILL.md"), "utf8");
