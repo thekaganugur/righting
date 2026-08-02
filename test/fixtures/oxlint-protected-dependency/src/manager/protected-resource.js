@@ -1,0 +1,1 @@
+import "protected-resource/subpath";

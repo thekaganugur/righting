@@ -13,7 +13,7 @@ const { isMatch } = packageRequire("micromatch") as {
 
 const supportedOxlintVersion = "1.75.0";
 const roles = ["Client", "Manager", "Engine", "ResourceAccess", "Resource", "Utility"] as const;
-const supportedCapabilities = new Set([
+const recognizedCapabilities = new Set([
   "role-dependency",
   "manager-interaction",
   "protected-dependency",
@@ -117,7 +117,7 @@ function createResolver(conditionNames: string[], mainFields: string[]): Resolve
 function createState(projectDirectory: string, stamp: string): AdapterState {
   const contract = loadNormalizedContract(projectDirectory);
   const unsupported = contract.effective.capabilities.filter(
-    (capability) => capability.applies && !supportedCapabilities.has(capability.id),
+    (capability) => capability.applies && !recognizedCapabilities.has(capability.id),
   );
   if (unsupported.length > 0) {
     fail(`contract requires unsupported capabilities: ${unsupported.map(({ id }) => id).join(", ")}.`);
@@ -369,19 +369,12 @@ function dependencyRule(ruleId: RuleId) {
           report(node, `${from.role} cannot depend on ${to.role}.`);
         }
       }
+      const inspectImport = (node: Node) => inspect(node.source ?? node, sourceOf(node), "import");
       return {
-        ImportDeclaration(node: Node) {
-          inspect(node.source ?? node, sourceOf(node), "import");
-        },
-        ExportAllDeclaration(node: Node) {
-          inspect(node.source ?? node, sourceOf(node), "import");
-        },
-        ExportNamedDeclaration(node: Node) {
-          inspect(node.source ?? node, sourceOf(node), "import");
-        },
-        ImportExpression(node: Node) {
-          inspect(node.source ?? node, sourceOf(node), "import");
-        },
+        ImportDeclaration: inspectImport,
+        ExportAllDeclaration: inspectImport,
+        ExportNamedDeclaration: inspectImport,
+        ImportExpression: inspectImport,
         CallExpression(node: Node) {
           if (
             node.callee?.type === "Identifier" &&

@@ -40,6 +40,8 @@ const packagedResources = [
   "docs/eslint.md",
   "docs/oxlint.md",
   "docs/evidence/oxlint-inspection.json",
+  "docs/evidence/oxlint-protected-inspection.json",
+  "docs/evidence/oxlint-native-executions.json",
   "docs/legacy-debt.md",
   "docs/dogfood.md",
 ];
@@ -237,6 +239,30 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(oxlintReference, /inspection schema 1[\s\S]*normalized contract version 2/i);
     assert.match(oxlintReference, /protected-dependency[\s\S]*supported/i);
     assert.match(oxlintReference, /Oxc Resolver: `11\.24\.2`/);
+    assert.match(oxlintReference, /design-judgment[\s\S]*Establishes: none[\s\S]*Does not establish:[\s\S]*policy-rule IDs: none/i);
+    assert.match(oxlintReference, /target fixture tree revision: `[0-9a-f]{40}`/i);
+    assert.match(oxlintReference, /oxlint-native-executions\.json[\s\S]*exact native commands/i);
+    assert.match(oxlintReference, /Observed validation outcomes:[\s\S]*npm test[\s\S]*passed/i);
+    const nativeEvidence = JSON.parse(
+      readFileSync(resolve(packageDirectory, "package/docs/evidence/oxlint-native-executions.json"), "utf8"),
+    ) as { families: Record<string, { command: string; exitStatus: number }[]> };
+    assert.deepEqual(Object.keys(nativeEvidence.families).sort(), [
+      "canonical-and-alias-classification",
+      "declared-coverage",
+      "default-role-edges",
+      "generated-source-and-composition-roots",
+      "policy-variations-and-protected-dependencies",
+      "source-classification-violations",
+      "static-dependency-forms",
+      "test-source-treatment",
+    ]);
+    for (const executions of Object.values(nativeEvidence.families)) {
+      assert.ok(executions.length > 0);
+      for (const execution of executions) {
+        assert.match(execution.command, /^node_modules\/.bin\/oxlint /);
+        assert.ok(execution.exitStatus === 0 || execution.exitStatus === 1);
+      }
+    }
     const integrationSkill = readFileSync(
       resolve(packageDirectory, "package/skills/righting-integrate/SKILL.md"),
       "utf8",

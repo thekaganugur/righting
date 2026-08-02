@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "node --test dist/test/oxlint.test.js",
+  "fixture": "isolated copy of test/fixtures/dependency-conformance with per-family additions from test/oxlint.test.ts",
+  "executable": "node_modules/.bin/oxlint",
+  "families": {
+    "canonical-and-alias-classification": [
+      {
+        "command": "node_modules/.bin/oxlint \"src/page.client.js\" \"src/page.screen.js\" \"src/clients/page.js\" \"src/screens/page.js\" \"src/screens/page.client.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/reject-screen.manager.js\" \"src/managers/reject-screen.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/managers/reject-screen.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/reject-screen.manager.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stderr": ""
+      }
+    ],
+    "declared-coverage": [
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/import-outside.js\" \"outside/unchecked.manager.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      }
+    ],
+    "default-role-edges": [
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/oxlint-to-manager.js\" \"src/client/oxlint-to-utility.js\" \"src/manager/oxlint-to-engine.js\" \"src/manager/oxlint-to-resource-access.js\" \"src/manager/oxlint-to-utility.js\" \"src/engine/oxlint-to-resource-access.js\" \"src/engine/oxlint-to-utility.js\" \"src/resource-access/oxlint-to-resource.js\" \"src/resource-access/oxlint-to-utility.js\" \"src/resource/oxlint-to-utility.js\" \"src/utility/oxlint-to-utility.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/oxlint-to-client.js\" \"src/client/oxlint-to-engine.js\" \"src/client/oxlint-to-resource-access.js\" \"src/client/oxlint-to-resource.js\" \"src/manager/oxlint-to-client.js\" \"src/manager/oxlint-to-manager.js\" \"src/manager/oxlint-to-resource.js\" \"src/engine/oxlint-to-client.js\" \"src/engine/oxlint-to-manager.js\" \"src/engine/oxlint-to-engine.js\" \"src/engine/oxlint-to-resource.js\" \"src/resource-access/oxlint-to-client.js\" \"src/resource-access/oxlint-to-manager.js\" \"src/resource-access/oxlint-to-engine.js\" \"src/resource-access/oxlint-to-resource-access.js\" \"src/resource/oxlint-to-client.js\" \"src/resource/oxlint-to-manager.js\" \"src/resource/oxlint-to-engine.js\" \"src/resource/oxlint-to-resource-access.js\" \"src/resource/oxlint-to-resource.js\" \"src/utility/oxlint-to-client.js\" \"src/utility/oxlint-to-manager.js\" \"src/utility/oxlint-to-engine.js\" \"src/utility/oxlint-to-resource-access.js\" \"src/utility/oxlint-to-resource.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/client/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on Client.\nsrc/client/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on Engine.\nsrc/client/oxlint-to-resource-access.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on ResourceAccess.\nsrc/client/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on Resource.\nsrc/engine/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on Client.\nsrc/engine/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on Engine.\nsrc/engine/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on Manager.\nsrc/engine/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on Resource.\nsrc/manager/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Manager.\nsrc/manager/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Resource.\nsrc/resource-access/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: ResourceAccess cannot depend on Client.\nsrc/resource-access/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: ResourceAccess cannot depend on Engine.\nsrc/resource-access/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: ResourceAccess cannot depend on Manager.\nsrc/resource-access/oxlint-to-resource-access.js:1:23: error righting(role-dependency): righting/role-dependency: ResourceAccess cannot depend on ResourceAccess.\nsrc/resource/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on Client.\nsrc/resource/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on Engine.\nsrc/resource/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on Manager.\nsrc/resource/oxlint-to-resource-access.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on ResourceAccess.\nsrc/resource/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on Resource.\nsrc/utility/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on Client.\nsrc/utility/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on Engine.\nsrc/utility/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on Manager.\nsrc/utility/oxlint-to-resource-access.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on ResourceAccess.\nsrc/utility/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on Resource.\n",
+        "stderr": ""
+      }
+    ],
+    "generated-source-and-composition-roots": [
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/forbidden.generated.js\" \"src/generated/manager/forbidden.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/generated/manager/forbidden.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/forbidden.generated.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/composition-root.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/import-root.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/client/import-root.js:1:8: error righting(role-dependency): righting/role-dependency: Client cannot depend on a composition root.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/not-composition-root.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/manager/not-composition-root.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stderr": ""
+      }
+    ],
+    "policy-variations-and-protected-dependencies": [
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/read-access.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/client/read-access.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on ResourceAccess.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/engine/read-access.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/read-access.js\" \"src/client/read-resource.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/engine/read-access.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/engine/read-access.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on ResourceAccess.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/protected.js\" \"src/manager/protected-import-map.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/manager/protected-import-map.js:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on protected Resource package protected-resource.\nsrc/manager/protected.js:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on protected Resource package protected-resource.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/resource-access/protected.js\" \"src/resource-access/protected-import-map.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/protected-utility.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/client/protected-utility.js:1:8: error righting(role-dependency): righting/role-dependency: Client cannot depend on protected Utility package @example/protected-utility.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/resource/protected-utility.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      }
+    ],
+    "source-classification-violations": [
+      {
+        "command": "node_modules/.bin/oxlint \"src/plain.js\" \"src/engines/page.client.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/unclassified-source",
+          "righting/ambiguous-source"
+        ],
+        "stdout": "src/engines/page.client.js:1:1: error righting(ambiguous-source): righting/ambiguous-source: This covered source matches multiple canonical roles: Client, Engine.\nsrc/plain.js:1:1: error righting(unclassified-source): righting/unclassified-source: This covered source does not match a canonical role or explicit source treatment.\n",
+        "stderr": ""
+      }
+    ],
+    "static-dependency-forms": [
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/client.js\" \"src/client/reexport-manager.js\" \"src/client/reexport-all-manager.js\" \"src/client/require-manager.cjs\" \"src/client/dynamic-manager.js\" \"src/client/type-manager.mts\" \"src/client/extension-manager.js\" \"src/client/index-manager.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/forbidden.js\" \"src/manager/reexport-client.js\" \"src/manager/reexport-all-client.js\" \"src/manager/require-client.cjs\" \"src/manager/dynamic-client.js\" \"src/manager/type-client.mts\" \"src/manager/extension-client.js\" \"src/manager/index-client.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/manager/dynamic-client.js:1:13: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/extension-client.js:1:24: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/forbidden.js:1:24: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/index-client.js:1:24: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/reexport-all-client.js:1:15: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/reexport-client.js:1:24: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/require-client.cjs:2:9: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/type-client.mts:1:29: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/package-import.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/package-import.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/manager/package-import.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/specific-package-import.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/manager/specific-package-import.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/exact-package-import.js\" \"src/client/repeated-wildcard-import.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/exact-package-import.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/manager/exact-package-import.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/unresolved-package.js\" \"src/client/unresolved-package-name.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/unresolved-local-import"
+        ],
+        "stdout": "src/client/unresolved-package-name.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"missing-package\": Cannot find module 'missing-package'\nsrc/client/unresolved-package.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"#missing\": Package import specifier \"#missing\" is not defined in package <fixture>/package.json\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/conditional-package-import.js\" \"src/client/conditional-import.js\" \"src/client/array-package-import.js\" \"src/client/ts-path.mts\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/conditional-package-import.js\" \"src/manager/conditional-require.cjs\" \"src/manager/array-package-import.js\" \"src/manager/ts-path.mts\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/role-dependency"
+        ],
+        "stdout": "src/manager/array-package-import.js:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/conditional-package-import.js:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/conditional-require.cjs:1:9: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/ts-path.mts:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/external-and-builtin.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/unresolved.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/unresolved-local-import"
+        ],
+        "stdout": "src/client/unresolved.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"./missing.js\": Cannot find module './missing.js'\n",
+        "stderr": ""
+      }
+    ],
+    "test-source-treatment": [
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/forbidden.test.js\" \"src/tests/manager/forbidden.js\"",
+        "exitStatus": 0,
+        "diagnostics": [],
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/manager/unresolved.test.js\" \"src/tests/manager/unresolved.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/unresolved-local-import"
+        ],
+        "stdout": "src/manager/unresolved.test.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"./missing.js\": Cannot find module './missing.js'\nsrc/tests/manager/unresolved.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"./missing.js\": Cannot find module './missing.js'\n",
+        "stderr": ""
+      },
+      {
+        "command": "node_modules/.bin/oxlint \"src/client/import-test.js\" \"src/client/import-test-directory.js\"",
+        "exitStatus": 1,
+        "diagnostics": [
+          "righting/test-dependency"
+        ],
+        "stdout": "src/client/import-test-directory.js:1:23: error righting(test-dependency): righting/test-dependency: Governed production source cannot depend on test source.\nsrc/client/import-test.js:1:23: error righting(test-dependency): righting/test-dependency: Governed production source cannot depend on test source.\n",
+        "stderr": ""
+      }
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { after, test } from "node:test";
@@ -20,11 +20,30 @@ import {
 const testDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryDirectory = resolve(testDirectory, "../..");
 const sourceFixtureDirectory = resolve(repositoryDirectory, "test/fixtures/dependency-conformance");
+const protectedFixtureDirectory = resolve(repositoryDirectory, "test/fixtures/oxlint-protected-dependency");
+const protectedPolicy = JSON.parse(readFileSync(resolve(protectedFixtureDirectory, "righting.json"), "utf8")) as object;
 const fixtureDirectory = mkdtempSync(resolve(tmpdir(), "righting-oxlint-conformance-"));
+const canonicalFixtureDirectory = realpathSync(fixtureDirectory);
 const fixturePolicyPath = resolve(fixtureDirectory, "righting.json");
 const fixturePackagePath = resolve(fixtureDirectory, "package.json");
 const oxlint = resolve(repositoryDirectory, "node_modules/.bin/oxlint");
 const executableScenarioFamilyIds = new Set<ConformanceScenarioFamilyId>();
+type NativeExecution = {
+  command: string;
+  exitStatus: number;
+  diagnostics: string[];
+  stdout: string;
+  stderr: string;
+};
+const nativeExecutions = new Map<ConformanceScenarioFamilyId, NativeExecution[]>();
+let activeScenarioFamily: ConformanceScenarioFamilyId | undefined;
+const policyRuleIds = [
+  "righting/role-dependency",
+  "righting/unresolved-local-import",
+  "righting/unclassified-source",
+  "righting/ambiguous-source",
+  "righting/test-dependency",
+];
 
 cpSync(sourceFixtureDirectory, fixtureDirectory, { recursive: true });
 writeFileSync(
@@ -32,13 +51,7 @@ writeFileSync(
   `${JSON.stringify(
     {
       jsPlugins: [{ name: "righting", specifier: resolve(repositoryDirectory, "dist/src/oxlint.js") }],
-      rules: {
-        "righting/role-dependency": "error",
-        "righting/unresolved-local-import": "error",
-        "righting/unclassified-source": "error",
-        "righting/ambiguous-source": "error",
-        "righting/test-dependency": "error",
-      },
+      rules: Object.fromEntries(policyRuleIds.map((ruleId) => [ruleId, "error"])),
     },
     null,
     2,
@@ -49,16 +62,40 @@ writeFileSync(fixturePackagePath, '{"private":true,"type":"module","imports":{"#
 function conformanceTest(id: ConformanceScenarioFamilyId, name: string, run: () => void) {
   assert.equal(executableScenarioFamilyIds.has(id), false, `duplicate executable scenario family: ${id}`);
   executableScenarioFamilyIds.add(id);
-  test(`${id}: ${name}`, run);
+  test(`${id}: ${name}`, () => {
+    activeScenarioFamily = id;
+    nativeExecutions.set(id, []);
+    try {
+      run();
+    } finally {
+      activeScenarioFamily = undefined;
+    }
+  });
 }
 
 after(() => {
   try {
+    const familyIds = [...Object.values(conformanceScenarioFamilyIds)].sort();
     assert.deepEqual(
       [...executableScenarioFamilyIds].sort(),
-      [...Object.values(conformanceScenarioFamilyIds)].sort(),
+      familyIds,
       "every registered scenario family must have one executable family test",
     );
+    if (nativeExecutions.size === familyIds.length) {
+      const evidence = {
+        schemaVersion: 1,
+        generatedBy: "node --test dist/test/oxlint.test.js",
+        fixture: "isolated copy of test/fixtures/dependency-conformance with per-family additions from test/oxlint.test.ts",
+        executable: "node_modules/.bin/oxlint",
+        families: Object.fromEntries(familyIds.map((id) => [id, nativeExecutions.get(id)])),
+      };
+      const evidencePath = resolve(repositoryDirectory, "docs/evidence/oxlint-native-executions.json");
+      if (process.env.UPDATE_OXLINT_EVIDENCE === "1") {
+        writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
+      } else {
+        assert.deepEqual(JSON.parse(readFileSync(evidencePath, "utf8")), evidence);
+      }
+    }
   } finally {
     rmSync(fixtureDirectory, { recursive: true, force: true });
   }
@@ -108,34 +145,64 @@ function withFiles(files: Record<string, string>, action: () => void) {
   }
 }
 
+function stableNativeOutput(value: string): string {
+  const lines = value
+    .replaceAll(canonicalFixtureDirectory, "<fixture>")
+    .replaceAll(fixtureDirectory, "<fixture>")
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .sort();
+  return lines.length === 0 ? "" : `${lines.join("\n")}\n`;
+}
+
 function runLint(
   targets: string | readonly string[],
   options: readonly string[] = [],
   workingDirectory = fixtureDirectory,
 ) {
-  return spawnSync(oxlint, [...options, ...(typeof targets === "string" ? [targets] : targets)], {
-    cwd: workingDirectory,
-    encoding: "utf8",
-  });
+  const arguments_ = [...options, ...(typeof targets === "string" ? [targets] : targets)];
+  const result = spawnSync(oxlint, arguments_, { cwd: workingDirectory, encoding: "utf8" });
+  if (activeScenarioFamily !== undefined) {
+    const text = output(result);
+    nativeExecutions.get(activeScenarioFamily)!.push({
+      command: `node_modules/.bin/oxlint ${arguments_.map((argument) => JSON.stringify(argument)).join(" ")}`,
+      exitStatus: result.status ?? -1,
+      diagnostics: policyRuleIds.filter((ruleId) => text.includes(ruleId)),
+      stdout: stableNativeOutput(result.stdout),
+      stderr: stableNativeOutput(result.stderr),
+    });
+  }
+  return result;
 }
 
 function output(result: ReturnType<typeof runLint>): string {
   return `${result.stdout}\n${result.stderr}`;
 }
 
-test("the Oxlint support record retains a reproducible inspection capture", () => {
+test("the Oxlint support record retains reproducible inspection captures", () => {
   const cli = resolve(repositoryDirectory, "dist/src/cli.js");
-  const inspection = spawnSync(process.execPath, [cli, "inspect", "--json"], {
-    cwd: sourceFixtureDirectory,
-    encoding: "utf8",
-  });
-  assert.equal(inspection.status, 0, inspection.stderr);
-  const expected = readFileSync(resolve(repositoryDirectory, "docs/evidence/oxlint-inspection.json"), "utf8");
-  assert.equal(inspection.stdout, expected);
-  assert.equal(
-    createHash("sha256").update(expected).digest("hex"),
-    "d3fe86488eee441bc1645100e67cd3a0c050b79ef09febc76c8580278574b608",
-  );
+  const captures = [
+    {
+      fixture: sourceFixtureDirectory,
+      evidence: "oxlint-inspection.json",
+      sha256: "d3fe86488eee441bc1645100e67cd3a0c050b79ef09febc76c8580278574b608",
+    },
+    {
+      fixture: protectedFixtureDirectory,
+      evidence: "oxlint-protected-inspection.json",
+      sha256: "d767397c535bfb24fb496e06916505c8dcfeef4a61f4ef85b0b0d623e04f28d3",
+    },
+  ];
+  for (const capture of captures) {
+    const inspection = spawnSync(process.execPath, [cli, "inspect", "--json"], {
+      cwd: capture.fixture,
+      encoding: "utf8",
+    });
+    assert.equal(inspection.status, 0, inspection.stderr);
+    const expected = readFileSync(resolve(repositoryDirectory, "docs/evidence", capture.evidence), "utf8");
+    assert.equal(inspection.stdout, expected);
+    assert.equal(createHash("sha256").update(expected).digest("hex"), capture.sha256);
+  }
 });
 
 type RoleDependency = readonly [Role, Role];
@@ -434,7 +501,6 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
       "src/resource/protected-utility.js": 'import "@example/protected-utility/subpath";\n',
       "src/manager/protected-import-map.js": 'import "#protected-resource";\n',
       "src/resource-access/protected-import-map.js": 'import "#protected-resource";\n',
-      "src/resource-access/missing-protected.js": 'import "missing-protected/subpath";\n',
       "node_modules/protected-resource/package.json":
         '{"name":"protected-resource","type":"module","exports":{".":"./index.js","./subpath":"./subpath.js"}}\n',
       "node_modules/protected-resource/index.js": "export {};\n",
@@ -452,22 +518,7 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
         },
         () => {
           withPolicy(
-            policy({
-              overrides: [
-                {
-                  name: "client-cannot-use-utility",
-                  from: "Client",
-                  to: "Utility",
-                  effect: "disallow",
-                  reason: "Proves protected Utility classification.",
-                },
-              ],
-              protectedDependencies: [
-                { package: "protected-resource", role: "Resource" },
-                { package: "@example/protected-utility", role: "Utility" },
-                { package: "missing-protected", role: "Resource" },
-              ],
-            }),
+            protectedPolicy,
             () => {
               const manager = runLint(["src/manager/protected.js", "src/manager/protected-import-map.js"]);
               assert.equal(manager.status, 1, output(manager));
@@ -480,11 +531,32 @@ conformanceTest(conformanceScenarioFamilyIds.policyVariationsAndProtectedDepende
               assert.equal(client.status, 1, output(client));
               assert.match(output(client), /righting\/role-dependency/);
               assert.equal(runLint("src/resource/protected-utility.js").status, 0);
-              const missing = runLint("src/resource-access/missing-protected.js");
-              assert.equal(missing.status, 1, output(missing));
-              assert.match(output(missing), /righting\/unresolved-local-import/);
             },
           );
+        },
+      );
+    },
+  );
+});
+
+test("unresolved configured protected packages fail closed from allowed and forbidden roles", () => {
+  withFiles(
+    {
+      "src/resource-access/missing-protected.js": 'import "missing-protected/subpath";\n',
+      "src/manager/missing-protected.js": 'import "missing-protected/subpath";\n',
+    },
+    () => {
+      withPolicy(
+        policy({ protectedDependencies: [{ package: "missing-protected", role: "Resource" }] }),
+        () => {
+          const result = runLint([
+            "src/resource-access/missing-protected.js",
+            "src/manager/missing-protected.js",
+          ]);
+          assert.equal(result.status, 1, output(result));
+          assert.match(output(result), /righting\/unresolved-local-import/);
+          assert.match(output(result), /src[\\/]resource-access[\\/]missing-protected\.js/);
+          assert.match(output(result), /src[\\/]manager[\\/]missing-protected\.js/);
         },
       );
     },
@@ -532,6 +604,43 @@ test("Oxlint fails closed when inspection is incomplete or invalid", () => {
     assert.equal(result.status, 1, output(result));
     assert.match(output(result), /coverage must be a non-empty array/);
   });
+});
+
+test("Oxlint fails closed on an unknown future applicable capability", () => {
+  const pluginDirectory = mkdtempSync(resolve(repositoryDirectory, "dist/oxlint-future-capability-"));
+  try {
+    copyFileSync(resolve(repositoryDirectory, "dist/src/oxlint.js"), resolve(pluginDirectory, "oxlint.js"));
+    const inspection = JSON.parse(
+      readFileSync(resolve(repositoryDirectory, "docs/evidence/oxlint-inspection.json"), "utf8"),
+    ) as { contract: { effective: { capabilities: object[] } } };
+    inspection.contract.effective.capabilities.push({
+      id: "future-static",
+      applies: true,
+      reason: "Future static capability fixture.",
+      establishes: [],
+      doesNotEstablish: [],
+      policyRuleIds: [],
+      requiredScenarioFamilies: [],
+    });
+    writeFileSync(
+      resolve(pluginDirectory, "adapter-inspection.js"),
+      `export function loadNormalizedContract() { return ${JSON.stringify(inspection.contract)}; }\n`,
+    );
+    withJson(
+      resolve(fixtureDirectory, ".oxlintrc.json"),
+      {
+        jsPlugins: [{ name: "righting", specifier: resolve(pluginDirectory, "oxlint.js") }],
+        rules: { "righting/role-dependency": "error" },
+      },
+      () => {
+        const result = runLint("src/client/client.js");
+        assert.notEqual(result.status, 0, output(result));
+        assert.match(output(result), /unsupported capabilities: future-static/);
+      },
+    );
+  } finally {
+    rmSync(pluginDirectory, { recursive: true, force: true });
+  }
 });
 
 conformanceTest(conformanceScenarioFamilyIds.declaredCoverage, "Oxlint leaves source outside declared coverage unchecked", () => {

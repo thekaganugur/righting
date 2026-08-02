@@ -1,0 +1,340 @@
+{
+  "schemaVersion": 1,
+  "command": "inspect",
+  "ok": true,
+  "policy": {
+    "path": "righting.json",
+    "status": "valid"
+  },
+  "adapter": {
+    "status": "unknown"
+  },
+  "contract": {
+    "contractVersion": 2,
+    "preset": "volatility@1",
+    "roles": [
+      "Client",
+      "Manager",
+      "Engine",
+      "ResourceAccess",
+      "Resource",
+      "Utility"
+    ],
+    "configured": {
+      "coverage": [
+        "src/**/*.js"
+      ],
+      "aliases": [
+        {
+          "name": "client",
+          "role": "Client",
+          "filenameSuffixes": [],
+          "directorySegments": [
+            "client"
+          ]
+        },
+        {
+          "name": "manager",
+          "role": "Manager",
+          "filenameSuffixes": [],
+          "directorySegments": [
+            "manager"
+          ]
+        },
+        {
+          "name": "engine",
+          "role": "Engine",
+          "filenameSuffixes": [],
+          "directorySegments": [
+            "engine"
+          ]
+        },
+        {
+          "name": "resourceAccess",
+          "role": "ResourceAccess",
+          "filenameSuffixes": [],
+          "directorySegments": [
+            "resource-access"
+          ]
+        },
+        {
+          "name": "resource",
+          "role": "Resource",
+          "filenameSuffixes": [],
+          "directorySegments": [
+            "resource"
+          ]
+        },
+        {
+          "name": "utility",
+          "role": "Utility",
+          "filenameSuffixes": [],
+          "directorySegments": [
+            "utility"
+          ]
+        }
+      ],
+      "generated": {
+        "filenameMarkers": [],
+        "directorySegments": []
+      },
+      "protectedDependencies": [
+        {
+          "package": "protected-resource",
+          "role": "Resource"
+        },
+        {
+          "package": "@example/protected-utility",
+          "role": "Utility"
+        }
+      ],
+      "variations": [],
+      "overrides": [
+        {
+          "name": "client-cannot-use-utility",
+          "from": "Client",
+          "to": "Utility",
+          "effect": "disallow",
+          "reason": "Proves protected Utility classification."
+        }
+      ],
+      "compositionRoots": [],
+      "guidance": {}
+    },
+    "effective": {
+      "allowedDependencies": {
+        "Client": [
+          "Manager"
+        ],
+        "Manager": [
+          "Engine",
+          "ResourceAccess",
+          "Utility"
+        ],
+        "Engine": [
+          "ResourceAccess",
+          "Utility"
+        ],
+        "ResourceAccess": [
+          "Resource",
+          "Utility"
+        ],
+        "Resource": [
+          "Utility"
+        ],
+        "Utility": [
+          "Utility"
+        ]
+      },
+      "conventions": {
+        "roles": {
+          "Client": {
+            "filenameSuffixes": [
+              ".client."
+            ],
+            "directorySegments": [
+              "clients",
+              "client"
+            ]
+          },
+          "Manager": {
+            "filenameSuffixes": [
+              ".manager."
+            ],
+            "directorySegments": [
+              "managers",
+              "manager"
+            ]
+          },
+          "Engine": {
+            "filenameSuffixes": [
+              ".engine."
+            ],
+            "directorySegments": [
+              "engines",
+              "engine"
+            ]
+          },
+          "ResourceAccess": {
+            "filenameSuffixes": [
+              ".access."
+            ],
+            "directorySegments": [
+              "access",
+              "resource-access"
+            ]
+          },
+          "Resource": {
+            "filenameSuffixes": [
+              ".resource."
+            ],
+            "directorySegments": [
+              "resources",
+              "resource"
+            ]
+          },
+          "Utility": {
+            "filenameSuffixes": [
+              ".utility."
+            ],
+            "directorySegments": [
+              "utilities",
+              "utility"
+            ]
+          }
+        },
+        "tests": {
+          "filenameMarkers": [
+            ".test.",
+            ".spec."
+          ],
+          "directorySegments": [
+            "test",
+            "tests",
+            "__tests__"
+          ]
+        },
+        "generated": {
+          "filenameMarkers": [
+            ".generated."
+          ],
+          "directorySegments": [
+            "generated"
+          ]
+        },
+        "compositionRoots": [
+          "composition-root"
+        ]
+      },
+      "policyRuleIds": [
+        "righting/role-dependency",
+        "righting/unresolved-local-import",
+        "righting/unclassified-source",
+        "righting/ambiguous-source",
+        "righting/test-dependency"
+      ],
+      "protectedDependencyRules": [
+        {
+          "package": "protected-resource",
+          "role": "Resource",
+          "allowedFrom": [
+            "ResourceAccess"
+          ],
+          "forbiddenFrom": [
+            "Client",
+            "Manager",
+            "Engine",
+            "Resource",
+            "Utility"
+          ],
+          "policyRuleId": "righting/role-dependency"
+        },
+        {
+          "package": "@example/protected-utility",
+          "role": "Utility",
+          "allowedFrom": [
+            "Manager",
+            "Engine",
+            "ResourceAccess",
+            "Resource",
+            "Utility"
+          ],
+          "forbiddenFrom": [
+            "Client"
+          ],
+          "policyRuleId": "righting/role-dependency"
+        }
+      ],
+      "capabilities": [
+        {
+          "id": "role-dependency",
+          "applies": true,
+          "coverage": "statically-enforceable",
+          "policyRuleIds": [
+            "righting/role-dependency",
+            "righting/unresolved-local-import",
+            "righting/unclassified-source",
+            "righting/ambiguous-source",
+            "righting/test-dependency"
+          ],
+          "establishes": [
+            "configured-role-dependency-boundaries",
+            "unresolved-local-import-is-forbidden"
+          ],
+          "doesNotEstablish": [
+            "files-outside-coverage",
+            "runtime-dependency-behavior"
+          ]
+        },
+        {
+          "id": "manager-interaction",
+          "applies": true,
+          "coverage": "partially-checkable",
+          "policyRuleIds": [
+            "righting/role-dependency"
+          ],
+          "establishes": [
+            "direct-manager-import-is-forbidden"
+          ],
+          "doesNotEstablish": [
+            "queued-interaction-semantics"
+          ]
+        },
+        {
+          "id": "protected-dependency",
+          "applies": true,
+          "coverage": "statically-enforceable",
+          "policyRuleIds": [
+            "righting/role-dependency"
+          ],
+          "establishes": [
+            "configured-resource-and-utility-package-classification"
+          ],
+          "doesNotEstablish": [
+            "external-service-runtime-behavior",
+            "utility-package-access-restriction"
+          ]
+        },
+        {
+          "id": "design-judgment",
+          "applies": true,
+          "coverage": "guidance-only",
+          "policyRuleIds": [],
+          "establishes": [],
+          "doesNotEstablish": [
+            "role-responsibility",
+            "real-volatility",
+            "contract-quality",
+            "runtime-behavior",
+            "use-case-validity"
+          ]
+        }
+      ],
+      "evidenceLimits": [
+        "files-outside-coverage",
+        "matched-files-are-inspection-evidence",
+        "runtime-behavior",
+        "maintainer-approval",
+        "adapter-activation"
+      ]
+    }
+  },
+  "evidence": {
+    "sourceSummary": {
+      "covered": 4,
+      "roles": {
+        "Client": 1,
+        "Manager": 1,
+        "Engine": 0,
+        "ResourceAccess": 1,
+        "Resource": 1,
+        "Utility": 0
+      },
+      "tests": 0,
+      "compositionRoots": 0,
+      "unclassified": 0,
+      "ambiguous": 0
+    },
+    "sourceViolations": []
+  }
+}

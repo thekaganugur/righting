@@ -1,0 +1,25 @@
+{
+  "preset": "volatility@1",
+  "coverage": ["src/**/*.js"],
+  "aliases": [
+    { "name": "client", "role": "Client", "directorySegments": ["client"] },
+    { "name": "manager", "role": "Manager", "directorySegments": ["manager"] },
+    { "name": "engine", "role": "Engine", "directorySegments": ["engine"] },
+    { "name": "resourceAccess", "role": "ResourceAccess", "directorySegments": ["resource-access"] },
+    { "name": "resource", "role": "Resource", "directorySegments": ["resource"] },
+    { "name": "utility", "role": "Utility", "directorySegments": ["utility"] }
+  ],
+  "overrides": [
+    {
+      "name": "client-cannot-use-utility",
+      "from": "Client",
+      "to": "Utility",
+      "effect": "disallow",
+      "reason": "Proves protected Utility classification."
+    }
+  ],
+  "protectedDependencies": [
+    { "package": "protected-resource", "role": "Resource" },
+    { "package": "@example/protected-utility", "role": "Utility" }
+  ]
+}
