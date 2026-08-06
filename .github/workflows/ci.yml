@@ -18,7 +18,13 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+
+      - name: Add test swap
+        run: |
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
       - run: npm test
-        env:
-          RAYON_NUM_THREADS: 1
       - run: git diff --exit-code -- docs/capabilities.md

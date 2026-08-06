@@ -29,9 +29,15 @@ jobs:
           package-manager-cache: false
 
       - run: npm ci
-      - run: npm test
-        env:
-          RAYON_NUM_THREADS: 1
+
+      - name: Add test swap
+        run: |
+          sudo fallocate -l 4G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
+      - run: npm run build && node --test --test-concurrency=1 dist/test/*.test.js
 
       - name: Verify tag matches package version
         env:
