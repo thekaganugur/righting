@@ -21,10 +21,10 @@ jobs:
 
       - name: Add test swap
         run: |
-          sudo fallocate -l 4G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
+          sudo fallocate -l 4G "$RUNNER_TEMP/test.swap"
+          sudo chmod 600 "$RUNNER_TEMP/test.swap"
+          sudo mkswap "$RUNNER_TEMP/test.swap"
+          sudo swapon "$RUNNER_TEMP/test.swap"
 
       - run: npm test
       - run: git diff --exit-code -- docs/capabilities.md
