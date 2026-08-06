@@ -29,7 +29,9 @@ jobs:
           package-manager-cache: false
 
       - run: npm ci
-      - run: npm run build && node --test --test-concurrency=1 dist/test/*.test.js
+      - run: npm test
+        env:
+          RAYON_NUM_THREADS: 1
 
       - name: Verify tag matches package version
         env:
