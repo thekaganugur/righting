@@ -3,6 +3,12 @@ name: Publish
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to publish
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -13,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
 
       - uses: actions/setup-node@v6
         with:
@@ -24,6 +32,22 @@ jobs:
       - run: npm test
 
       - name: Verify tag matches package version
-        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: test "v$(node -p "require('./package.json').version")" = "$RELEASE_TAG"
 
-      - run: npm publish --tag alpha --provenance
+      - name: Publish if version is absent
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          package="$name@$version"
+
+          npm view "$name" name >/dev/null
+          if output=$(npm view "$package" version --json 2>&1); then
+            echo "$package is already published"
+          elif grep -Eq '"code"[[:space:]]*:[[:space:]]*"E404"' <<<"$output"; then
+            npm publish --tag alpha --provenance || npm view "$package" version >/dev/null
+          else
+            printf '%s\n' "$output" >&2
+            exit 1
+          fi

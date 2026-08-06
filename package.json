@@ -28,7 +28,7 @@
     "build": "tsc --project tsconfig.json && node scripts/render-capabilities.mjs",
     "dev": "tsc --project tsconfig.json --watch",
     "prepack": "npm run build",
-    "release:alpha": "npm version prerelease --preid=alpha && git push --follow-tags",
+    "release:alpha": "npm version prerelease --preid=alpha && npm test && npm publish --tag alpha && git push --follow-tags",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "test": "npm run build && node --test dist/test/*.test.js"
   },
