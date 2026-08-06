@@ -34,6 +34,8 @@ Design one conceptual Interface, which may expose several cohesive facets or ent
 
 Show the hidden Implementation and its internal Client, Manager, Engine, ResourceAccess, Resource, and Utility responsibilities. Apply the closed-architecture and contract-factoring constraints from `LANGUAGE.md`; a larger subsystem may compose role-bearing Modules but is not a seventh role.
 
+Name the target module root and map each current or new file to its destination and Righting role, applying the Architecture Module placement rule from the vocabulary layer.
+
 Prepare a draft dedicated Architecture Module document containing:
 
 - the volatility evidence and change ownership;
@@ -42,7 +44,7 @@ Prepare a draft dedicated Architecture Module document containing:
 - hidden Implementation and internal Righting roles;
 - dependencies and composition;
 - relevant core-use-case call chains; and
-- the smallest behavior-preserving migration slice.
+- the smallest behavior-preserving migration slice, naming the target module root and every moved or new file with its Righting role.
 
 This stage is complete when the draft covers every item and names every unresolved assumption.
 

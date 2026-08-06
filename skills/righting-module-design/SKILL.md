@@ -19,7 +19,7 @@ Use these terms exactly — don't substitute "component," "service," "API," or "
 
 **Module** — anything with an Interface and an Implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit, component, service.
 
-**Architecture Module** — a Module whose boundary encapsulates evidenced volatility and change ownership. It may contain smaller internal Modules and several Righting-role implementations. Routes, features, domain entities, and directories are evidence, not boundary rules.
+**Architecture Module** — a Module whose boundary encapsulates evidenced volatility and change ownership. Once accepted, it is realized under one project-conventional module root: the folder or package containing its Implementation. A file belongs under that root when its responsibility or knowledge changes with the Module's volatility; it remains in a shared location only when its responsibility is independent of that volatility. Volatility justifies the boundary; the module root makes it navigable and enforceable. Routes, features, domain entities, and directories are evidence, not boundary rules.
 
 **Interface** — everything a caller must know to use the Module correctly: the type signature, but also invariants, ordering constraints, error modes, required configuration, and performance characteristics. One conceptual Interface may expose several cohesive facets or entry points. _Avoid_: API, signature (too narrow — they refer only to the type-level surface).
 

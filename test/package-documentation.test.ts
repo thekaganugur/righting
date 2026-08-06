@@ -150,6 +150,8 @@ test("module skills expose one review, one workflow, and one vocabulary layer", 
   assert.match(workflow, /facts[\s\S]*repository[\s\S]*decisions[\s\S]*maintainer/i);
   assert.match(workflow, /one question[\s\S]*recommended answer/i);
   assert.match(workflow, /draft dedicated Architecture Module document/i);
+  assert.match(workflow, /target module root[\s\S]*each current or new file[\s\S]*Righting role/i);
+  assert.match(workflow, /migration slice[^\n]*target module root[^\n]*every moved or new file[^\n]*Righting role/i);
   assert.match(workflow, /code-level facade[\s\S]*real caller/i);
   assert.match(workflow, /validate[\s\S]*maintainer accepts[\s\S]*docs\/architecture/i);
   assert.match(workflow, /Stop before[\s\S]*application code/i);
@@ -157,6 +159,9 @@ test("module skills expose one review, one workflow, and one vocabulary layer", 
   assert.match(vocabulary.match(/^description: ([^\n]+)/m)?.[1] ?? "", /vocabulary layer/i);
   assert.match(vocabulary, /scale-agnostic/i);
   assert.match(vocabulary, /Architecture Module[\s\S]*volatility and change ownership/i);
+  assert.match(vocabulary, /accepted[\s\S]*one project-conventional module root[\s\S]*folder or package/i);
+  assert.match(vocabulary, /responsibility or knowledge[\s\S]*volatility[\s\S]*shared location[\s\S]*independent/i);
+  assert.match(vocabulary, /volatility justifies[\s\S]*module root[\s\S]*navigable and enforceable/i);
   assert.match(vocabulary, /one conceptual Interface[\s\S]*facets/i);
   assert.match(vocabulary, /does not own[\s\S]*discovery[\s\S]*acceptance[\s\S]*migration/i);
 
