@@ -1,6 +1,6 @@
 # Language
 
-Shared vocabulary for every suggestion this skill makes, taken from Juval Löwy, *Righting Software*. Use these terms exactly — don't substitute "feature module," "service layer," "repository," or "helper." Consistent language is the whole point.
+Shared discovery vocabulary taken from Juval Löwy, *Righting Software*. Use these terms exactly during volatility review. After candidate selection, follow the Component/Contract translation in [`righting-module-design`](../righting-module-design/SKILL.md) and use its Module/Interface vocabulary.
 
 ## Decomposition terms
 
@@ -41,7 +41,7 @@ _Avoid_: "circular dependency," "layering issue" — say which call breaks close
 
 **Layer** — a horizontal band of same-role components. _Avoid_: tier (deployment concern, not design).
 
-**Contract** — the public face of a component, designed before internals. **Facet**: one of possibly several independent contracts a component exposes. Factoring signals, not quotas: 3–5 members per contract; 1–2 facets per component, each logically consistent and independent; behavioral atomic business verbs, never property-like or CRUD; stable under the volatility — the encapsulated change alters the implementation, never the contract. Never add members or facets merely to hit a range. 12+ members → factor down (a specialized derived contract) or sideways (split unrelated siblings); a single-member contract suggests over-factoring unless it's a deliberate facet.
+**Contract** — the method's name for the public face of a component, designed before internals. **Facet**: one of possibly several independent contracts a component exposes. After selection, the vocabulary bridge translates each Contract to an Interface facet. Factoring signals, not quotas: 3–5 members per contract; 1–2 facets per component, each logically consistent and independent; behavioral atomic business verbs, never property-like or CRUD; stable under the volatility — the encapsulated change alters the implementation, never the contract. Never add members or facets merely to hit a range. 12+ members → factor down (a specialized derived contract) or sideways (split unrelated siblings); a single-member contract suggests over-factoring unless it's a deliberate facet.
 
 ## Composition terms
 

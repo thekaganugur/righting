@@ -1,6 +1,6 @@
 # HTML Report Format
 
-The volatility review is rendered as a single self-contained HTML file in the OS temp directory. Tailwind and Mermaid both come from CDNs. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (module placement, role layers, volatility heat). Mix the two — don't lean on Mermaid for everything, it'll start to look generic.
+The volatility review is rendered as one HTML file in the OS temp directory and requires network access for the Tailwind and Mermaid CDN assets. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (module placement, role layers, volatility heat). Mix the two — don't lean on Mermaid for everything, it'll start to look generic.
 
 ## Scaffold
 
@@ -47,14 +47,16 @@ When no Architecture Module is accepted, the overview consists of dashed candida
 
 The diagrams carry the weight. Prose is sparse, plain, and uses the glossary terms ([LANGUAGE.md](LANGUAGE.md)) without ceremony.
 
-Render the candidate fields (SKILL.md §2) as one `<article>`. Rendering specifics:
+Render each candidate as one `<article>` with these fields:
 
 - **Title** — short, names the containment (e.g. "Contain pricing volatility in a Pricing Engine").
-- **Badge row** — tier (`Observed` = emerald, `Projected` = amber, `Speculative` = slate) plus a smell-category tag (`functional decomposition`, `client orchestration`, `leaky ResourceAccess`, `open call`, `missing Engine`, `Manager too expensive`, `pass-through Manager`). Beside the tier badge, an **evidence chip** in plain words: "changed together in N commits", "same rule in N files", "tenant variation already here", or "no history — speculative".
-- **Files** — `font-mono text-sm`.
+- **Badge row** — tier (`Observed` = emerald, `Projected` = amber, `Speculative` = slate) plus a smell-category tag (`functional decomposition`, `client orchestration`, `leaky ResourceAccess`, `open call`, `missing Engine`, `Manager too expensive`, `pass-through Manager`).
+- **Files** — real paths in `font-mono text-sm`.
+- **Current shape** — the role confusion or decomposition smell, in one sentence.
+- **Evidence** — a plain-language chip such as "changed together in N commits", "same rule in N files", "tenant variation already here", or "no history — speculative".
 - **Before / After diagram** — the centrepiece. Two columns, side by side. Label the after state **Candidate hypothesis** because Interface design happens only after selection. See patterns below.
-- **Volatility / Correction** — one sentence each.
-- **Wins** — bullets, ≤6 words each ("Policy change touches one Engine", "Clients stop orchestrating", "Callers stop seeing CRUD").
+- **Volatility / Correction** — one sentence each, with volatility stated through its axis.
+- **Benefit** — bullets of ≤6 words each ("Policy change touches one Engine", "Clients stop orchestrating", "Callers stop seeing CRUD").
 - **ADR callout** (if applicable) — one line in an amber-tinted box.
 
 No paragraphs of explanation. If the diagram needs a paragraph to be understood, redraw the diagram.
@@ -122,6 +124,6 @@ Plain English, concise — but the architectural nouns and verbs come straight f
 - "Open call: Engine imports a Client concern."
 - "Contained: tax-rule changes touch one Engine."
 
-**Wins bullets** name the gain in glossary terms: *"containment: payment change touches one component"*, *"composition: new use case is a Manager rewire"*, *"callers stop seeing storage shape"*. Don't write *"easier to maintain"* or *"cleaner code"* — those terms aren't in the glossary and don't earn their place.
+**Benefit bullets** name the gain in glossary terms: *"containment: payment change touches one component"*, *"composition: new use case is a Manager rewire"*, *"callers stop seeing storage shape"*. Don't write *"easier to maintain"* or *"cleaner code"* — those terms aren't in the glossary and don't earn their place.
 
 No hedging, no throat-clearing, no "it's worth noting that…". If a sentence could be a bullet, make it a bullet. If a bullet could be cut, cut it. If a term isn't in [LANGUAGE.md](LANGUAGE.md), reach for one that is before inventing a new one.

@@ -1,12 +1,16 @@
 ---
 name: righting-adapter-authoring
-description: Author, assess, or extend a Righting guardrail adapter from the normalized JSON contract and prove its claims through adapter-neutral conformance. Use when a maintainer wants a guardrail integration, an approval-ready adapter change, or expanded support.
+description: Author, assess, or extend a Righting guardrail adapter implementation from the normalized JSON contract and prove its claims through adapter-neutral conformance. Use for a new adapter implementation, an approval-ready adapter change, or support for another host or version tuple.
 compatibility: Requires the local righting CLI and an established native guardrail command.
 ---
 
 # Conformance-led adapter authoring
 
 Build a thin guardrail adapter around the normalized contract. Read the conformance contract shipped by the same package at `node_modules/righting/docs/adapter-conformance.md`; it is the support gate. Here **native** means the host's public command, configuration, diagnostics, and suppression—not the adapter's implementation language.
+
+## Approval branch
+
+For a proposal, approval packet, or read-only assessment, read [`APPROVAL.md`](APPROVAL.md) completely before gathering evidence. Apply its non-mutating evidence rules and approval gate through stages 1–3. Continue to implementation only after the gate records explicit approval.
 
 ## 1. Capture the trust boundary
 
@@ -46,10 +50,6 @@ Use the host's resolver configuration for every dependency-path mapping the proj
 Define the adapter lifecycle: project-root selection, contract and resolver snapshot lifetime, reload behavior in editor, watch, or other long-lived processes, and multi-root behavior. Support each case or fail once with an actionable configuration diagnostic.
 
 **Completion:** the implementation plan names the candidates evaluated at each seam and their black-box disposition, the normalized resolution outcomes, each thin-layer responsibility, direct runtime requirements, root and state lifetime, pinned versions, and every unresolved compatibility risk. Every proposed owned behavior maps to a reproduced defect, an applicable conformance mismatch in current code, or an explicitly requested support claim.
-
-### Approval branch
-
-When the maintainer asks for a proposal, approval packet, or read-only assessment, read [`APPROVAL.md`](APPROVAL.md) completely and follow its evidence and approval gate. Continue to implementation only after that gate records explicit approval.
 
 ## 4. Implement through the native entry point
 

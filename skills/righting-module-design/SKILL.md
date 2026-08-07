@@ -15,9 +15,13 @@ Read the root `CONTEXT-MAP.md` when present and then each applicable `CONTEXT.md
 
 ## Glossary
 
-Use these terms exactly — don't substitute "component," "service," "API," or "boundary." Consistent language is the whole point.
+Use these terms exactly. The discovery vocabulary from *Righting Software* has two scoped translations:
 
-**Module** — anything with an Interface and an Implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit, component, service.
+**Component** _(method term)_ — a volatility-bearing unit during discovery. When the workflow accepts that unit as durable architecture ownership, model it as an Architecture Module.
+
+**Contract** _(method term)_ — one public face of a Component. During Module design, translate each Contract to a cohesive facet of the Module's one conceptual Interface.
+
+**Module** — anything with an Interface and an Implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit, service. Use Component only for the discovery term above.
 
 **Architecture Module** — a Module whose boundary encapsulates evidenced volatility and change ownership. Selection makes module-first organization the target. An accepted Architecture Module is realized under one project-conventional module root: the folder or package containing its Implementation. Volatility justifies the boundary; the module root makes it navigable. Routes, features, domain entities, and directories are evidence, not boundary rules.
 
@@ -85,39 +89,10 @@ When designing an interface, ask:
 
 ## Principles
 
-- **Depth is a property of the interface, not the implementation.** A deep module can be internally composed of small, mockable, swappable parts — they just aren't part of the interface. A module can have **internal seams** (private to its implementation, used by its own tests) as well as the **external seam** at its interface.
-- **The deletion test.** Imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep.
-- **The interface is the test surface.** Callers and tests cross the same seam. If you want to test *past* the interface, the module is probably the wrong shape.
-
-## Designing for testability
-
-Good interfaces make testing natural:
-
-1. **Accept dependencies, don't create them.**
-
-   ```typescript
-   // Testable
-   function processOrder(order, paymentGateway) {}
-
-   // Hard to test
-   function processOrder(order) {
-     const gateway = new StripeGateway();
-   }
-   ```
-
-2. **Return results, don't produce side effects.**
-
-   ```typescript
-   // Testable
-   function calculateDiscount(cart): Discount {}
-
-   // Hard to test
-   function applyDiscount(cart): void {
-     cart.total -= discount;
-   }
-   ```
-
-3. **Small surface area.** Fewer methods = fewer tests needed. Fewer params = simpler test setup.
+- **Depth is a property of the Interface, not the Implementation.** A deep Module can be internally composed of small, mockable, swappable parts that stay outside the Interface. It may have private internal Seams as well as the external Seam at its Interface.
+- **The deletion test.** Imagine deleting the Module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep.
+- **The Interface is the acceptance surface.** Callers and behavior-level tests cross the external Seam. Focused Implementation tests may use private internal Seams when they add unique diagnostic coverage; they do not widen the Interface.
+- **Effects and dependencies stay hidden.** Expose effectful business behavior through the Interface with observable outcomes. Configure dependencies at a composition root or internal Seam rather than making callers supply them for testability.
 
 ## Relationships
 
@@ -136,4 +111,4 @@ Good interfaces make testing natural:
 ## Going deeper
 
 - **Deepening a cluster given its dependencies** — see [DEEPENING.md](DEEPENING.md): dependency categories, seam discipline, and replace-don't-layer testing.
-- **Exploring alternative interfaces** — see [DESIGN-IT-TWICE.md](DESIGN-IT-TWICE.md): produce independent designs in parallel when delegation is available, or sequentially otherwise, then compare on depth, locality, and seam placement.
+- **Exploring alternative Interfaces** — see [DESIGN-IT-TWICE.md](DESIGN-IT-TWICE.md): use fresh-context independent designs when delegation is available, or a constrained sequential comparison otherwise, then compare on Depth, Locality, and Seam placement.

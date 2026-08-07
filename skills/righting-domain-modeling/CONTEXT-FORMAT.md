@@ -51,10 +51,8 @@ _Avoid_: Client, buyer, account
 - **Ordering ↔ Billing**: Shared types for `CustomerId` and `Money`
 ```
 
-The skill infers which structure applies:
+File placement follows the existing structure:
 
-- If `CONTEXT-MAP.md` exists, read it to find contexts
-- If only a root `CONTEXT.md` exists, single context
-- If neither exists, create a root `CONTEXT.md` lazily when the first term is resolved
-
-When multiple contexts exist, infer which one the current topic relates to. If unclear, ask.
+- With `CONTEXT-MAP.md`, update the applicable context file linked by the map.
+- With only a root `CONTEXT.md`, update that single context.
+- With neither file, create a root `CONTEXT.md` lazily when the first term is resolved.

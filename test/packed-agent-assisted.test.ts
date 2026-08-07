@@ -61,6 +61,10 @@ test("a packed Righting artifact proves the agent-assisted JSON journey", () => 
 
     const integrationSkill = readFileSync(resolve(projectDirectory, ".agents/skills/righting-integrate/SKILL.md"), "utf8");
     assert.match(integrationSkill, /dependency ledger[\s\S]*observed inconsistencies/i);
+    for (const reference of ["policy-language.md", "oxlint.md"]) {
+      assert.match(integrationSkill, new RegExp(`node_modules/righting/docs/${reference.replace(".", "\\.")}`));
+      assert.ok(existsSync(resolve(projectDirectory, `node_modules/righting/docs/${reference}`)));
+    }
     assert.match(integrationSkill, /list the available guardrail adapters[\s\S]*recommend[\s\S]*maintainer explicitly chooses/i);
     assert.match(integrationSkill, /chooses ESLint[\s\S]*read `ESLINT\.md` completely/i);
     assert.ok(existsSync(resolve(projectDirectory, ".agents/skills/righting-integrate/ESLINT.md")));

@@ -145,7 +145,10 @@ test("module skills expose one review, one workflow, and one vocabulary layer", 
   assert.match(workflow, /\.\.\/righting-volatility-review\/SKILL\.md/);
   assert.match(workflow, /\.\.\/righting-module-design\/SKILL\.md/);
   assert.match(workflow, /review-only[\s\S]*righting-volatility-review[\s\S]*stop/i);
-  assert.match(workflow, /existing selected[\s\S]*volatility-candidate\/v1[\s\S]*do not rerun/i);
+  assert.match(
+    workflow,
+    /existing selected[\s\S]*volatility-candidate\/v1[\s\S]*current packet[\s\S]*without rerunning[\s\S]*stale[\s\S]*refresh[\s\S]*full discovery only/i,
+  );
   assert.match(workflow, /grilling gate/i);
   assert.match(workflow, /facts[\s\S]*repository[\s\S]*decisions[\s\S]*maintainer/i);
   assert.match(workflow, /one question[\s\S]*recommended answer/i);
@@ -192,12 +195,11 @@ test("module workflows make module roots primary and label incremental placement
   const stage3 = workflow.match(/## 3\.[\s\S]*?(?=\n## 4\.)/)?.[0] ?? "";
 
   assert.match(review, /accepted Architecture Module documents[\s\S]*current module roots[\s\S]*global role folders/i);
-  assert.match(review, /group[\s\S]*Architecture Module[\s\S]*Righting roles inside/i);
+  assert.match(review, /HTML-REPORT\.md[\s\S]*owns the report structure/i);
   assert.match(report, /Architecture Module group[\s\S]*role-coloured file/i);
-  assert.match(review, /accepted Architecture Modules as solid root groups[\s\S]*dashed hypothesis group alongside/i);
   assert.match(report, /accepted Architecture Modules[\s\S]*solid outlines[\s\S]*every[\s\S]*candidate[\s\S]*dashed hypothesis group/i);
   assert.doesNotMatch(report, /taxonomy bands stacked vertically/i);
-  for (const source of [vocabulary, review, report, checklist, policyLanguage]) {
+  for (const source of [vocabulary, report, checklist, policyLanguage]) {
     assert.match(source, /module-neutral source, composition roots, and host-required entrypoints/i);
     assert.doesNotMatch(source, /module-neutral and host-owned source|host tool requires its location/i);
   }

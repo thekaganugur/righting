@@ -6,15 +6,13 @@ compatibility: Requires the sibling righting-volatility-review, righting-module-
 
 # Volatility-driven deep Modules
 
-This workflow routes one Architecture Module through specialist skills rather than duplicating them. Use the vocabulary defined by [`righting-module-design`](../righting-module-design/SKILL.md) throughout.
+This workflow routes one Architecture Module through specialist skills rather than duplicating them. After candidate selection, use the vocabulary bridge defined by [`righting-module-design`](../righting-module-design/SKILL.md).
 
 ## 1. Route discovery
 
-Read [`righting-volatility-review`](../righting-volatility-review/SKILL.md) and its [`LANGUAGE.md`](../righting-volatility-review/LANGUAGE.md).
-
-- For a review-only request, run `righting-volatility-review` and stop before Interface design.
-- For an existing selected `volatility-candidate/v1` packet, verify that its evidence is current and do not rerun discovery.
-- Otherwise run `righting-volatility-review` through candidate selection and consume its selected packet.
+- For a review-only request, read [`righting-volatility-review`](../righting-volatility-review/SKILL.md) and its [`LANGUAGE.md`](../righting-volatility-review/LANGUAGE.md), run that review, and stop before Interface design.
+- For an existing selected `volatility-candidate/v1` packet, read [`LANGUAGE.md`](../righting-volatility-review/LANGUAGE.md), then verify its evidence directly against the repository. Consume a current packet without rerunning discovery. When evidence is stale, read [`righting-volatility-review`](../righting-volatility-review/SKILL.md) and refresh the affected discovery evidence; rerun full discovery only when a bounded refresh cannot restore a current packet.
+- Otherwise read [`righting-volatility-review`](../righting-volatility-review/SKILL.md) and its [`LANGUAGE.md`](../righting-volatility-review/LANGUAGE.md), run discovery through candidate selection, and consume its selected packet.
 
 A Speculative candidate cannot proceed. Also inventory existing accepted Architecture Module documents that intersect the candidate, its callers, tests, or dependencies. Record their current module roots and any Implementation still scattered through global role folders; existing accepted ownership is authoritative unless the maintainer reopens it.
 
@@ -41,7 +39,7 @@ Read [`DEEPENING.md`](../righting-module-design/DEEPENING.md). Use [`DESIGN-IT-T
 
 Design one conceptual Interface, which may expose several cohesive facets or entry points. Describe everything callers must know: business verbs, invariants, ordering, errors, configuration, and relevant performance semantics. A code-level facade requires a real caller; dependency ports follow `DEEPENING.md`.
 
-Show the hidden Implementation and its internal Client, Manager, Engine, ResourceAccess, Resource, and Utility responsibilities. Apply the closed-architecture and contract-factoring constraints from `LANGUAGE.md`; a larger subsystem may compose role-bearing Modules but is not a seventh role.
+Show the hidden Implementation and map each internal responsibility to its applicable Client, Manager, Engine, ResourceAccess, Resource, or Utility role. Apply the closed-architecture constraints from `LANGUAGE.md`, translating its Contract-factoring guidance into cohesive Interface facets through the vocabulary bridge. A larger subsystem may compose role-bearing Modules but is not a seventh role.
 
 Lay out the target **module root first**, with canonical role suffixes identifying responsibilities inside it. Do not default the target to global `clients/`, `managers/`, `engines/`, `access/`, or `resources/` folders. Files owned by another accepted Module target that Module's root rather than being absorbed into the selected one.
 
