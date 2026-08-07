@@ -67,6 +67,12 @@ When the review is delivered as inline findings rather than the HTML report, lea
 
 Close with a top recommendation, then ask: *Which candidate, if any, should be handed to `righting-deep-modules`?*
 
+## Physical placement
+
+Treat paths as evidence, never as proof of volatility. When an accepted Architecture Module document already assigns ownership, show its target as one module root with Righting-role files inside. Scattering one accepted Module across global role folders is navigation and locality friction worth reporting; a proposed correction should not recreate that layout.
+
+Files outside a module root need a concrete reason: module-neutral source, composition roots, and host-required entrypoints are the only categories. A host-required entrypoint remains thin and calls the Module through its Interface. Mere reuse by several Modules does not establish module neutrality.
+
 ## Frontend translation
 
 Roles are architectural, not deployment units — never propose distributed services for an in-process codebase. In frontend code the roles usually map as:

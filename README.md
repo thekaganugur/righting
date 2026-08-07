@@ -52,7 +52,7 @@ This validates and explains the declared adapter-neutral contract. `inspect --js
 - [Oxlint adapter](docs/oxlint.md) — the centrally supported, exact-version native integration.
 - [`righting-adapter-authoring`](skills/righting-adapter-authoring/SKILL.md) — the generic, conformance-led authoring path for compatible agents.
 - [`righting-volatility-review`](skills/righting-volatility-review/SKILL.md) — review-only discovery and ranking of volatility-backed candidates, stopping before Interface design.
-- [`righting-deep-modules`](skills/righting-deep-modules/SKILL.md) — the end-to-end workflow from candidate discovery through an accepted Architecture Module design.
+- [`righting-deep-modules`](skills/righting-deep-modules/SKILL.md) — the end-to-end workflow from candidate discovery through an accepted, module-root-first Architecture Module design and an honestly complete or partial migration slice.
 - [`righting-module-design`](skills/righting-module-design/SKILL.md) — the Module, Interface, Depth, and Seam vocabulary layer beneath that workflow.
 - [Legacy ESLint debt](docs/legacy-debt.md) — approved native suppression, growth detection, and pruning.
 - [Orders/Returns dogfood record](docs/dogfood.md) — a worked record, not onboarding guidance.

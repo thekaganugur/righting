@@ -150,7 +150,8 @@ test("module skills expose one review, one workflow, and one vocabulary layer", 
   assert.match(workflow, /facts[\s\S]*repository[\s\S]*decisions[\s\S]*maintainer/i);
   assert.match(workflow, /one question[\s\S]*recommended answer/i);
   assert.match(workflow, /draft dedicated Architecture Module document/i);
-  assert.match(workflow, /target module root[\s\S]*each current or new file[\s\S]*Righting role/i);
+  assert.match(workflow, /living placement inventory[\s\S]*target path[\s\S]*Righting role or explicit treatment/i);
+  assert.match(workflow, /Finalize[\s\S]*complete placement inventory/i);
   assert.match(workflow, /migration slice[^\n]*target module root[^\n]*every moved or new file[^\n]*Righting role/i);
   assert.match(workflow, /code-level facade[\s\S]*real caller/i);
   assert.match(workflow, /validate[\s\S]*maintainer accepts[\s\S]*docs\/architecture/i);
@@ -161,7 +162,7 @@ test("module skills expose one review, one workflow, and one vocabulary layer", 
   assert.match(vocabulary, /Architecture Module[\s\S]*volatility and change ownership/i);
   assert.match(vocabulary, /accepted[\s\S]*one project-conventional module root[\s\S]*folder or package/i);
   assert.match(vocabulary, /responsibility or knowledge[\s\S]*volatility[\s\S]*shared location[\s\S]*independent/i);
-  assert.match(vocabulary, /volatility justifies[\s\S]*module root[\s\S]*navigable and enforceable/i);
+  assert.match(vocabulary, /volatility justifies[\s\S]*module root[\s\S]*navigable/i);
   assert.match(vocabulary, /one conceptual Interface[\s\S]*facets/i);
   assert.match(vocabulary, /does not own[\s\S]*discovery[\s\S]*acceptance[\s\S]*migration/i);
 
@@ -171,6 +172,51 @@ test("module skills expose one review, one workflow, and one vocabulary layer", 
   assert.match(readme, /righting-volatility-review[\s\S]*review-only/i);
   assert.match(readme, /righting-deep-modules[\s\S]*end-to-end workflow/i);
   assert.match(readme, /righting-module-design[\s\S]*vocabulary layer/i);
+});
+
+test("module workflows make module roots primary and label incremental placement honestly", () => {
+  const review = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/SKILL.md"), "utf8");
+  const workflow = readFileSync(resolve(repositoryDirectory, "skills/righting-deep-modules/SKILL.md"), "utf8");
+  const vocabulary = readFileSync(resolve(repositoryDirectory, "skills/righting-module-design/SKILL.md"), "utf8");
+  const report = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/HTML-REPORT.md"), "utf8");
+  const checklist = readFileSync(
+    resolve(repositoryDirectory, "skills/righting-volatility-review/method-checklist.md"),
+    "utf8",
+  );
+  const policyLanguage = readFileSync(resolve(repositoryDirectory, "docs/policy-language.md"), "utf8");
+  const decision = readFileSync(
+    resolve(repositoryDirectory, "docs/adr/0003-organize-architecture-modules-by-module-root.md"),
+    "utf8",
+  );
+  const stage2 = workflow.match(/## 2\.[\s\S]*?(?=\n## 3\.)/)?.[0] ?? "";
+  const stage3 = workflow.match(/## 3\.[\s\S]*?(?=\n## 4\.)/)?.[0] ?? "";
+
+  assert.match(review, /accepted Architecture Module documents[\s\S]*current module roots[\s\S]*global role folders/i);
+  assert.match(review, /group[\s\S]*Architecture Module[\s\S]*Righting roles inside/i);
+  assert.match(report, /Architecture Module group[\s\S]*role-coloured file/i);
+  assert.match(review, /accepted Architecture Modules as solid root groups[\s\S]*dashed hypothesis group alongside/i);
+  assert.match(report, /accepted Architecture Modules[\s\S]*solid outlines[\s\S]*every[\s\S]*candidate[\s\S]*dashed hypothesis group/i);
+  assert.doesNotMatch(report, /taxonomy bands stacked vertically/i);
+  for (const source of [vocabulary, review, report, checklist, policyLanguage]) {
+    assert.match(source, /module-neutral source, composition roots, and host-required entrypoints/i);
+    assert.doesNotMatch(source, /module-neutral and host-owned source|host tool requires its location/i);
+  }
+  assert.match(stage2, /living placement inventory/i);
+  assert.match(stage2, /owner[\s\S]*current path[\s\S]*target path[\s\S]*Righting role or explicit treatment/i);
+  assert.doesNotMatch(stage2, /complete placement inventory/i);
+  assert.match(stage3, /Finalize[\s\S]*complete placement inventory/i);
+  assert.match(workflow, /module root first[\s\S]*role suffix/i);
+  assert.match(workflow, /host[\s\S]*required location[\s\S]*thin[\s\S]*Interface/i);
+  assert.match(workflow, /partial[\s\S]*must not[\s\S]*(established|realized|colocat)/i);
+  assert.match(workflow, /no known[\s\S]*volatility[\s\S]*outside[\s\S]*root[\s\S]*exception/i);
+  assert.doesNotMatch(workflow, /TanStack/);
+  assert.match(vocabulary, /selection onward[\s\S]*module-first/i);
+  assert.match(vocabulary, /global role folders[\s\S]*not[\s\S]*target/i);
+  assert.match(vocabulary, /used by multiple Modules[\s\S]*not[\s\S]*module-neutral/i);
+  assert.match(policyLanguage, /classifiers[\s\S]*not[\s\S]*folder topology/i);
+  assert.match(policyLanguage, /does not declare or enforce[\s\S]*module ownership[\s\S]*Interface access/i);
+  assert.match(decision, /module root first[\s\S]*role suffix/i);
+  assert.match(decision, /host-required[\s\S]*module-neutral/i);
 });
 
 test("third-party notices retain the license for copied and adapted skills", () => {

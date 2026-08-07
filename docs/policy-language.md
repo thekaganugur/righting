@@ -39,6 +39,10 @@ This exact starter is the only valid incomplete policy and produces no normalize
 
 Suffix and directory conventions are additive and may be mixed. Multiple matches for one role are valid; matches for different roles produce `righting/ambiguous-source`. An edge absent from the table is forbidden by default.
 
+These conventions are role classifiers, not a prescribed folder topology. For an accepted Architecture Module, the packaged [`righting-deep-modules`](../skills/righting-deep-modules/SKILL.md) workflow targets a project-conventional module root first and canonical role suffixes inside it. Canonical role directory segments remain valid classification for existing layouts; they are not a recommendation to organize business source primarily into global role folders. Genuinely module-neutral source, composition roots, and host-required entrypoints may remain outside module roots when their responsibility or placement justifies it.
+
+Normalized contract version 2 does not declare or enforce Architecture Module ownership, root placement, or Interface access. Consequently, current inspection and guardrail adapters cannot establish colocation or prevent cross-Module Implementation reach-through; those claims remain design-workflow evidence until a future, explicitly versioned contract models them.
+
 ## Aliases
 
 Aliases add project vocabulary and exact filename or directory tokens to one canonical role. Canonical conventions remain active. An alias does not create a role, path-map individual files, or change dependency behavior.

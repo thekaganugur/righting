@@ -9,7 +9,7 @@ Surface architectural friction and propose **containment opportunities** — cor
 
 ## Vocabulary
 
-Use these terms exactly in every suggestion — don't drift into "service layer," "repository," "helper," or "feature module." Full definitions in [LANGUAGE.md](LANGUAGE.md); read it before writing up candidates.
+Use these terms exactly in every suggestion — don't drift into "service layer," "repository," "helper," or "feature module." Full definitions in [LANGUAGE.md](LANGUAGE.md); read it before writing up candidates. For Architecture Module placement, read the **Architecture Module** and **Physical realization** definitions in [`righting-module-design`](../righting-module-design/SKILL.md); use that vocabulary without crossing this review's stop before Interface design.
 
 The six **roles**: **Client** (presentation), **Manager** (workflow, the "what"), **Engine** (activity, the "how"), **ResourceAccess** (atomic business verbs — never CRUD), **Resource** (state), **Utility** (cross-cutting). Components encapsulate **volatility** — open-ended change found via its **axes** (what changes for one customer over time; what differs across customers at once) — never functionality. Calls step down one **layer** under **closed architecture**; anything else is an **open call**.
 
@@ -18,6 +18,7 @@ Guardrails:
 - Smallest correction that contains the volatility; preserve behavior and existing project style.
 - A seam is justified only when the volatility is real, likely within the system lifespan, or already causing ripple edits — never for imaginary change.
 - Large systems: group Managers/Engines/ResourceAccess into a handful of vertical **subsystems**, not one flat layer.
+- The target physical view groups by Architecture Module, with Righting roles inside. Never infer a Module from a folder, but do not default a correction to global role folders either.
 - Informed by the domain model: CONTEXT.md names the business verbs and volatile areas; ADRs record decisions not to re-litigate.
 
 ## Process
@@ -26,13 +27,16 @@ Guardrails:
 
 Before exploring, read the root `CONTEXT-MAP.md` when present and then each applicable `CONTEXT.md`; otherwise read the root `CONTEXT.md`. Read relevant ADRs for the area. If these files do not exist, proceed silently.
 
+Inventory accepted Architecture Module documents, current module roots, global role folders, and host-required source locations that intersect the area. Accepted documents establish existing ownership; paths without that evidence do not establish a Module.
+
 Then walk the codebase. If a sub-agent delegation tool is available (an `Agent`, `Task`, or `subagent` tool — whatever the harness registers), delegate the recon pass to a read-only exploration role (e.g. `Explore` or `scout`); fan out in parallel across areas if the tool supports it — recon output is high-volume and throwaway, and the main context must survive through candidate selection and handoff, so a delegated role carries that weight instead of the orchestrator. If no such tool is registered, explore inline via `read`, `bash`, and `grep`. Establish two anchors before hunting smells:
 
 - **Core use cases** — the few behaviors the system exists to support. Not every route or endpoint.
 - **Volatility list** — apply the axes of volatility. Separate volatility from variability, and from changes to the nature of the business. Watch for solutions masquerading as requirements. Tag each entry **Observed / Projected / Speculative** by evidence — tiers in [method-checklist.md](method-checklist.md).
 
-Then map files to roles and note where you experience friction:
+Then map files to roles and hypothesized volatility ownership, and note where you experience friction:
 
+- Where is an accepted Architecture Module scattered across global role folders instead of colocated under its root?
 - Where is the structure shaped by required functionality instead of volatility (functional decomposition)?
 - Where do Clients orchestrate — stitching Managers or calling Engines/ResourceAccess directly?
 - Where does ResourceAccess leak — callers knowing CRUD, transport, storage shape, or generated API names?
@@ -42,7 +46,7 @@ Then map files to roles and note where you experience friction:
 
 The full smell catalog per role, the closed-architecture red flags, and the frontend role translation live in [method-checklist.md](method-checklist.md). Apply roles as architectural roles, not deployment units; do not propose distributed services for an in-process codebase.
 
-Done when every core use case is named, every volatility is stated via an axis and tagged Observed / Projected / Speculative, and every file you touched maps to one role. Don't surface a single candidate before these anchors hold — the smells only mean something against them.
+Done when every core use case is named, every volatility is stated via an axis and tagged Observed / Projected / Speculative, every file you touched maps to one role, and accepted Module ownership or its absence is explicit. Don't surface a single candidate before these anchors hold — the smells only mean something against them.
 
 ### 2. Present candidates
 
@@ -52,7 +56,7 @@ Default to the **HTML report**: the before/after visuals are this skill's signat
 
 **HTML report.** Write a self-contained HTML file to the OS temp directory so nothing lands in the repo. Resolve the temp dir from `$TMPDIR`, falling back to `/tmp` (or `%TEMP%` on Windows), and write to `<tmpdir>/volatility-review-<timestamp>.html` so each run gets a fresh file. Open it for the user — `xdg-open <path>` on Linux, `open <path>` on macOS, `start <path>` on Windows — and tell them the absolute path.
 
-The report uses **Tailwind via CDN** and **Mermaid via CDN**. Open with a **static architecture overview**: the current codebase drawn as taxonomy layers, open calls in red. Each candidate gets a **before/after visualisation**. Be visual.
+The report uses **Tailwind via CDN** and **Mermaid via CDN**. Open with a **static architecture overview** that renders accepted Architecture Modules as solid root groups and every volatility-backed candidate as a dashed hypothesis group alongside them, with Righting roles inside each group, module-neutral source, composition roots, and host-required entrypoints outside, and open calls in red. When no Module is accepted yet, the overview consists of candidate hypothesis groups rather than groups derived from folders. Do not make global taxonomy layers the primary physical view. Each candidate gets a **before/after visualisation**. Be visual.
 
 For each candidate, render a card:
 

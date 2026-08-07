@@ -19,7 +19,7 @@ Use these terms exactly — don't substitute "component," "service," "API," or "
 
 **Module** — anything with an Interface and an Implementation. Deliberately scale-agnostic: a function, class, package, or tier-spanning slice. _Avoid_: unit, component, service.
 
-**Architecture Module** — a Module whose boundary encapsulates evidenced volatility and change ownership. Once accepted, it is realized under one project-conventional module root: the folder or package containing its Implementation. A file belongs under that root when its responsibility or knowledge changes with the Module's volatility; it remains in a shared location only when its responsibility is independent of that volatility. Volatility justifies the boundary; the module root makes it navigable and enforceable. Routes, features, domain entities, and directories are evidence, not boundary rules.
+**Architecture Module** — a Module whose boundary encapsulates evidenced volatility and change ownership. Selection makes module-first organization the target. An accepted Architecture Module is realized under one project-conventional module root: the folder or package containing its Implementation. Volatility justifies the boundary; the module root makes it navigable. Routes, features, domain entities, and directories are evidence, not boundary rules.
 
 **Interface** — everything a caller must know to use the Module correctly: the type signature, but also invariants, ordering constraints, error modes, required configuration, and performance characteristics. One conceptual Interface may expose several cohesive facets or entry points. _Avoid_: API, signature (too narrow — they refer only to the type-level surface).
 
@@ -34,6 +34,24 @@ Use these terms exactly — don't substitute "component," "service," "API," or "
 **Leverage** — what callers get from depth: more capability per unit of interface they learn. One implementation pays back across N call sites and M tests.
 
 **Locality** — what maintainers get from depth: change, bugs, knowledge, and verification concentrate in one place rather than spreading across callers. Fix once, fixed everywhere.
+
+## Physical realization
+
+Volatility determines the Architecture Module; the folder never determines the volatility. From selection onward, the target is **module-first**:
+
+```text
+<project-conventional module root>/
+├── capture.manager.ts
+├── pricing.engine.ts
+├── orders.access.ts
+└── capture.manager.test.ts
+```
+
+Group by module root first and retain Righting roles with canonical filename suffixes inside it. Do not require a literal `src/modules/` parent: a project may use a top-level folder, package, or another consistent root convention.
+
+A current or planned file belongs under the root when its responsibility or knowledge changes with the Module's volatility. This includes internal Adapters and Interface-level tests. The only outside-root categories are module-neutral source, composition roots, and host-required entrypoints. A shared location is reserved for responsibility independent of the volatility. A host-required entrypoint stays thin and reaches the Module through its Interface. Being used by multiple Modules is not enough to make code module-neutral; it may instead belong to one Module and serve the others through that Interface.
+
+Global role folders such as `managers/`, `engines/`, or `access/` may describe a legacy layout, but they are not the target organization for an accepted Architecture Module. Incremental migration is allowed, but the Module is only partially realized while known volatility-coupled Implementation remains outside its root without one of the explicit reasons above.
 
 ## Deep vs shallow
 

@@ -1,6 +1,6 @@
 # HTML Report Format
 
-The volatility review is rendered as a single self-contained HTML file in the OS temp directory. Tailwind and Mermaid both come from CDNs. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (taxonomy layers, volatility heat). Mix the two — don't lean on Mermaid for everything, it'll start to look generic.
+The volatility review is rendered as a single self-contained HTML file in the OS temp directory. Tailwind and Mermaid both come from CDNs. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (module placement, role layers, volatility heat). Mix the two — don't lean on Mermaid for everything, it'll start to look generic.
 
 ## Scaffold
 
@@ -35,11 +35,13 @@ The volatility review is rendered as a single self-contained HTML file in the OS
 
 ## Header
 
-Repo name, date, and a compact legend: horizontal band = layer, box = component coloured by role, red arrow = open call, striped fill = uncontained volatility, dark box = contained component. No introduction paragraph.
+Repo name, date, and a compact legend: solid outline = accepted Architecture Module group, dashed outline = candidate hypothesis, role-coloured file = current Righting role, red arrow = open call, striped fill = uncontained volatility, dark box = contained component. No introduction paragraph.
 
 ## Overview section
 
-One **static architecture diagram** of the codebase as it is today, before any candidate cards. Hand-built taxonomy bands stacked vertically — Clients / Managers / Engines / ResourceAccess / Resources — with Utilities as a vertical bar on the right spanning all bands. Place the real modules (by name, monospaced) in the band matching their *actual current role*, even when that role is wrong for them; red arrows mark open calls. This diagram is the "before" the whole report argues against. Use a consistent role colour key and reuse it in every candidate diagram: Client sky, Manager indigo, Engine violet, ResourceAccess teal, Resource stone, Utility slate.
+One **static architecture diagram** of the codebase as it is today, before any candidate cards. Group accepted Architecture Modules by their module roots first using solid outlines, and render every volatility-backed candidate beside them as a dashed hypothesis group. Inside each group, place real files by name and colour them by their actual Righting roles. Show module-neutral source, composition roots, and host-required entrypoints in separate outside areas. When accepted ownership is scattered across global role folders, keep the Architecture Module group and annotate each file's current path so the lost locality is visible; do not reorganize the overview into those folders.
+
+When no Architecture Module is accepted, the overview consists of dashed candidate hypotheses rather than groups derived from folders. Red arrows mark open calls. This diagram is the "before" the whole report argues against. Use a consistent role colour key and reuse it in every candidate diagram: Client sky, Manager indigo, Engine violet, ResourceAccess teal, Resource stone, Utility slate.
 
 ## Candidate card
 
@@ -61,9 +63,9 @@ No paragraphs of explanation. If the diagram needs a paragraph to be understood,
 
 Pick the pattern that fits the candidate. Mix them — variety is part of the point.
 
-### Taxonomy snippet (the workhorse for role confusion)
+### Module placement snippet (the workhorse for locality and role confusion)
 
-A miniature of the overview diagram, scoped to the candidate's files. Before: a module straddling two bands, or an arrow skipping a band (red). After: each module in one band, arrows stepping down one band at a time. Hand-built divs — Mermaid can't render bands with the right weight.
+A miniature of the overview diagram, scoped to the candidate's files. Before: files owned by one accepted Architecture Module are scattered across global role folders, or their role arrows skip a layer (red). Candidate hypothesis: one module-root group contains the role-coloured files, while arrows still step down through the permitted roles. Use hand-built divs; Mermaid cannot render nested module groups and role lanes with the right weight.
 
 ### Mermaid sequence diagram (the workhorse for orchestration and validation)
 
@@ -101,7 +103,7 @@ Stack horizontal bands; draw the offending call as a red arrow skipping or climb
 - Lean editorial, not corporate-dashboard. Generous whitespace. Serif optional for headings (`font-serif` works well with stone/slate).
 - Colour: the fixed role key above, plus red for open calls/leaks and amber stripes for uncontained volatility. Nothing else.
 - Keep diagrams ~320px tall so before/after sits comfortably side by side without scrolling.
-- Use `text-xs uppercase tracking-wider` for band and module labels — schematic, not UI.
+- Use `text-xs uppercase tracking-wider` for module and role labels — schematic, not UI.
 - The only scripts are the Tailwind CDN and the Mermaid ESM import. The report is otherwise static.
 
 ## Top recommendation section
