@@ -50,9 +50,24 @@ The closed dependency order and its allowed relaxations are in [LANGUAGE.md](LAN
 - Generated API calls spread across Clients and Managers instead of sitting behind ResourceAccess.
 - Asymmetry: similar use cases follow inconsistent call patterns with no load-bearing reason.
 
+## Accepted Module follow-ups
+
+Compare every accepted Architecture Module in scope with its document before ranking new candidates. Follow-up classification and routing live in [`SKILL.md`](SKILL.md); apply those decisions here rather than redefining them. Capture the accepted document and root, remaining work, readiness, blockers, and next route. Preserve the accepted responsibility and Interface; only the maintainer can reopen them.
+
 ## Text findings format
 
-When the review is delivered as inline findings rather than the HTML report, lead with the volatility list, then one block per candidate:
+When the review is delivered as inline findings rather than the HTML report, lead with the volatility list, then Accepted Module follow-ups, then one block per candidate. Format each follow-up as:
+
+```md
+A. Accepted Module name — partial placement | partial migration
+   **Accepted state**: document path and module root, or root unresolved.
+   **Remaining work**: concrete accepted work not yet realized.
+   **Readiness**: ready | blocked.
+   **Blockers**: named prerequisites or none.
+   **Next route**: righting-deep-modules | normal implementation workflow | blocked.
+```
+
+Format each candidate as:
 
 ```md
 1. Candidate name
@@ -65,7 +80,7 @@ When the review is delivered as inline findings rather than the HTML report, lea
    **Tier**: Observed | Projected | Speculative.
 ```
 
-Close with a top recommendation, then ask: *Which candidate, if any, should be handed to `righting-deep-modules`?*
+Compare ready follow-ups and candidates in the top recommendation, then ask: *Which actionable item, if any, should proceed?* A selected candidate is handed to `righting-deep-modules`; a selected follow-up uses its named next route.
 
 ## Physical placement
 

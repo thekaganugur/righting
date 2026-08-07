@@ -26,6 +26,7 @@ The volatility review is rendered as one HTML file in the OS temp directory and 
     <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
       <header>...</header>
       <section id="overview">...</section>
+      <section id="accepted-follow-ups">...</section><!-- omit when none -->
       <section id="candidates" class="space-y-10">...</section>
       <section id="top-recommendation">...</section>
     </main>
@@ -42,6 +43,20 @@ Repo name, date, and a compact legend: solid outline = accepted Architecture Mod
 One **static architecture diagram** of the codebase as it is today, before any candidate cards. Group accepted Architecture Modules by their module roots first using solid outlines, and render every volatility-backed candidate beside them as a dashed hypothesis group. Inside each group, place real files by name and colour them by their actual Righting roles. Show module-neutral source, composition roots, and host-required entrypoints in separate outside areas. When accepted ownership is scattered across global role folders, keep the Architecture Module group and annotate each file's current path so the lost locality is visible; do not reorganize the overview into those folders.
 
 When no Architecture Module is accepted, the overview consists of dashed candidate hypotheses rather than groups derived from folders. Red arrows mark open calls. This diagram is the "before" the whole report argues against. Use a consistent role colour key and reuse it in every candidate diagram: Client sky, Manager indigo, Engine violet, ResourceAccess teal, Resource stone, Utility slate.
+
+## Accepted Module follow-ups
+
+Place this section between the overview and candidates when at least one accepted Architecture Module is incomplete. Render one compact `<article>` per follow-up. These are accepted work, not candidate hypotheses.
+
+- **Title** — accepted Module name.
+- **Status** — display the `partial placement` or `partial migration` classification established by [`SKILL.md`](SKILL.md).
+- **Accepted state** — architecture-document path and accepted module root, or `root unresolved`.
+- **Remaining work** — concrete missing, moved, or ownership-decision items derived from the accepted document and current source.
+- **Readiness** — `ready` or `blocked`.
+- **Blockers** — named evidence, dependency, or maintainer decision; use `none` when ready.
+- **Next route** — display the route established by [`SKILL.md`](SKILL.md): `righting-deep-modules`, `normal implementation workflow`, or `blocked`.
+
+This reference owns rendering; follow-up classification and routing remain in [`SKILL.md`](SKILL.md). Use a small current-versus-accepted-target placement visual for partial placement and a remaining-slices checklist for partial migration. Preserve accepted responsibility and Interface; show conflicts as blockers rather than silently redesigning the Module. Omit complete Modules from this section because the overview already shows them. Follow-ups have status and readiness badges, never volatility evidence tiers.
 
 ## Candidate card
 
@@ -110,7 +125,9 @@ Stack horizontal bands; draw the offending call as a red arrow skipping or climb
 
 ## Top recommendation section
 
-One larger card. Candidate name, tier badge, evidence chip, one sentence on why, the composition check (a compact sequence diagram or call chain showing a core use case flowing through the corrected components unchanged), anchor link to its card. That's it.
+Choose across ready Accepted Module follow-ups and volatility candidates. A blocked follow-up and a Speculative candidate cannot lead.
+
+For a candidate, show its name, tier badge, evidence chip, one sentence on why, and a composition check with an anchor link to its card. For a follow-up, show the accepted Module name, placement-or-migration status, accepted-document evidence, one sentence on why it should proceed now, its next route, and a behavior-preservation or remaining-slice check with an anchor link to its card. Do not add a volatility tier to a follow-up.
 
 ## Tone
 

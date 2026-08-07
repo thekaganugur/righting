@@ -210,7 +210,7 @@ test("module workflows make module roots primary and label incremental placement
   assert.match(workflow, /module root first[\s\S]*role suffix/i);
   assert.match(workflow, /host[\s\S]*required location[\s\S]*thin[\s\S]*Interface/i);
   assert.match(workflow, /partial[\s\S]*must not[\s\S]*(established|realized|colocat)/i);
-  assert.match(workflow, /no known[\s\S]*volatility[\s\S]*outside[\s\S]*root[\s\S]*exception/i);
+  assert.match(workflow, /no known file[\s\S]*owned[\s\S]*outside[\s\S]*root[\s\S]*exception/i);
   assert.doesNotMatch(workflow, /TanStack/);
   assert.match(vocabulary, /selection onward[\s\S]*module-first/i);
   assert.match(vocabulary, /global role folders[\s\S]*not[\s\S]*target/i);
@@ -219,6 +219,42 @@ test("module workflows make module roots primary and label incremental placement
   assert.match(policyLanguage, /does not declare or enforce[\s\S]*module ownership[\s\S]*Interface access/i);
   assert.match(decision, /module root first[\s\S]*role suffix/i);
   assert.match(decision, /host-required[\s\S]*module-neutral/i);
+});
+
+test("volatility reviews make accepted partial Modules actionable", () => {
+  const review = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/SKILL.md"), "utf8");
+  const workflow = readFileSync(resolve(repositoryDirectory, "skills/righting-deep-modules/SKILL.md"), "utf8");
+  const report = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/HTML-REPORT.md"), "utf8");
+  const checklist = readFileSync(
+    resolve(repositoryDirectory, "skills/righting-volatility-review/method-checklist.md"),
+    "utf8",
+  );
+  const followUpReport = report.match(/## Accepted Module follow-ups[\s\S]*?(?=\n## Candidate card)/)?.[0] ?? "";
+
+  assert.match(review, /Accepted Module follow-up/i);
+  assert.match(review, /partial placement[\s\S]*partial migration/i);
+  assert.match(review, /partial migration[\s\S]*takes precedence/i);
+  assert.match(review, /remaining work[\s\S]*readiness[\s\S]*blockers[\s\S]*next (workflow|route)/i);
+  assert.match(review, /readiness: ready \| blocked[\s\S]*workflow:[^\n]*\| blocked/i);
+  assert.match(review, /`blocked`[^\n]*pairs only with `blocked`/i);
+  assert.match(review, /compare[\s\S]*follow-ups[\s\S]*candidates[\s\S]*top recommendation/i);
+  assert.match(review, /schema: architecture-module-follow-up\/v1/);
+  assert.match(review, /Which actionable item, if any, should proceed\?/i);
+
+  assert.match(followUpReport, /partial placement/i);
+  assert.match(followUpReport, /partial migration/i);
+  assert.match(followUpReport, /remaining work/i);
+  assert.match(followUpReport, /readiness/i);
+  assert.match(followUpReport, /blocker/i);
+  assert.match(followUpReport, /next route/i);
+  assert.match(followUpReport, /classification[\s\S]*SKILL\.md/i);
+  assert.doesNotMatch(followUpReport, /Observed|Projected|Speculative/);
+
+  assert.match(checklist, /Accepted Module follow-up/i);
+  assert.match(checklist, /classification and routing[\s\S]*SKILL\.md/i);
+  assert.match(checklist, /normal implementation workflow/i);
+  assert.match(workflow, /architecture-module-follow-up\/v1[\s\S]*without rerunning[\s\S]*discovery/i);
+  assert.match(workflow, /accepted[\s\S]*(responsibility|Interface)[\s\S]*authoritative/i);
 });
 
 test("third-party notices retain the license for copied and adapted skills", () => {
