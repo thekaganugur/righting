@@ -267,6 +267,8 @@ test("module workflows default to focused rigor and disclose the exhaustive path
   assert.match(workflow, /current branch[\s\S]*active accepted[\s\S]*migration[\s\S]*before[\s\S]*new candidate/i);
   assert.match(workflow, /local correction[\s\S]*new Architecture Module/i);
   assert.match(workflow, /work inline[\s\S]*one read-only scout[\s\S]*evidence gap/i);
+  assert.match(workflow, /one complete validation pass/i);
+  assert.doesNotMatch(workflow, /Validate the draft once/i);
   assert.match(
     workflow,
     /Interface-level test strategy[\s\S]*observable behavior[\s\S]*dependency[\s\S]*(moved|retained)[^\n]*tests/i,
@@ -283,6 +285,19 @@ test("module workflows default to focused rigor and disclose the exhaustive path
   assert.match(review, /inline findings[\s\S]*default/i);
   assert.match(review, /HTML-REPORT\.md[\s\S]*(explicit[^\n]*(visual|deep)|(visual|deep)[^\n]*explicit)/i);
   assert.match(review, /Explore inline[\s\S]*deep review[\s\S]*independent evidence/i);
+
+  assert.match(
+    deepWorkflow,
+    /Independent-delegation fallback[\s\S]*independent delegation[\s\S]*unavailable[\s\S]*disclose the limitation[\s\S]*maintainer agreement[\s\S]*bounded evidence question[\s\S]*sequentially[\s\S]*self-review[\s\S]*same review criteria[\s\S]*preserve[\s\S]*completion criteria/i,
+  );
+  assert.match(
+    review,
+    /independent delegation is unavailable[\s\S]*DEEP-WORKFLOW\.md#independent-delegation-fallback/i,
+  );
+  assert.match(
+    deepWorkflow,
+    /independent review is unavailable[\s\S]*#independent-delegation-fallback/i,
+  );
 
   assert.match(alternatives, /activation gate/i);
   assert.match(alternatives, /local correction[\s\S]*suffices[\s\S]*stop/i);

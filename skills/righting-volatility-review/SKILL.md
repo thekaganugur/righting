@@ -37,7 +37,7 @@ Inventory accepted Architecture Module documents, current module roots, global r
 
 Treat the current branch, worktree state, and active accepted migrations as sequencing evidence. Surface an active migration before recommending a new candidate that would increase work in progress.
 
-Explore inline by default. In a deep review, delegate parallel read-only scouts only after naming independent evidence areas and the bounded question each scout will answer. Keep overlapping evidence in the main agent rather than paying several scouts to rediscover it. Establish two anchors before hunting smells:
+Explore inline by default. In a deep review, delegate parallel read-only scouts only after naming independent evidence areas and the bounded question each scout will answer. Keep overlapping evidence in the main agent rather than paying several scouts to rediscover it. When independent delegation is unavailable for a deep review, apply the [delegation fallback](../righting-deep-modules/DEEP-WORKFLOW.md#independent-delegation-fallback). Establish two anchors before hunting smells:
 
 - **Core use cases** — the few behaviors the system exists to support. Not every route or endpoint.
 - **Volatility list** — apply the axes of volatility. Separate volatility from variability, and from changes to the nature of the business. Watch for solutions masquerading as requirements. Tag each entry **Observed / Projected / Speculative** by evidence — tiers in [method-checklist.md](method-checklist.md).

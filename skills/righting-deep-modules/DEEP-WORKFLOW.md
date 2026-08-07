@@ -2,11 +2,15 @@
 
 Use this branch only after the escalation gate in [`SKILL.md`](SKILL.md) is accepted. It preserves the full evidence, comparison, placement, and acceptance process for consequential or genuinely ambiguous Module work.
 
+## Independent-delegation fallback
+
+When a workflow that points here requires independent delegation and it is unavailable, disclose the limitation and obtain maintainer agreement before using the applicable constrained fallback: answer each bounded evidence question sequentially in the main context, or perform a separate self-review pass against the same review criteria. Preserve the calling stage's completion criteria.
+
 ## 1. Re-establish exhaustive evidence
 
 Inspect the selected work item's files, callers, tests, dependencies, domain documents, relevant ADRs, accepted neighboring Modules, current branch, and active migration state. Facts come from the repository; decisions come from the maintainer.
 
-Reuse current discovery evidence. When the escalation trigger leaves independent evidence gaps, delegate one fresh read-only scout per gap in parallel. Give each scout a bounded question and require compressed evidence with paths and symbols. Keep overlapping questions in the main agent and never rerun completed reconnaissance.
+Reuse current discovery evidence. When the escalation trigger leaves independent evidence gaps, delegate one fresh read-only scout per gap in parallel. Give each scout a bounded question and require compressed evidence with paths and symbols. Keep overlapping questions in the main agent and never rerun completed reconnaissance. When independent delegation is unavailable, apply the [delegation fallback](#independent-delegation-fallback).
 
 For a candidate, verify its core use cases, volatility axes and tier, ripple evidence, role hypotheses, open calls, leaked knowledge, and smallest local correction. For an accepted follow-up, verify the accepted document, root, remaining work, readiness, blockers, and neighboring ownership without reopening its responsibility or Interface.
 
@@ -63,7 +67,7 @@ Validate that each named volatility scenario changes the Implementation without 
 
 Validate placement separately: no known file owned by the selected Module remains outside its root without an explicit inventory exception. Host-required entrypoints remain thin, module-neutral files are independent of the volatility, and neighboring accepted Modules communicate through Interfaces rather than Implementation reach-through.
 
-Run one independent read-only review after the draft is complete. Apply actionable findings. Re-review only when a correction changes the Module boundary, Interface, placement decision, or migration outcome; otherwise validate the correction inline.
+Run one independent read-only review after the draft is complete. When independent review is unavailable, apply the [delegation fallback](#independent-delegation-fallback). Apply actionable findings. Re-review only when a correction changes the Module boundary, Interface, placement decision, or migration outcome; otherwise validate the correction inline.
 
 Return to the failing stage when evidence, design, placement, or test strategy is insufficient. Reject a candidate when its volatility does not justify an Architecture Module. Defer a follow-up when its accepted design is stale, contradictory, or blocked, naming what must resolve. Otherwise present the exact draft or revision and wait until the maintainer accepts it or requests revision.
 

@@ -58,7 +58,7 @@ Lay out the target **module root first**, retaining canonical role suffixes. Fin
 
 Prefer one complete placement slice. When independent validation requires increments, mark the outcome **partial**, list every residual placement, and name the evidence needed for the next move. A partial slice is never established, realized, or fully colocated.
 
-Validate the draft once against the selected evidence, accepted neighboring ownership, Interface stability, observable behavior, dependency treatment, every test disposition, core use cases, placement inventory, and migration outcome. Use one independent reviewer only when the maintainer requests it or an escalation risk requires independent assurance; re-review only when a correction changes the boundary, Interface, or placement decision.
+Run one complete validation pass against the selected evidence, accepted neighboring ownership, Interface stability, observable behavior, dependency treatment, every test disposition, core use cases, placement inventory, and migration outcome. Use one independent reviewer only when the maintainer requests it or an escalation risk requires independent assurance; re-review only when a correction changes the boundary, Interface, or placement decision.
 
 Present the exact draft and wait for acceptance. After acceptance, write it using the repository's architecture-document convention, updating an accepted document for a follow-up or using `docs/architecture/<module-name>.md` when none exists. Stop before moving source or editing application code; continue through the project's normal implementation workflow only after the accepted document and migration slice exist.
 
