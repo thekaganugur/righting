@@ -1,6 +1,6 @@
 ---
 name: righting-volatility-review
-description: Find, evidence, rank, and present uncontained-volatility candidates and incomplete accepted Architecture Modules, stopping before Interface design. Reports actionable work as quick inline findings or a visual HTML report. Use when the user wants a volatility-based architecture review, asks to apply The Method or Righting Software, wants to rank volatility by observed evidence (git history, co-change, existing variation), wants to fix functional decomposition, leaky ResourceAccess, or open calls, or wants a more LLM-navigable architecture.
+description: Find, evidence, rank, and present uncontained-volatility candidates and incomplete accepted Architecture Modules, stopping before Interface design. Uses focused inline findings by default and preserves a visual deep report for explicit requests. Use when the user wants a volatility-based architecture review, asks to apply The Method or Righting Software, wants to rank volatility by observed evidence, wants to fix functional decomposition, leaky ResourceAccess, or open calls, or wants a more LLM-navigable architecture.
 ---
 
 # Improve Codebase Volatility
@@ -35,7 +35,9 @@ Before exploring, read the root `CONTEXT-MAP.md` when present and then each appl
 
 Inventory accepted Architecture Module documents, current module roots, global role folders, and host-required source locations that intersect the area. Compare each accepted target with current source. Record complete realization or an Accepted Module follow-up, including the remaining work and whether it is partial placement or partial migration. Accepted documents establish existing ownership; paths without that evidence do not establish a Module.
 
-Then walk the codebase. If a sub-agent delegation tool is available (an `Agent`, `Task`, or `subagent` tool — whatever the harness registers), delegate the recon pass to a read-only exploration role (e.g. `Explore` or `scout`); fan out in parallel across areas if the tool supports it — recon output is high-volume and throwaway, and the main context must survive through candidate selection and handoff, so a delegated role carries that weight instead of the orchestrator. If no such tool is registered, explore inline via `read`, `bash`, and `grep`. Establish two anchors before hunting smells:
+Treat the current branch, worktree state, and active accepted migrations as sequencing evidence. Surface an active migration before recommending a new candidate that would increase work in progress.
+
+Explore inline by default. In a deep review, delegate parallel read-only scouts only after naming independent evidence areas and the bounded question each scout will answer. Keep overlapping evidence in the main agent rather than paying several scouts to rediscover it. Establish two anchors before hunting smells:
 
 - **Core use cases** — the few behaviors the system exists to support. Not every route or endpoint.
 - **Volatility list** — apply the axes of volatility. Separate volatility from variability, and from changes to the nature of the business. Watch for solutions masquerading as requirements. Tag each entry **Observed / Projected / Speculative** by evidence — tiers in [method-checklist.md](method-checklist.md).
@@ -52,6 +54,8 @@ Then map files to roles and hypothesized volatility ownership, and note where yo
 
 The full smell catalog per role, the closed-architecture red flags, and the frontend role translation live in [method-checklist.md](method-checklist.md). Apply roles as architectural roles, not deployment units; do not propose distributed services for an in-process codebase.
 
+For each new candidate, compare a local correction that introduces no Architecture Module. Keep the candidate only when that correction leaves evidenced volatility, caller knowledge, open calls, or ownership friction uncontained.
+
 Done when every core use case is named, every volatility is stated via an axis and tagged Observed / Projected / Speculative, every architecture-relevant source file used as evidence or included in a candidate has a role hypothesis or explicit non-role treatment, and every accepted Module in scope is marked complete or has an explicit follow-up. Surface actionable work only after these anchors hold.
 
 ### 2. Present actionable work
@@ -66,11 +70,11 @@ Lead with the volatility list and do NOT design contracts yet — whichever medi
 
 Keep accepted follow-ups out of the volatility tiers and preserve their accepted responsibility and Interface unless the maintainer reopens them. Compare ready follow-ups with candidates when choosing the top recommendation; use accepted commitment, readiness, project sequencing, and containment payoff for follow-ups, and evidence tier plus containment payoff for candidates. A Speculative candidate cannot be the top recommendation; neither can a blocked follow-up.
 
-Default to the **HTML report**: the before/after visuals are this skill's signature. Drop to **quick inline findings** when the user wants it fast, in-terminal, or without a browser — follow the text format in [method-checklist.md](method-checklist.md) (volatility list, Accepted Module follow-ups, candidate blocks, top recommendation).
+**Quick inline findings are the default.** Follow the text format in [method-checklist.md](method-checklist.md): volatility list, Accepted Module follow-ups, candidate blocks, and top recommendation.
 
-**HTML report.** Read [HTML-REPORT.md](HTML-REPORT.md) completely, then write its single-file, network-dependent report to the OS temp directory so nothing lands in the repo. Resolve the temp dir from `$TMPDIR`, falling back to `/tmp` (or `%TEMP%` on Windows), and write to `<tmpdir>/volatility-review-<timestamp>.html` so each run gets a fresh file. Open it for the user — `xdg-open <path>` on Linux, `open <path>` on macOS, `start <path>` on Windows — and tell them the absolute path.
+Read [HTML-REPORT.md](HTML-REPORT.md) completely only for an explicit visual or deep request. Then write its single-file, network-dependent report to the OS temp directory so nothing lands in the repo. Resolve the temp dir from `$TMPDIR`, falling back to `/tmp` (or `%TEMP%` on Windows), and write to `<tmpdir>/volatility-review-<timestamp>.html`. Open it for the user with the host platform's normal opener and report the absolute path.
 
-The reference owns the report structure, follow-up and candidate fields, diagrams, styling, and Top recommendation.
+`HTML-REPORT.md` owns the report structure for visual output, including follow-up and candidate fields, diagrams, styling, and Top recommendation.
 
 Use `CONTEXT.md` vocabulary for the domain and `LANGUAGE.md` vocabulary for the architecture. Surface an ADR conflict only when evidenced friction justifies reopening it.
 

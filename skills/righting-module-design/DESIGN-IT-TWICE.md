@@ -1,8 +1,19 @@
 # Design It Twice
 
-When the user wants to explore alternative Interfaces for a chosen deepening candidate, use fresh-context independent designs when delegation is available. When delegation is unavailable, run a constrained sequential comparison from orthogonal briefs. Based on "Design It Twice" (Ousterhout) — your first idea is unlikely to be the best.
+Use this exhaustive comparison only after the activation gate below. Fresh-context independent designs preserve genuinely different Interface options when delegation is available; a constrained sequential comparison preserves them when it is not. Based on "Design It Twice" (Ousterhout) — your first idea is unlikely to be the best.
 
 Uses the vocabulary in [SKILL.md](SKILL.md) — **module**, **interface**, **seam**, **adapter**, **leverage**.
+
+## Activation gate
+
+Start with **Alternative 0** from the selected evidence:
+
+- for a new candidate, the smallest local correction with no new Architecture Module; or
+- for an accepted Module, the smallest completion that preserves its accepted Interface.
+
+Refresh this baseline only when the comparison's new constraints invalidate it.
+
+When the local correction suffices, stop and return it to the focused workflow. Continue only when the maintainer explicitly requests alternatives, or the focused workflow has named at least two credible Interface or Seam placements and the maintainer accepts the comparison after seeing its expected cost. Subagent availability alone never activates this workflow.
 
 ## Process
 
@@ -43,7 +54,7 @@ Each designer outputs:
 
 ### 3. Present and compare
 
-Present designs sequentially so the user can absorb each one, then compare them in prose. Contrast by **depth** (leverage at the interface), **locality** (where change concentrates), and **seam placement**.
+Show every alternative to the maintainer sequentially so each can be absorbed, then compare them in prose. Contrast by **depth** (leverage at the interface), **locality** (where change concentrates), and **seam placement**.
 
 After comparing, give your own recommendation: which design you think is strongest and why. If elements from different designs would combine well, propose a hybrid. Be opinionated — the user wants a strong read, not a menu.
 

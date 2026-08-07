@@ -19,6 +19,7 @@ const packagedResources = [
   "skills/righting-adapter-authoring/SKILL.md",
   "skills/righting-adapter-authoring/APPROVAL.md",
   "skills/righting-deep-modules/SKILL.md",
+  "skills/righting-deep-modules/DEEP-WORKFLOW.md",
   "skills/righting-volatility-review/SKILL.md",
   "skills/righting-volatility-review/LANGUAGE.md",
   "skills/righting-volatility-review/method-checklist.md",
@@ -135,6 +136,11 @@ test("the volatility review hands selected discovery to deep-module design", () 
 test("module skills expose one review, one workflow, and one vocabulary layer", () => {
   const review = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/SKILL.md"), "utf8");
   const workflow = readFileSync(resolve(repositoryDirectory, "skills/righting-deep-modules/SKILL.md"), "utf8");
+  const deepWorkflow = readFileSync(
+    resolve(repositoryDirectory, "skills/righting-deep-modules/DEEP-WORKFLOW.md"),
+    "utf8",
+  );
+  const workflowGuidance = `${workflow}\n${deepWorkflow}`;
   const vocabulary = readFileSync(resolve(repositoryDirectory, "skills/righting-module-design/SKILL.md"), "utf8");
   const alternatives = readFileSync(resolve(repositoryDirectory, "skills/righting-module-design/DESIGN-IT-TWICE.md"), "utf8");
   const readme = readFileSync(resolve(repositoryDirectory, "README.md"), "utf8");
@@ -149,16 +155,22 @@ test("module skills expose one review, one workflow, and one vocabulary layer", 
     workflow,
     /existing selected[\s\S]*volatility-candidate\/v1[\s\S]*current packet[\s\S]*without rerunning[\s\S]*stale[\s\S]*refresh[\s\S]*full discovery only/i,
   );
-  assert.match(workflow, /grilling gate/i);
-  assert.match(workflow, /facts[\s\S]*repository[\s\S]*decisions[\s\S]*maintainer/i);
-  assert.match(workflow, /one question[\s\S]*recommended answer/i);
-  assert.match(workflow, /draft dedicated Architecture Module document/i);
-  assert.match(workflow, /living placement inventory[\s\S]*target path[\s\S]*Righting role or explicit treatment/i);
-  assert.match(workflow, /Finalize[\s\S]*complete placement inventory/i);
-  assert.match(workflow, /migration slice[^\n]*target module root[^\n]*every moved or new file[^\n]*Righting role/i);
-  assert.match(workflow, /code-level facade[\s\S]*real caller/i);
-  assert.match(workflow, /validate[\s\S]*maintainer accepts[\s\S]*docs\/architecture/i);
-  assert.match(workflow, /Stop before[\s\S]*application code/i);
+  assert.match(workflowGuidance, /grilling gate/i);
+  assert.match(workflowGuidance, /facts[\s\S]*repository[\s\S]*decisions[\s\S]*maintainer/i);
+  assert.match(workflowGuidance, /one question[\s\S]*recommended answer/i);
+  assert.match(workflowGuidance, /draft dedicated Architecture Module document/i);
+  assert.match(
+    workflowGuidance,
+    /living placement inventory[\s\S]*target path[\s\S]*Righting role or explicit treatment/i,
+  );
+  assert.match(workflowGuidance, /Finalize[\s\S]*complete placement inventory/i);
+  assert.match(
+    workflowGuidance,
+    /migration slice[^\n]*target (?:module )?root[^\n]*every moved or new file[^\n]*Righting role/i,
+  );
+  assert.match(workflowGuidance, /code-level facade[\s\S]*real caller/i);
+  assert.match(workflowGuidance, /validate[\s\S]*maintainer accepts[\s\S]*docs\/architecture/i);
+  assert.match(workflowGuidance, /Stop before[\s\S]*application code/i);
 
   assert.match(vocabulary.match(/^description: ([^\n]+)/m)?.[1] ?? "", /vocabulary layer/i);
   assert.match(vocabulary, /scale-agnostic/i);
@@ -180,6 +192,11 @@ test("module skills expose one review, one workflow, and one vocabulary layer", 
 test("module workflows make module roots primary and label incremental placement honestly", () => {
   const review = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/SKILL.md"), "utf8");
   const workflow = readFileSync(resolve(repositoryDirectory, "skills/righting-deep-modules/SKILL.md"), "utf8");
+  const deepWorkflow = readFileSync(
+    resolve(repositoryDirectory, "skills/righting-deep-modules/DEEP-WORKFLOW.md"),
+    "utf8",
+  );
+  const workflowGuidance = `${workflow}\n${deepWorkflow}`;
   const vocabulary = readFileSync(resolve(repositoryDirectory, "skills/righting-module-design/SKILL.md"), "utf8");
   const report = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/HTML-REPORT.md"), "utf8");
   const checklist = readFileSync(
@@ -191,8 +208,8 @@ test("module workflows make module roots primary and label incremental placement
     resolve(repositoryDirectory, "docs/adr/0003-organize-architecture-modules-by-module-root.md"),
     "utf8",
   );
-  const stage2 = workflow.match(/## 2\.[\s\S]*?(?=\n## 3\.)/)?.[0] ?? "";
-  const stage3 = workflow.match(/## 3\.[\s\S]*?(?=\n## 4\.)/)?.[0] ?? "";
+  const stage2 = deepWorkflow.match(/## 2\.[\s\S]*?(?=\n## 3\.)/)?.[0] ?? "";
+  const stage3 = deepWorkflow.match(/## 3\.[\s\S]*?(?=\n## 4\.)/)?.[0] ?? "";
 
   assert.match(review, /accepted Architecture Module documents[\s\S]*current module roots[\s\S]*global role folders/i);
   assert.match(review, /HTML-REPORT\.md[\s\S]*owns the report structure/i);
@@ -207,11 +224,14 @@ test("module workflows make module roots primary and label incremental placement
   assert.match(stage2, /owner[\s\S]*current path[\s\S]*target path[\s\S]*Righting role or explicit treatment/i);
   assert.doesNotMatch(stage2, /complete placement inventory/i);
   assert.match(stage3, /Finalize[\s\S]*complete placement inventory/i);
-  assert.match(workflow, /module root first[\s\S]*role suffix/i);
-  assert.match(workflow, /host[\s\S]*required location[\s\S]*thin[\s\S]*Interface/i);
-  assert.match(workflow, /partial[\s\S]*must not[\s\S]*(established|realized|colocat)/i);
-  assert.match(workflow, /no known file[\s\S]*owned[\s\S]*outside[\s\S]*root[\s\S]*exception/i);
-  assert.doesNotMatch(workflow, /TanStack/);
+  assert.match(workflowGuidance, /module root first[\s\S]*role suffix/i);
+  assert.match(workflowGuidance, /host[\s\S]*required location[\s\S]*thin[\s\S]*Interface/i);
+  assert.match(workflowGuidance, /partial[\s\S]*(?:must not|never)[\s\S]*(established|realized|colocat)/i);
+  assert.match(
+    workflowGuidance,
+    /no known file[\s\S]*owned[\s\S]*outside[\s\S]*root[\s\S]*exception/i,
+  );
+  assert.doesNotMatch(workflowGuidance, /TanStack/);
   assert.match(vocabulary, /selection onward[\s\S]*module-first/i);
   assert.match(vocabulary, /global role folders[\s\S]*not[\s\S]*target/i);
   assert.match(vocabulary, /used by multiple Modules[\s\S]*not[\s\S]*module-neutral/i);
@@ -219,6 +239,56 @@ test("module workflows make module roots primary and label incremental placement
   assert.match(policyLanguage, /does not declare or enforce[\s\S]*module ownership[\s\S]*Interface access/i);
   assert.match(decision, /module root first[\s\S]*role suffix/i);
   assert.match(decision, /host-required[\s\S]*module-neutral/i);
+});
+
+test("module workflows default to focused rigor and disclose the exhaustive path", () => {
+  const workflow = readFileSync(resolve(repositoryDirectory, "skills/righting-deep-modules/SKILL.md"), "utf8");
+  const deepWorkflow = readFileSync(
+    resolve(repositoryDirectory, "skills/righting-deep-modules/DEEP-WORKFLOW.md"),
+    "utf8",
+  );
+  const review = readFileSync(resolve(repositoryDirectory, "skills/righting-volatility-review/SKILL.md"), "utf8");
+  const alternatives = readFileSync(
+    resolve(repositoryDirectory, "skills/righting-module-design/DESIGN-IT-TWICE.md"),
+    "utf8",
+  );
+  const readme = readFileSync(resolve(repositoryDirectory, "README.md"), "utf8");
+
+  assert.match(workflow, /focused[\s\S]*default/i);
+  assert.match(workflow, /escalation gate/i);
+  assert.match(
+    workflow,
+    /explicit[^\n]*deep[\s\S]*two materially different[\s\S]*ownership[\s\S]*difficult to reverse[\s\S]*(security|concurrency|data integrity)/i,
+  );
+  assert.match(workflow, /explicit[^\n]*alternative[^\n]*Interface/i);
+  assert.match(workflow, /architectural decision[^\n]*difficult to reverse/i);
+  assert.match(workflow, /explicit request[^\n]*first trigger[^\n]*accepts escalation/i);
+  assert.match(workflow, /state[\s\S]*trigger[\s\S]*ask[\s\S]*maintainer[\s\S]*before[\s\S]*DEEP-WORKFLOW\.md/i);
+  assert.match(workflow, /current branch[\s\S]*active accepted[\s\S]*migration[\s\S]*before[\s\S]*new candidate/i);
+  assert.match(workflow, /local correction[\s\S]*new Architecture Module/i);
+  assert.match(workflow, /work inline[\s\S]*one read-only scout[\s\S]*evidence gap/i);
+  assert.match(
+    workflow,
+    /Interface-level test strategy[\s\S]*observable behavior[\s\S]*dependency[\s\S]*(moved|retained)[^\n]*tests/i,
+  );
+  assert.match(workflow, /Focused design is complete[^\n]*test strategy/i);
+  assert.doesNotMatch(workflow, /\b(?:50|100|200)\s+(?:source\s+)?files\b/i);
+
+  assert.match(deepWorkflow, /living placement inventory/i);
+  assert.match(deepWorkflow, /complete placement inventory/i);
+  assert.match(deepWorkflow, /DESIGN-IT-TWICE\.md/i);
+  assert.match(deepWorkflow, /draft dedicated Architecture Module document/i);
+  assert.match(deepWorkflow, /maintainer accepts/i);
+
+  assert.match(review, /inline findings[\s\S]*default/i);
+  assert.match(review, /HTML-REPORT\.md[\s\S]*(explicit[^\n]*(visual|deep)|(visual|deep)[^\n]*explicit)/i);
+  assert.match(review, /Explore inline[\s\S]*deep review[\s\S]*independent evidence/i);
+
+  assert.match(alternatives, /activation gate/i);
+  assert.match(alternatives, /local correction[\s\S]*suffices[\s\S]*stop/i);
+  assert.match(alternatives, /maintainer[\s\S]*accepts[\s\S]*comparison/i);
+  assert.match(alternatives, /show[\s\S]*every alternative[\s\S]*maintainer/i);
+  assert.match(readme, /righting-deep-modules[\s\S]*focused default[\s\S]*deep/i);
 });
 
 test("volatility reviews make accepted partial Modules actionable", () => {
