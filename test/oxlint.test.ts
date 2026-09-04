@@ -195,7 +195,9 @@ function runLint(
   const arguments_ = [...options, ...(typeof targets === "string" ? [targets] : targets)];
   const inspectionSha256 =
     activeScenarioFamily === undefined ? undefined : retainInspection(workingDirectory);
-  const env = { ...process.env };
+  const env = { ...process.env, NO_COLOR: "1" };
+  delete env.CI;
+  delete env.FORCE_COLOR;
   delete env.GITHUB_ACTIONS;
   const result = spawnSync(oxlint, arguments_, { cwd: workingDirectory, encoding: "utf8", env });
   if (activeScenarioFamily !== undefined) {
