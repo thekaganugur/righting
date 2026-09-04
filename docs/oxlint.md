@@ -35,7 +35,7 @@ Add the package export under an explicit native plugin name and enable its five 
 }
 ```
 
-Preserve the project's existing Oxlint plugins, categories, rules, and command. For each linted file, the adapter discovers the nearest canonical project root containing `righting.json`; invocation from a project subdirectory is supported when Oxlint is given or discovers the project configuration. The first rule context for that root invokes the adjacent packaged CLI as `righting inspect --json`, requires inspection schema 1 and normalized contract version 2, and fails before reporting policy evidence when inspection is unsuccessful, the policy is incomplete, a host version is unsupported, or an unknown applicable capability appears. Contract and resolver state is process-scoped and isolated by canonical root. Subdirectory root discovery and simultaneous multi-root linting are supported. Editor and watch hosts must restart after policy, package, or TypeScript/JavaScript configuration changes; live reload remains unclaimed. The adapter neither imports `righting/core` nor reads or normalizes `righting.json` itself.
+Preserve the project's existing Oxlint plugins, categories, rules, and command. For each linted file, the adapter discovers the nearest canonical project root containing `righting.json`; invocation from a project subdirectory is supported when Oxlint is given or discovers the project configuration. When Oxlint loads the plugin, the adapter preloads the nearest root from the invocation directory through the adjacent packaged CLI as `righting inspect --json`, before per-file rule creation. Additional roots are acquired on their first rule context. Each canonical root has one process-scoped acquisition outcome, successful or failed, for a given policy/package/configuration stamp, so a failed subprocess cannot fan out across files. Inspection requires inspection schema 1 and normalized contract version 2 and fails before reporting policy evidence when inspection is unsuccessful, the policy is incomplete, a host version is unsupported, or an unknown applicable capability appears. Contract and resolver state is process-scoped and isolated by canonical root. Subdirectory root discovery and simultaneous multi-root linting are supported. Editor and watch hosts must restart after policy, package, or TypeScript/JavaScript configuration changes; live reload remains unclaimed. The adapter neither imports `righting/core` nor reads or normalizes `righting.json` itself.
 
 ## Resolution
 
@@ -60,13 +60,13 @@ Use the project's normal lint command with `--deny-warnings --report-unused-disa
 
 Tested tuple:
 
-- Righting and adapter: `0.1.0-alpha.5`;
+- Righting and adapter: `0.1.0-alpha.10`;
 - inspection `schemaVersion`: `1`;
 - normalized `contractVersion`: `2`;
 - Oxlint: `1.75.0` JavaScript-plugin API;
 - Oxc Resolver: `11.24.2`;
 - Micromatch: `4.0.8`;
-- validation runtime: Node.js `26.5.0`.
+- validation runtime: Node.js `24.20.0`.
 
 `role-dependency` disposition: claimed. The complete capability includes all 36 canonical role edges, normalized variations and overrides, static imports, named and star re-exports, scope-aware literal `require`, dynamic and type-only imports, the tested resolver surface above, declared coverage, canonical and alias classification, tests, generated source, composition roots, and unresolved imports.
 
@@ -114,10 +114,10 @@ Observed validation outcomes:
 | Command | Observed outcome |
 | --- | --- |
 | `npm run build` | passed |
-| `node --test dist/test/oxlint.test.js` | 16 tests passed |
+| `node --test dist/test/oxlint.test.js` | 18 tests passed |
 | `node --test dist/test/packed-oxlint.test.js` | 1 test passed |
-| `npm test` | 59 tests passed |
+| `npm test` | 64 tests passed |
 | `npm run typecheck` | passed |
 | `git diff --check` | passed |
 
-The focused native suite asserts allowed exit `0`, forbidden exit `1`, complete scenario-family registration, and stable policy identities. The clean packed-consumer test installs the published-style artifact and exact Oxlint tuple, verifies Oxc Resolver `11.24.2`, passes an allowed normal lint run, and fails an intentional dependency with `righting/role-dependency`. No quantitative adapter performance claim is made for this tuple.
+The focused native suite asserts allowed exit `0`, forbidden exit `1`, complete scenario-family registration, stable policy identities, and one pre-traversal contract acquisition while 64 files run on two Oxlint threads. The clean packed-consumer test installs the published-style artifact and exact Oxlint tuple, verifies Oxc Resolver `11.24.2`, injects the observed lint-time `spawnSync ... ENOMEM` failure mode, proves that the packaged adapter instead acquires once before traversal, passes the normal parallel lint run, and fails an intentional dependency with `righting/role-dependency`. No quantitative adapter performance claim is made for this tuple.

@@ -60,12 +60,28 @@ test("a packed project loads righting/oxlint through its normal pinned Oxlint co
       resolve(projectDirectory, "src/allowed.client.js"),
       'import { value } from "./work.manager.js";\nexport { value };\n',
     );
+    for (let index = 0; index < 64; index += 1) {
+      writeFileSync(resolve(projectDirectory, `src/value-${index}.utility.js`), "export {};\n");
+    }
+    const acquisitionPath = resolve(projectDirectory, "inspection-acquisitions");
+    const preloadPath = resolve(projectDirectory, "inspection-preload.cjs");
+    writeFileSync(acquisitionPath, "");
+    writeFileSync(
+      preloadPath,
+      `const childProcess = require("node:child_process");\nconst { appendFileSync } = require("node:fs");\nconst spawnSync = childProcess.spawnSync;\nchildProcess.spawnSync = function (command, args, options) {\n  if (args?.includes("inspect") && args.includes("--json")) {\n    appendFileSync(${JSON.stringify(acquisitionPath)}, "inspection\\n");\n    if (new Error().stack.includes("lintFileImpl")) return { error: new Error(\`spawnSync \${command} ENOMEM\`) };\n  }\n  return spawnSync.apply(this, arguments);\n};\n`,
+    );
 
     const installedResolver = JSON.parse(
       readFileSync(resolve(projectDirectory, "node_modules/oxc-resolver/package.json"), "utf8"),
     ) as { version: string };
     assert.equal(installedResolver.version, "11.24.2");
-    assertCommandSucceeded(runCommand(projectDirectory, "npm", ["run", "lint"]));
+    assertCommandSucceeded(
+      runCommand(projectDirectory, "npm", ["run", "lint"], {
+        ...process.env,
+        NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ""} --require=${preloadPath}`.trim(),
+      }),
+    );
+    assert.equal(readFileSync(acquisitionPath, "utf8"), "inspection\n");
 
     writeFileSync(resolve(projectDirectory, "src/view.client.js"), "export const value = 1;\n");
     writeFileSync(

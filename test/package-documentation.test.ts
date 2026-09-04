@@ -409,6 +409,10 @@ test("the packed package publishes every onboarding reference without the retire
     assert.match(eslintReference, /--suppress-rule righting\/role-dependency/);
     assert.match(eslintReference, /--prune-suppressions/);
     const oxlintReference = readFileSync(resolve(packageDirectory, "package/docs/oxlint.md"), "utf8");
+    const packagedVersion = (
+      JSON.parse(readFileSync(resolve(packageDirectory, "package/package.json"), "utf8")) as { version: string }
+    ).version;
+    assert.ok(oxlintReference.includes(`Righting and adapter: \`${packagedVersion}\``));
     assert.match(oxlintReference, /righting\/oxlint/);
     assert.match(oxlintReference, /Oxlint exactly `1\.75\.0`/);
     assert.match(oxlintReference, /inspection schema 1[\s\S]*normalized contract version 2/i);

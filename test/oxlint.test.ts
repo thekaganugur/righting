@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFileSync, cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { after, test } from "node:test";
@@ -614,6 +623,22 @@ test("Oxlint keeps normalized contracts isolated across project roots in one pro
   );
 });
 
+test("an invalid enclosing policy does not block a valid nested project", () => {
+  withFiles(
+    {
+      "nested/righting.json": '{"preset":"volatility@1","coverage":["src/**/*.js"]}\n',
+      "nested/package.json": '{"private":true,"type":"module"}\n',
+      "nested/src/value.utility.js": "export {};\n",
+    },
+    () => {
+      withPolicy({ preset: "volatility@1", status: "incomplete" }, () => {
+        const result = runLint("nested/src/value.utility.js");
+        assert.equal(result.status, 0, output(result));
+      });
+    },
+  );
+});
+
 test("Oxlint fails closed when inspection is incomplete or invalid", () => {
   withPolicy({ preset: "volatility@1", status: "incomplete" }, () => {
     const result = runLint("src/client/client.js");
@@ -625,6 +650,41 @@ test("Oxlint fails closed when inspection is incomplete or invalid", () => {
     assert.equal(result.status, 1, output(result));
     assert.match(output(result), /coverage must be a non-empty array/);
   });
+});
+
+test("Oxlint acquires one contract before parallel file traversal", () => {
+  const pluginDirectory = mkdtempSync(resolve(repositoryDirectory, "dist/oxlint-inspection-stress-"));
+  const acquisitionPath = resolve(pluginDirectory, "acquisitions");
+  const files = Object.fromEntries(
+    Array.from({ length: 64 }, (_, index) => [`src/stress/value-${index}.utility.js`, "export {};\n"]),
+  );
+  try {
+    copyFileSync(resolve(repositoryDirectory, "dist/src/oxlint.js"), resolve(pluginDirectory, "oxlint.js"));
+    const inspection = JSON.parse(
+      readFileSync(resolve(repositoryDirectory, "docs/evidence/oxlint-inspection.json"), "utf8"),
+    ) as { contract: object };
+    writeFileSync(acquisitionPath, "");
+    writeFileSync(
+      resolve(pluginDirectory, "adapter-inspection.js"),
+      `import { appendFileSync } from "node:fs";\nexport function loadNormalizedContract() {\n  appendFileSync(${JSON.stringify(acquisitionPath)}, "inspection\\n");\n  if (new Error().stack.includes("lintFileImpl")) throw new Error("Righting adapter: could not run righting inspect --json: spawnSync node ENOMEM");\n  return ${JSON.stringify(inspection.contract)};\n}\n`,
+    );
+    withFiles(files, () => {
+      withJson(
+        resolve(fixtureDirectory, ".oxlintrc.json"),
+        {
+          jsPlugins: [{ name: "righting", specifier: resolve(pluginDirectory, "oxlint.js") }],
+          rules: Object.fromEntries(policyRuleIds.map((ruleId) => [ruleId, "error"])),
+        },
+        () => {
+          const result = runLint("src/stress", ["--threads=2"]);
+          assert.equal(result.status, 0, output(result));
+          assert.equal(readFileSync(acquisitionPath, "utf8"), "inspection\n");
+        },
+      );
+    });
+  } finally {
+    rmSync(pluginDirectory, { recursive: true, force: true });
+  }
 });
 
 test("Oxlint fails closed on an unknown future applicable capability", () => {

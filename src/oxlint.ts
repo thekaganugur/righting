@@ -65,6 +65,7 @@ type AdapterState = {
 };
 
 const states = new Map<string, AdapterState>();
+const stateFailures = new Map<string, { stamp: string; error: unknown }>();
 const analyses = new WeakMap<object, Map<string, DependencyAnalysis>>();
 const preparedRoots = new WeakMap<object, Set<string>>();
 
@@ -83,14 +84,20 @@ function absoluteFilename(filename: string): string {
   return isAbsolute(filename) ? filename : resolve(process.cwd(), filename);
 }
 
-function findProjectDirectory(filename: string): string {
-  let directory = dirname(absoluteFilename(filename));
+function searchProjectDirectory(start: string): string | undefined {
+  let directory = start;
   while (true) {
     if (existsSync(resolve(directory, "righting.json"))) return realpathSync(directory);
     const parent = dirname(directory);
-    if (parent === directory) fail(`could not find righting.json for ${filename}.`);
+    if (parent === directory) return undefined;
     directory = parent;
   }
+}
+
+function findProjectDirectory(filename: string): string {
+  const projectDirectory = searchProjectDirectory(dirname(absoluteFilename(filename)));
+  if (projectDirectory === undefined) fail(`could not find righting.json for ${filename}.`);
+  return projectDirectory;
 }
 
 function stateStamp(projectDirectory: string): string {
@@ -132,14 +139,25 @@ function createState(projectDirectory: string, stamp: string): AdapterState {
   };
 }
 
-function stateFor(context: RuleContext): AdapterState {
-  const projectDirectory = findProjectDirectory(context.filename);
+function stateForProject(projectDirectory: string): AdapterState {
   const stamp = stateStamp(projectDirectory);
   const cached = states.get(projectDirectory);
   if (cached !== undefined && cached.stamp === stamp) return cached;
-  const state = createState(projectDirectory, stamp);
-  states.set(projectDirectory, state);
-  return state;
+  const failed = stateFailures.get(projectDirectory);
+  if (failed !== undefined && failed.stamp === stamp) throw failed.error;
+  try {
+    const state = createState(projectDirectory, stamp);
+    states.set(projectDirectory, state);
+    stateFailures.delete(projectDirectory);
+    return state;
+  } catch (error) {
+    stateFailures.set(projectDirectory, { stamp, error });
+    throw error;
+  }
+}
+
+function stateFor(context: RuleContext): AdapterState {
+  return stateForProject(findProjectDirectory(context.filename));
 }
 
 function projectPath(state: AdapterState, path: string): string {
@@ -420,6 +438,15 @@ function classificationRule(ruleId: RuleId) {
 const packageMetadata = JSON.parse(
   readFileSync(fileURLToPath(new URL("../../package.json", import.meta.url)), "utf8"),
 ) as { version: string };
+
+const workingDirectoryProject = searchProjectDirectory(realpathSync(process.cwd()));
+if (workingDirectoryProject !== undefined) {
+  try {
+    stateForProject(workingDirectoryProject);
+  } catch {
+    // The cached failure is reported only if a linted file belongs to this root.
+  }
+}
 
 export default {
   meta: { name: "righting", version: packageMetadata.version },

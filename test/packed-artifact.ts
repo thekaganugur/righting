@@ -5,8 +5,13 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import type { CommandResult } from "./json-contract.js";
 
-export function runCommand(projectDirectory: string, command: string, arguments_: string[]): CommandResult {
-  return spawnSync(command, arguments_, { cwd: projectDirectory, encoding: "utf8", input: "" }) as unknown as CommandResult;
+export function runCommand(
+  projectDirectory: string,
+  command: string,
+  arguments_: string[],
+  env: NodeJS.ProcessEnv = process.env,
+): CommandResult {
+  return spawnSync(command, arguments_, { cwd: projectDirectory, encoding: "utf8", input: "", env }) as unknown as CommandResult;
 }
 
 export function assertCommandSucceeded(result: CommandResult): void {
