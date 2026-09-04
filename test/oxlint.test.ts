@@ -195,7 +195,9 @@ function runLint(
   const arguments_ = [...options, ...(typeof targets === "string" ? [targets] : targets)];
   const inspectionSha256 =
     activeScenarioFamily === undefined ? undefined : retainInspection(workingDirectory);
-  const result = spawnSync(oxlint, arguments_, { cwd: workingDirectory, encoding: "utf8" });
+  const env = { ...process.env };
+  delete env.GITHUB_ACTIONS;
+  const result = spawnSync(oxlint, arguments_, { cwd: workingDirectory, encoding: "utf8", env });
   if (activeScenarioFamily !== undefined) {
     const text = output(result);
     nativeExecutions.get(activeScenarioFamily)!.push({

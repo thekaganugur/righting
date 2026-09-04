@@ -116,7 +116,7 @@ Observed validation outcomes:
 | `npm run build` | passed |
 | `node --test dist/test/oxlint.test.js` | 18 tests passed |
 | `node --test dist/test/packed-oxlint.test.js` | 1 test passed |
-| `npm test` | 64 tests passed |
+| `npm test` | 65 tests passed |
 | `npm run typecheck` | passed |
 | `git diff --check` | passed |
 
