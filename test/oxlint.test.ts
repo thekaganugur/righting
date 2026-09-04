@@ -652,12 +652,16 @@ test("Oxlint fails closed when inspection is incomplete or invalid", () => {
   });
 });
 
-test("Oxlint acquires one contract before parallel file traversal", () => {
+test("Oxlint acquires one contract per project before parallel file traversal", () => {
   const pluginDirectory = mkdtempSync(resolve(repositoryDirectory, "dist/oxlint-inspection-stress-"));
   const acquisitionPath = resolve(pluginDirectory, "acquisitions");
-  const files = Object.fromEntries(
-    Array.from({ length: 64 }, (_, index) => [`src/stress/value-${index}.utility.js`, "export {};\n"]),
-  );
+  const files = {
+    "stress-project/righting.json": '{"preset":"volatility@1","coverage":["src/**/*.js"]}\n',
+    "stress-project/package.json": '{"private":true,"type":"module"}\n',
+    ...Object.fromEntries(
+      Array.from({ length: 64 }, (_, index) => [`stress-project/src/value-${index}.utility.js`, "export {};\n"]),
+    ),
+  };
   try {
     copyFileSync(resolve(repositoryDirectory, "dist/src/oxlint.js"), resolve(pluginDirectory, "oxlint.js"));
     const inspection = JSON.parse(
@@ -666,7 +670,7 @@ test("Oxlint acquires one contract before parallel file traversal", () => {
     writeFileSync(acquisitionPath, "");
     writeFileSync(
       resolve(pluginDirectory, "adapter-inspection.js"),
-      `import { appendFileSync } from "node:fs";\nexport function loadNormalizedContract() {\n  appendFileSync(${JSON.stringify(acquisitionPath)}, "inspection\\n");\n  if (new Error().stack.includes("lintFileImpl")) throw new Error("Righting adapter: could not run righting inspect --json: spawnSync node ENOMEM");\n  return ${JSON.stringify(inspection.contract)};\n}\n`,
+      `import { appendFileSync } from "node:fs";\nexport function loadNormalizedContract(projectDirectory) {\n  appendFileSync(${JSON.stringify(acquisitionPath)}, projectDirectory + "\\n");\n  if (new Error().stack.includes("lintFileImpl")) throw new Error("Righting adapter: could not run righting inspect --json: spawnSync node ENOMEM");\n  return ${JSON.stringify(inspection.contract)};\n}\n`,
     );
     withFiles(files, () => {
       withJson(
@@ -676,9 +680,12 @@ test("Oxlint acquires one contract before parallel file traversal", () => {
           rules: Object.fromEntries(policyRuleIds.map((ruleId) => [ruleId, "error"])),
         },
         () => {
-          const result = runLint("src/stress", ["--threads=2"]);
+          const result = runLint("stress-project/src", ["--threads=2"]);
           assert.equal(result.status, 0, output(result));
-          assert.equal(readFileSync(acquisitionPath, "utf8"), "inspection\n");
+          assert.deepEqual(readFileSync(acquisitionPath, "utf8").trim().split("\n").sort(), [
+            canonicalFixtureDirectory,
+            realpathSync(resolve(fixtureDirectory, "stress-project")),
+          ].sort());
         },
       );
     });

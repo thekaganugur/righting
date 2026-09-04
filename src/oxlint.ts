@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -98,6 +98,28 @@ function findProjectDirectory(filename: string): string {
   const projectDirectory = searchProjectDirectory(dirname(absoluteFilename(filename)));
   if (projectDirectory === undefined) fail(`could not find righting.json for ${filename}.`);
   return projectDirectory;
+}
+
+function projectDirectoriesAtAndBelow(start: string): string[] {
+  const projects = new Set<string>();
+  const enclosing = searchProjectDirectory(start);
+  if (enclosing !== undefined) projects.add(enclosing);
+  function visit(directory: string): void {
+    if (existsSync(resolve(directory, "righting.json"))) projects.add(realpathSync(directory));
+    let entries;
+    try {
+      entries = readdirSync(directory, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (entry.isDirectory() && entry.name !== ".git" && entry.name !== "node_modules") {
+        visit(resolve(directory, entry.name));
+      }
+    }
+  }
+  visit(start);
+  return [...projects];
 }
 
 function stateStamp(projectDirectory: string): string {
@@ -439,12 +461,11 @@ const packageMetadata = JSON.parse(
   readFileSync(fileURLToPath(new URL("../../package.json", import.meta.url)), "utf8"),
 ) as { version: string };
 
-const workingDirectoryProject = searchProjectDirectory(realpathSync(process.cwd()));
-if (workingDirectoryProject !== undefined) {
+for (const projectDirectory of projectDirectoriesAtAndBelow(realpathSync(process.cwd()))) {
   try {
-    stateForProject(workingDirectoryProject);
+    stateForProject(projectDirectory);
   } catch {
-    // The cached failure is reported only if a linted file belongs to this root.
+    // A cached failure is reported only if a linted file belongs to this root.
   }
 }
 
