@@ -166,12 +166,28 @@ function withFiles(files: Record<string, string>, action: () => void) {
 }
 
 function stableNativeOutput(value: string): string {
-  const lines = value
+  const normalized = value
     .replaceAll(canonicalFixtureDirectory, "<fixture>")
-    .replaceAll(fixtureDirectory, "<fixture>")
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .sort();
+    .replaceAll(fixtureDirectory, "<fixture>");
+  try {
+    const report = JSON.parse(normalized) as {
+      diagnostics?: unknown[];
+      number_of_files?: number;
+      number_of_rules?: number;
+    };
+    if (Array.isArray(report.diagnostics)) {
+      return `${JSON.stringify({
+        diagnostics: [...report.diagnostics].sort((left, right) =>
+          JSON.stringify(left).localeCompare(JSON.stringify(right)),
+        ),
+        number_of_files: report.number_of_files,
+        number_of_rules: report.number_of_rules,
+      })}\n`;
+    }
+  } catch {
+    // Non-JSON initialization failures retain their stable lines below.
+  }
+  const lines = normalized.split(/\r?\n/).filter(Boolean).sort();
   return lines.length === 0 ? "" : `${lines.join("\n")}\n`;
 }
 
@@ -192,7 +208,7 @@ function runLint(
   options: readonly string[] = [],
   workingDirectory = fixtureDirectory,
 ) {
-  const arguments_ = [...options, ...(typeof targets === "string" ? [targets] : targets)];
+  const arguments_ = ["--format=json", ...options, ...(typeof targets === "string" ? [targets] : targets)];
   const inspectionSha256 =
     activeScenarioFamily === undefined ? undefined : retainInspection(workingDirectory);
   const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: "1" };

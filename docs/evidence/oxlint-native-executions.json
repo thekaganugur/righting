@@ -24,328 +24,328 @@
   "families": {
     "canonical-and-alias-classification": [
       {
-        "command": "node_modules/.bin/oxlint \"src/page.client.js\" \"src/page.screen.js\" \"src/clients/page.js\" \"src/screens/page.js\" \"src/screens/page.client.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/page.client.js\" \"src/page.screen.js\" \"src/clients/page.js\" \"src/screens/page.js\" \"src/screens/page.client.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "ca21ac8027bec414805dd3d02266776192fceff6aa3ea0ec5cb5485de2436bd0",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":5,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/reject-screen.manager.js\" \"src/managers/reject-screen.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/reject-screen.manager.js\" \"src/managers/reject-screen.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "ca21ac8027bec414805dd3d02266776192fceff6aa3ea0ec5cb5485de2436bd0",
-        "stdout": "src/managers/reject-screen.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/reject-screen.manager.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/managers/reject-screen.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/reject-screen.manager.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":18,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/target.utility.js\" \"src/canonical-Client.client.js\" \"src/clients/canonical.js\" \"src/canonical-Manager.manager.js\" \"src/managers/canonical.js\" \"src/canonical-Engine.engine.js\" \"src/engines/canonical.js\" \"src/canonical-ResourceAccess.access.js\" \"src/access/canonical.js\" \"src/canonical-Resource.resource.js\" \"src/resources/canonical.js\" \"src/canonical-Utility.utility.js\" \"src/utilities/canonical.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/target.utility.js\" \"src/canonical-Client.client.js\" \"src/clients/canonical.js\" \"src/canonical-Manager.manager.js\" \"src/managers/canonical.js\" \"src/canonical-Engine.engine.js\" \"src/engines/canonical.js\" \"src/canonical-ResourceAccess.access.js\" \"src/access/canonical.js\" \"src/canonical-Resource.resource.js\" \"src/resources/canonical.js\" \"src/canonical-Utility.utility.js\" \"src/utilities/canonical.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "612523236aa99e09582a85b12c4522995fa22c943b0d7bf4cbaa1f890d96856f",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":13,\"number_of_rules\":100}\n",
         "stderr": ""
       }
     ],
     "declared-coverage": [
       {
-        "command": "node_modules/.bin/oxlint \"src/client/import-outside.js\" \"outside/unchecked.manager.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/import-outside.js\" \"outside/unchecked.manager.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "244c41f7f0da7ed7dd031cfea383ec50e58ed25afae934d12b468c5f33044011",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       }
     ],
     "default-role-edges": [
       {
-        "command": "node_modules/.bin/oxlint \"src/client/oxlint-to-manager.js\" \"src/client/oxlint-to-utility.js\" \"src/manager/oxlint-to-engine.js\" \"src/manager/oxlint-to-resource-access.js\" \"src/manager/oxlint-to-utility.js\" \"src/engine/oxlint-to-resource-access.js\" \"src/engine/oxlint-to-utility.js\" \"src/resource-access/oxlint-to-resource.js\" \"src/resource-access/oxlint-to-utility.js\" \"src/resource/oxlint-to-utility.js\" \"src/utility/oxlint-to-utility.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/oxlint-to-manager.js\" \"src/client/oxlint-to-utility.js\" \"src/manager/oxlint-to-engine.js\" \"src/manager/oxlint-to-resource-access.js\" \"src/manager/oxlint-to-utility.js\" \"src/engine/oxlint-to-resource-access.js\" \"src/engine/oxlint-to-utility.js\" \"src/resource-access/oxlint-to-resource.js\" \"src/resource-access/oxlint-to-utility.js\" \"src/resource/oxlint-to-utility.js\" \"src/utility/oxlint-to-utility.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "bf5944bb8b0671c6156726aabb1277c1836089cf2b44533fa2b1bf46787deff0",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":11,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/oxlint-to-client.js\" \"src/client/oxlint-to-engine.js\" \"src/client/oxlint-to-resource-access.js\" \"src/client/oxlint-to-resource.js\" \"src/manager/oxlint-to-client.js\" \"src/manager/oxlint-to-manager.js\" \"src/manager/oxlint-to-resource.js\" \"src/engine/oxlint-to-client.js\" \"src/engine/oxlint-to-manager.js\" \"src/engine/oxlint-to-engine.js\" \"src/engine/oxlint-to-resource.js\" \"src/resource-access/oxlint-to-client.js\" \"src/resource-access/oxlint-to-manager.js\" \"src/resource-access/oxlint-to-engine.js\" \"src/resource-access/oxlint-to-resource-access.js\" \"src/resource/oxlint-to-client.js\" \"src/resource/oxlint-to-manager.js\" \"src/resource/oxlint-to-engine.js\" \"src/resource/oxlint-to-resource-access.js\" \"src/resource/oxlint-to-resource.js\" \"src/utility/oxlint-to-client.js\" \"src/utility/oxlint-to-manager.js\" \"src/utility/oxlint-to-engine.js\" \"src/utility/oxlint-to-resource-access.js\" \"src/utility/oxlint-to-resource.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/oxlint-to-client.js\" \"src/client/oxlint-to-engine.js\" \"src/client/oxlint-to-resource-access.js\" \"src/client/oxlint-to-resource.js\" \"src/manager/oxlint-to-client.js\" \"src/manager/oxlint-to-manager.js\" \"src/manager/oxlint-to-resource.js\" \"src/engine/oxlint-to-client.js\" \"src/engine/oxlint-to-manager.js\" \"src/engine/oxlint-to-engine.js\" \"src/engine/oxlint-to-resource.js\" \"src/resource-access/oxlint-to-client.js\" \"src/resource-access/oxlint-to-manager.js\" \"src/resource-access/oxlint-to-engine.js\" \"src/resource-access/oxlint-to-resource-access.js\" \"src/resource/oxlint-to-client.js\" \"src/resource/oxlint-to-manager.js\" \"src/resource/oxlint-to-engine.js\" \"src/resource/oxlint-to-resource-access.js\" \"src/resource/oxlint-to-resource.js\" \"src/utility/oxlint-to-client.js\" \"src/utility/oxlint-to-manager.js\" \"src/utility/oxlint-to-engine.js\" \"src/utility/oxlint-to-resource-access.js\" \"src/utility/oxlint-to-resource.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "a719e64c021c1ed10eae1121a8915d7e7afc0941dae338be6d56f3a5afca0723",
-        "stdout": "src/client/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on Client.\nsrc/client/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on Engine.\nsrc/client/oxlint-to-resource-access.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on ResourceAccess.\nsrc/client/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on Resource.\nsrc/engine/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on Client.\nsrc/engine/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on Engine.\nsrc/engine/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on Manager.\nsrc/engine/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on Resource.\nsrc/manager/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Manager.\nsrc/manager/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Resource.\nsrc/resource-access/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: ResourceAccess cannot depend on Client.\nsrc/resource-access/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: ResourceAccess cannot depend on Engine.\nsrc/resource-access/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: ResourceAccess cannot depend on Manager.\nsrc/resource-access/oxlint-to-resource-access.js:1:23: error righting(role-dependency): righting/role-dependency: ResourceAccess cannot depend on ResourceAccess.\nsrc/resource/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on Client.\nsrc/resource/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on Engine.\nsrc/resource/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on Manager.\nsrc/resource/oxlint-to-resource-access.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on ResourceAccess.\nsrc/resource/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Resource cannot depend on Resource.\nsrc/utility/oxlint-to-client.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on Client.\nsrc/utility/oxlint-to-engine.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on Engine.\nsrc/utility/oxlint-to-manager.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on Manager.\nsrc/utility/oxlint-to-resource-access.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on ResourceAccess.\nsrc/utility/oxlint-to-resource.js:1:23: error righting(role-dependency): righting/role-dependency: Utility cannot depend on Resource.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Client cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/oxlint-to-client.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":12,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Client cannot depend on Engine.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/oxlint-to-engine.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Client cannot depend on Resource.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/oxlint-to-resource.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":22,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Client cannot depend on ResourceAccess.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/oxlint-to-resource-access.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":29,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Engine cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/engine/oxlint-to-client.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Engine cannot depend on Engine.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/engine/oxlint-to-engine.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":12,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Engine cannot depend on Manager.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/engine/oxlint-to-manager.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":21,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Engine cannot depend on Resource.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/engine/oxlint-to-resource.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":22,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/oxlint-to-client.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Manager.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/oxlint-to-manager.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":12,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Resource.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/oxlint-to-resource.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":22,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Resource cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/resource/oxlint-to-client.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Resource cannot depend on Engine.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/resource/oxlint-to-engine.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Resource cannot depend on Manager.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/resource/oxlint-to-manager.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":21,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Resource cannot depend on Resource.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/resource/oxlint-to-resource.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":12,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Resource cannot depend on ResourceAccess.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/resource/oxlint-to-resource-access.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":29,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: ResourceAccess cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/resource-access/oxlint-to-client.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: ResourceAccess cannot depend on Engine.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/resource-access/oxlint-to-engine.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: ResourceAccess cannot depend on Manager.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/resource-access/oxlint-to-manager.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":21,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: ResourceAccess cannot depend on ResourceAccess.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/resource-access/oxlint-to-resource-access.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":12,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Utility cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/utility/oxlint-to-client.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Utility cannot depend on Engine.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/utility/oxlint-to-engine.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Utility cannot depend on Manager.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/utility/oxlint-to-manager.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":21,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Utility cannot depend on Resource.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/utility/oxlint-to-resource.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":22,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Utility cannot depend on ResourceAccess.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/utility/oxlint-to-resource-access.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":29,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":25,\"number_of_rules\":100}\n",
         "stderr": ""
       }
     ],
     "generated-source-and-composition-roots": [
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/forbidden.generated.js\" \"src/generated/manager/forbidden.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/forbidden.generated.js\" \"src/generated/manager/forbidden.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "6e2298c6eba815b56df066bdad905ca8fb3f116c7e75b40b5c77e4fe3bc11596",
-        "stdout": "src/generated/manager/forbidden.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/forbidden.generated.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/generated/manager/forbidden.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":23,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/forbidden.generated.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/composition-root.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/composition-root.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "6e2298c6eba815b56df066bdad905ca8fb3f116c7e75b40b5c77e4fe3bc11596",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/import-root.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/import-root.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "6e2298c6eba815b56df066bdad905ca8fb3f116c7e75b40b5c77e4fe3bc11596",
-        "stdout": "src/client/import-root.js:1:8: error righting(role-dependency): righting/role-dependency: Client cannot depend on a composition root.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Client cannot depend on a composition root.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/import-root.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":24,\"line\":1,\"column\":8}}],\"related\":[]}],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/not-composition-root.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/not-composition-root.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "6e2298c6eba815b56df066bdad905ca8fb3f116c7e75b40b5c77e4fe3bc11596",
-        "stdout": "src/manager/not-composition-root.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/not-composition-root.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       }
     ],
     "policy-variations-and-protected-dependencies": [
       {
-        "command": "node_modules/.bin/oxlint \"src/client/read-access.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/read-access.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "3051f230363f793d8b807e01cfa8393fafe5fa16c2c1c51851ae3eebe3ac5fee",
-        "stdout": "src/client/read-access.js:1:23: error righting(role-dependency): righting/role-dependency: Client cannot depend on ResourceAccess.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Client cannot depend on ResourceAccess.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/read-access.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":29,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/engine/read-access.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/engine/read-access.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "3051f230363f793d8b807e01cfa8393fafe5fa16c2c1c51851ae3eebe3ac5fee",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/read-access.js\" \"src/client/read-resource.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/read-access.js\" \"src/client/read-resource.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "15ce4921a06dbef3ec57bd416f8a1aa0e94d740eea473db1dee5dfb62800186c",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/engine/read-access.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/engine/read-access.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "15ce4921a06dbef3ec57bd416f8a1aa0e94d740eea473db1dee5dfb62800186c",
-        "stdout": "src/engine/read-access.js:1:23: error righting(role-dependency): righting/role-dependency: Engine cannot depend on ResourceAccess.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Engine cannot depend on ResourceAccess.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/engine/read-access.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":29,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/protected-resource.js\" \"src/manager/protected-import-map.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/protected-resource.js\" \"src/manager/protected-import-map.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "7f3e55d35dd636222e55135088e50c429c4dde1922365ba3f5e948065cbb3dd8",
-        "stdout": "src/manager/protected-import-map.js:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on protected Resource package protected-resource.\nsrc/manager/protected-resource.js:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on protected Resource package protected-resource.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Manager cannot depend on protected Resource package protected-resource.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/protected-import-map.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":21,\"line\":1,\"column\":8}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on protected Resource package protected-resource.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/protected-resource.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":28,\"line\":1,\"column\":8}}],\"related\":[]}],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/resource-access/protected-resource.js\" \"src/resource-access/protected-import-map.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/resource-access/protected-resource.js\" \"src/resource-access/protected-import-map.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "7f3e55d35dd636222e55135088e50c429c4dde1922365ba3f5e948065cbb3dd8",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/protected-utility.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/protected-utility.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "7f3e55d35dd636222e55135088e50c429c4dde1922365ba3f5e948065cbb3dd8",
-        "stdout": "src/client/protected-utility.js:1:8: error righting(role-dependency): righting/role-dependency: Client cannot depend on protected Utility package @example/protected-utility.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Client cannot depend on protected Utility package @example/protected-utility.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/protected-utility.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":36,\"line\":1,\"column\":8}}],\"related\":[]}],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/resource/protected-utility.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/resource/protected-utility.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "7f3e55d35dd636222e55135088e50c429c4dde1922365ba3f5e948065cbb3dd8",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       }
     ],
     "source-classification-violations": [
       {
-        "command": "node_modules/.bin/oxlint \"src/plain.js\" \"src/engines/page.client.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/plain.js\" \"src/engines/page.client.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/unclassified-source",
           "righting/ambiguous-source"
         ],
         "inspectionSha256": "b5bfe99d589d17c09d023dd3930fdec1ba2f377242064f4a3c604a08a22ec7f8",
-        "stdout": "src/engines/page.client.js:1:1: error righting(ambiguous-source): righting/ambiguous-source: This covered source matches multiple canonical roles: Client, Engine.\nsrc/plain.js:1:1: error righting(unclassified-source): righting/unclassified-source: This covered source does not match a canonical role or explicit source treatment.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/ambiguous-source: This covered source matches multiple canonical roles: Client, Engine.\",\"code\":\"righting(ambiguous-source)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/engines/page.client.js\",\"labels\":[{\"span\":{\"offset\":0,\"length\":11,\"line\":1,\"column\":1}}],\"related\":[]},{\"message\":\"righting/unclassified-source: This covered source does not match a canonical role or explicit source treatment.\",\"code\":\"righting(unclassified-source)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/plain.js\",\"labels\":[{\"span\":{\"offset\":0,\"length\":11,\"line\":1,\"column\":1}}],\"related\":[]}],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       }
     ],
     "static-dependency-forms": [
       {
-        "command": "node_modules/.bin/oxlint \"src/client/client.js\" \"src/client/reexport-manager.js\" \"src/client/reexport-all-manager.js\" \"src/client/require-manager.cjs\" \"src/client/dynamic-manager.js\" \"src/client/type-manager.mts\" \"src/client/extension-manager.js\" \"src/client/index-manager.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/client.js\" \"src/client/reexport-manager.js\" \"src/client/reexport-all-manager.js\" \"src/client/require-manager.cjs\" \"src/client/dynamic-manager.js\" \"src/client/type-manager.mts\" \"src/client/extension-manager.js\" \"src/client/index-manager.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "d3fe86488eee441bc1645100e67cd3a0c050b79ef09febc76c8580278574b608",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":8,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/forbidden.js\" \"src/manager/reexport-client.js\" \"src/manager/reexport-all-client.js\" \"src/manager/require-client.cjs\" \"src/manager/dynamic-client.js\" \"src/manager/type-client.mts\" \"src/manager/extension-client.js\" \"src/manager/index-client.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/forbidden.js\" \"src/manager/reexport-client.js\" \"src/manager/reexport-all-client.js\" \"src/manager/require-client.cjs\" \"src/manager/dynamic-client.js\" \"src/manager/type-client.mts\" \"src/manager/extension-client.js\" \"src/manager/index-client.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "d3fe86488eee441bc1645100e67cd3a0c050b79ef09febc76c8580278574b608",
-        "stdout": "src/manager/dynamic-client.js:1:13: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/extension-client.js:1:24: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/forbidden.js:1:24: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/index-client.js:1:24: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/reexport-all-client.js:1:15: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/reexport-client.js:1:24: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/require-client.cjs:2:9: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/type-client.mts:1:29: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/dynamic-client.js\",\"labels\":[{\"span\":{\"offset\":12,\"length\":21,\"line\":1,\"column\":13}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/extension-client.js\",\"labels\":[{\"span\":{\"offset\":23,\"length\":18,\"line\":1,\"column\":24}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/forbidden.js\",\"labels\":[{\"span\":{\"offset\":23,\"length\":21,\"line\":1,\"column\":24}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/index-client.js\",\"labels\":[{\"span\":{\"offset\":23,\"length\":18,\"line\":1,\"column\":24}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/reexport-all-client.js\",\"labels\":[{\"span\":{\"offset\":14,\"length\":21,\"line\":1,\"column\":15}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/reexport-client.js\",\"labels\":[{\"span\":{\"offset\":23,\"length\":21,\"line\":1,\"column\":24}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/require-client.cjs\",\"labels\":[{\"span\":{\"offset\":29,\"length\":21,\"line\":2,\"column\":9}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/type-client.mts\",\"labels\":[{\"span\":{\"offset\":28,\"length\":27,\"line\":1,\"column\":29}}],\"related\":[]}],\"number_of_files\":8,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/package-import.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/package-import.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "c46fb240a30eccbf97d990fd6deb7774ca70bdb06a7c7342a0275bf7df77f9c1",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/package-import.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/package-import.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "c46fb240a30eccbf97d990fd6deb7774ca70bdb06a7c7342a0275bf7df77f9c1",
-        "stdout": "src/manager/package-import.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/package-import.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":19,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/specific-package-import.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/specific-package-import.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "f2a2cd44f5d1dfe2db32b131f08eb8776d2d052dbdbed6a8f6d2bf02a372dc66",
-        "stdout": "src/manager/specific-package-import.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/specific-package-import.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":20,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/exact-package-import.js\" \"src/client/repeated-wildcard-import.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/exact-package-import.js\" \"src/client/repeated-wildcard-import.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "f2a2cd44f5d1dfe2db32b131f08eb8776d2d052dbdbed6a8f6d2bf02a372dc66",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/exact-package-import.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/exact-package-import.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "f2a2cd44f5d1dfe2db32b131f08eb8776d2d052dbdbed6a8f6d2bf02a372dc66",
-        "stdout": "src/manager/exact-package-import.js:1:23: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/exact-package-import.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":9,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/unresolved-package.js\" \"src/client/unresolved-package-name.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/unresolved-package.js\" \"src/client/unresolved-package-name.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/unresolved-local-import"
         ],
         "inspectionSha256": "d4663980c1f60b976bca475ae61b6694b195200597efdfe2d12e2d248c7087d5",
-        "stdout": "src/client/unresolved-package-name.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"missing-package\": Cannot find module 'missing-package'\nsrc/client/unresolved-package.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"#missing\": Package import specifier \"#missing\" is not defined in package <fixture>/package.json\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/unresolved-local-import: Covered source cannot depend on unresolved import \\\"#missing\\\": Package import specifier \\\"#missing\\\" is not defined in package <fixture>/package.json\",\"code\":\"righting(unresolved-local-import)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/unresolved-package.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":10,\"line\":1,\"column\":8}}],\"related\":[]},{\"message\":\"righting/unresolved-local-import: Covered source cannot depend on unresolved import \\\"missing-package\\\": Cannot find module 'missing-package'\",\"code\":\"righting(unresolved-local-import)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/unresolved-package-name.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":17,\"line\":1,\"column\":8}}],\"related\":[]}],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/conditional-package-import.js\" \"src/client/conditional-import.js\" \"src/client/array-package-import.js\" \"src/client/ts-path.mts\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/conditional-package-import.js\" \"src/client/conditional-import.js\" \"src/client/array-package-import.js\" \"src/client/ts-path.mts\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "d4663980c1f60b976bca475ae61b6694b195200597efdfe2d12e2d248c7087d5",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":4,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/conditional-package-import.js\" \"src/manager/conditional-require.cjs\" \"src/manager/array-package-import.js\" \"src/manager/ts-path.mts\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/conditional-package-import.js\" \"src/manager/conditional-require.cjs\" \"src/manager/array-package-import.js\" \"src/manager/ts-path.mts\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/role-dependency"
         ],
         "inspectionSha256": "d4663980c1f60b976bca475ae61b6694b195200597efdfe2d12e2d248c7087d5",
-        "stdout": "src/manager/array-package-import.js:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/conditional-package-import.js:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/conditional-require.cjs:1:9: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\nsrc/manager/ts-path.mts:1:8: error righting(role-dependency): righting/role-dependency: Manager cannot depend on Client.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/array-package-import.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":24,\"line\":1,\"column\":8}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/conditional-package-import.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":30,\"line\":1,\"column\":8}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/conditional-require.cjs\",\"labels\":[{\"span\":{\"offset\":8,\"length\":14,\"line\":1,\"column\":9}}],\"related\":[]},{\"message\":\"righting/role-dependency: Manager cannot depend on Client.\",\"code\":\"righting(role-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/ts-path.mts\",\"labels\":[{\"span\":{\"offset\":7,\"length\":24,\"line\":1,\"column\":8}}],\"related\":[]}],\"number_of_files\":4,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/external-and-builtin.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/external-and-builtin.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "8a7b499af7baed56e022c58c87772619c651a95bfc90b8616af08b821df01cfe",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/unresolved.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/unresolved.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/unresolved-local-import"
         ],
         "inspectionSha256": "d3fe86488eee441bc1645100e67cd3a0c050b79ef09febc76c8580278574b608",
-        "stdout": "src/client/unresolved.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"./missing.js\": Cannot find module './missing.js'\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/unresolved-local-import: Covered source cannot depend on unresolved import \\\"./missing.js\\\": Cannot find module './missing.js'\",\"code\":\"righting(unresolved-local-import)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/unresolved.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":14,\"line\":1,\"column\":8}}],\"related\":[]}],\"number_of_files\":1,\"number_of_rules\":100}\n",
         "stderr": ""
       }
     ],
     "test-source-treatment": [
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/forbidden.test.js\" \"src/tests/manager/forbidden.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/forbidden.test.js\" \"src/tests/manager/forbidden.js\"",
         "exitStatus": 0,
         "diagnostics": [],
         "inspectionSha256": "db8771254e5822f0e832c33ee373d82e8689b2bea896bae024b9839b1a1cdd34",
-        "stdout": "",
+        "stdout": "{\"diagnostics\":[],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/manager/unresolved.test.js\" \"src/tests/manager/unresolved.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/manager/unresolved.test.js\" \"src/tests/manager/unresolved.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/unresolved-local-import"
         ],
         "inspectionSha256": "db8771254e5822f0e832c33ee373d82e8689b2bea896bae024b9839b1a1cdd34",
-        "stdout": "src/manager/unresolved.test.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"./missing.js\": Cannot find module './missing.js'\nsrc/tests/manager/unresolved.js:1:8: error righting(unresolved-local-import): righting/unresolved-local-import: Covered source cannot depend on unresolved import \"./missing.js\": Cannot find module './missing.js'\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/unresolved-local-import: Covered source cannot depend on unresolved import \\\"./missing.js\\\": Cannot find module './missing.js'\",\"code\":\"righting(unresolved-local-import)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/manager/unresolved.test.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":14,\"line\":1,\"column\":8}}],\"related\":[]},{\"message\":\"righting/unresolved-local-import: Covered source cannot depend on unresolved import \\\"./missing.js\\\": Cannot find module './missing.js'\",\"code\":\"righting(unresolved-local-import)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/tests/manager/unresolved.js\",\"labels\":[{\"span\":{\"offset\":7,\"length\":14,\"line\":1,\"column\":8}}],\"related\":[]}],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       },
       {
-        "command": "node_modules/.bin/oxlint \"src/client/import-test.js\" \"src/client/import-test-directory.js\"",
+        "command": "node_modules/.bin/oxlint \"--format=json\" \"src/client/import-test.js\" \"src/client/import-test-directory.js\"",
         "exitStatus": 1,
         "diagnostics": [
           "righting/test-dependency"
         ],
         "inspectionSha256": "db8771254e5822f0e832c33ee373d82e8689b2bea896bae024b9839b1a1cdd34",
-        "stdout": "src/client/import-test-directory.js:1:23: error righting(test-dependency): righting/test-dependency: Governed production source cannot depend on test source.\nsrc/client/import-test.js:1:23: error righting(test-dependency): righting/test-dependency: Governed production source cannot depend on test source.\n",
+        "stdout": "{\"diagnostics\":[{\"message\":\"righting/test-dependency: Governed production source cannot depend on test source.\",\"code\":\"righting(test-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/import-test-directory.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":28,\"line\":1,\"column\":23}}],\"related\":[]},{\"message\":\"righting/test-dependency: Governed production source cannot depend on test source.\",\"code\":\"righting(test-dependency)\",\"severity\":\"error\",\"causes\":[],\"filename\":\"src/client/import-test.js\",\"labels\":[{\"span\":{\"offset\":22,\"length\":27,\"line\":1,\"column\":23}}],\"related\":[]}],\"number_of_files\":2,\"number_of_rules\":100}\n",
         "stderr": ""
       }
     ]
